@@ -2,16 +2,20 @@ using UnityEngine;
 
 public class CursorController : MonoBehaviour
 {
-    // Unity�G�f�B�^��Inspector����ݒ肷�邽�߂̕ϐ�
-    [Tooltip("�J�X�^���J�[�\���̉摜�iTexture2D�j��ݒ�")]
+    // UnityエディタのInspectorから設定するための変数
+    [Tooltip("ここにカスタムカーソルの画像（Texture2D）を設定します。")]
     public Texture2D cursorTexture;
 
-    [Tooltip("�J�[�\���̃N���b�N����ʒu�B���オ(0,0)")]
+    [Tooltip("カーソルのクリック判定位置です。左上が(0,0)です。")]
     public Vector2 hotspot = Vector2.zero;
 
+    // ゲームが開始された時に一度だけ呼ばれる関数
     void Start()
     {
-        //�J�[�\���Ƃ��Ďg���摜�A�N���b�N����ʒu�A�n�[�h�E�F�A�J�[�\�����\�t�g�E�F�A�J�[�\���������őI��
+        // Cursor.SetCursor() を使ってカーソルを変更します。
+        // 第1引数: カーソルとして使う画像
+        // 第2引数: クリック判定位置（ホットスポット）
+        // 第3引数: ハードウェアカーソルかソフトウェアカーソルかを自動で選択
         Cursor.SetCursor(cursorTexture, hotspot, CursorMode.Auto);
     }
 }

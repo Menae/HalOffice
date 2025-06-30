@@ -321,8 +321,21 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   cursorImage: {fileID: 515779608}
+  normalColor: {r: 1, g: 1, b: 1, a: 1}
+  normalScale: 0.5
+  farColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
+  farScale: 0.6
+  farShakeMultiplier: 1
+  mediumColor: {r: 1, g: 0.5, b: 0, a: 1}
+  mediumScale: 0.7
+  mediumShakeMultiplier: 2
+  mediumDistanceThreshold: 4
+  closeColor: {r: 1, g: 0, b: 0, a: 1}
+  closeScale: 0.8
+  closeShakeMultiplier: 4
+  closeDistanceThreshold: 2
   targetNpc: {fileID: 1250409061}
-  shakeMagnitude: 10
+  baseShakeMagnitude: 2
 --- !u!4 &218026571
 Transform:
   m_ObjectHideFlags: 0

@@ -1,68 +1,69 @@
 using UnityEngine;
-using UnityEngine.UI; // UI.Image‚ğˆµ‚¤‚½‚ß‚É•K—v
+using UnityEngine.UI; // UI.Imageï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ß‚É•Kï¿½v
 
 public class CursorController : MonoBehaviour
 {
-    [Header("ƒJ[ƒ\ƒ‹‚Ìİ’è")]
-    [Tooltip("ƒQ[ƒ€“à‚ÅƒJ[ƒ\ƒ‹‚Æ‚µ‚Ä•\¦‚·‚éUI Image")]
+    [Header("ï¿½Jï¿½[ï¿½\ï¿½ï¿½ï¿½Ìİ’ï¿½")]
+    [Tooltip("ï¿½Qï¿½[ï¿½ï¿½ï¿½ï¿½ï¿½ÅƒJï¿½[ï¿½\ï¿½ï¿½ï¿½Æ‚ï¿½ï¿½Ä•\ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½UI Image")]
     public Image cursorImage;
 
-    [Header("’Êí‚Ìó‘Ô")]
-    [Tooltip("‹ŠEŠO‚É‚¢‚é‚ÌƒJ[ƒ\ƒ‹‚ÌFi”’‚ÅŒ³‚ÌFj")]
+    [Header("ï¿½Êíï¿½Ìï¿½ï¿½")]
+    [Tooltip("ï¿½ï¿½ï¿½Eï¿½Oï¿½É‚ï¿½ï¿½éï¿½ÌƒJï¿½[ï¿½\ï¿½ï¿½ï¿½ÌFï¿½iï¿½ï¿½ï¿½ÅŒï¿½ï¿½ÌFï¿½j")]
     public Color normalColor = Color.white;
     [Range(0.1f, 5f)]
-    [Tooltip("’Êí‚ÌƒJ[ƒ\ƒ‹‚Ì•\¦”{—¦")]
+    [Tooltip("ï¿½Êíï¿½ÌƒJï¿½[ï¿½\ï¿½ï¿½ï¿½Ì•\ï¿½ï¿½ï¿½{ï¿½ï¿½")]
     public float normalScale = 0.5f;
 
-    [Header("‹ŠE“à‚Å‚Ì•Ï‰»")]
-    // --- ‰“‹——£ ---
-    [Tooltip("y‰“‹——£z‚ÌF")]
+    [Header("ï¿½ï¿½ï¿½Eï¿½ï¿½ï¿½Å‚Ì•Ï‰ï¿½")]
+    // --- ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ---
+    [Tooltip("ï¿½yï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½zï¿½ÌF")]
     public Color farColor = Color.yellow;
     [Range(0.1f, 5f)]
-    [Tooltip("y‰“‹——£z‚Ì•\¦”{—¦")]
+    [Tooltip("ï¿½yï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½zï¿½Ì•\ï¿½ï¿½ï¿½{ï¿½ï¿½")]
     public float farScale = 0.6f;
     [Range(0f, 5f)]
-    [Tooltip("y‰“‹——£z‚Ìk‚¦‚Ì”{—¦")]
+    [Tooltip("ï¿½yï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½zï¿½Ìkï¿½ï¿½ï¿½Ì”{ï¿½ï¿½")]
     public float farShakeMultiplier = 1.0f;
 
-    // --- ’†‹——£ ---
-    [Tooltip("y’†‹——£z‚ÌF")]
-    public Color mediumColor = new Color(1.0f, 0.5f, 0f); // ƒIƒŒƒ“ƒWF
+    // --- ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ---
+    [Tooltip("ï¿½yï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½zï¿½ÌF")]
+    public Color mediumColor = new Color(1.0f, 0.5f, 0f); // ï¿½Iï¿½ï¿½ï¿½ï¿½ï¿½Wï¿½F
     [Range(0.1f, 5f)]
-    [Tooltip("y’†‹——£z‚Ì•\¦”{—¦")]
+    [Tooltip("ï¿½yï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½zï¿½Ì•\ï¿½ï¿½ï¿½{ï¿½ï¿½")]
     public float mediumScale = 0.7f;
     [Range(0f, 5f)]
-    [Tooltip("y’†‹——£z‚Ìk‚¦‚Ì”{—¦")]
+    [Tooltip("ï¿½yï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½zï¿½Ìkï¿½ï¿½ï¿½Ì”{ï¿½ï¿½")]
     public float mediumShakeMultiplier = 1.5f;
-    [Tooltip("‚±‚Ì‹——£‚æ‚è‹ß‚¢‚ÆƒIƒŒƒ“ƒWF‚É‚È‚é‹«ŠEü")]
+    [Tooltip("ï¿½ï¿½ï¿½Ì‹ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ß‚ï¿½ï¿½ÆƒIï¿½ï¿½ï¿½ï¿½ï¿½Wï¿½Fï¿½É‚È‚é‹«ï¿½Eï¿½ï¿½")]
     public float mediumDistanceThreshold = 4.0f;
 
-    // --- ‹ß‹——£ ---
-    [Tooltip("y‹ß‹——£z‚ÌF")]
+    // --- ï¿½ß‹ï¿½ï¿½ï¿½ ---
+    [Tooltip("ï¿½yï¿½ß‹ï¿½ï¿½ï¿½ï¿½zï¿½ÌF")]
     public Color closeColor = Color.red;
     [Range(0.1f, 5f)]
-    [Tooltip("y‹ß‹——£z‚Ì•\¦”{—¦")]
+    [Tooltip("ï¿½yï¿½ß‹ï¿½ï¿½ï¿½ï¿½zï¿½Ì•\ï¿½ï¿½ï¿½{ï¿½ï¿½")]
     public float closeScale = 0.8f;
     [Range(0f, 5f)]
-    [Tooltip("y‹ß‹——£z‚Ìk‚¦‚Ì”{—¦")]
+    [Tooltip("ï¿½yï¿½ß‹ï¿½ï¿½ï¿½ï¿½zï¿½Ìkï¿½ï¿½ï¿½Ì”{ï¿½ï¿½")]
     public float closeShakeMultiplier = 2.5f;
-    [Tooltip("‚±‚Ì‹——£‚æ‚è‹ß‚¢‚ÆÔF‚É‚È‚é‹«ŠEü")]
+    [Tooltip("ï¿½ï¿½ï¿½Ì‹ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ß‚ï¿½ï¿½ÆÔFï¿½É‚È‚é‹«ï¿½Eï¿½ï¿½")]
     public float closeDistanceThreshold = 2.0f;
 
-    [Header("ŠÄ‹‘ÎÛ‚ÌNPC")]
-    [Tooltip("k‚¦‚Ì”»’è‚Ég‚¢‚½‚¢NPC‚ÌƒIƒuƒWƒFƒNƒg")]
+    [Header("ï¿½Äï¿½ï¿½ÎÛ‚ï¿½NPC")]
+    [Tooltip("ï¿½kï¿½ï¿½ï¿½Ì”ï¿½ï¿½ï¿½Égï¿½ï¿½ï¿½ï¿½ï¿½ï¿½NPCï¿½ÌƒIï¿½uï¿½Wï¿½Fï¿½Nï¿½g")]
     public NPCMove_v1 targetNpc;
 
-    // ššš •ÏXFŠî–{‚Ìk‚¦‚Ì‹­‚³‚ğİ’è ššš
-    [Header("k‚¦‚ÌŠî–{İ’è")]
-    [Tooltip("k‚¦‚ÌŠî–{‚Æ‚È‚é‹­‚³B‚±‚ê‚ÉŠe‹——£‚Ì”{—¦‚ªŠ|‚©‚é")]
+    // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ÏXï¿½Fï¿½ï¿½{ï¿½Ìkï¿½ï¿½ï¿½Ì‹ï¿½ï¿½ï¿½ï¿½ï¿½İ’ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    [Header("ï¿½kï¿½ï¿½ï¿½ÌŠï¿½{ï¿½İ’ï¿½")]
+    [Tooltip("ï¿½kï¿½ï¿½ï¿½ÌŠï¿½{ï¿½Æ‚È‚é‹­ï¿½ï¿½ï¿½Bï¿½ï¿½ï¿½ï¿½ÉŠeï¿½ï¿½ï¿½ï¿½ï¿½Ì”{ï¿½ï¿½ï¿½ï¿½ï¿½|ï¿½ï¿½ï¿½ï¿½")]
     public float baseShakeMagnitude = 2.0f;
 
+    // ã‚²ãƒ¼ãƒ ãŒé–‹å§‹ã•ã‚ŒãŸæ™‚ã«ä¸€åº¦ã ã‘å‘¼ã°ã‚Œã‚‹é–¢æ•°
     void Start()
     {
-        // ... Start()‚Ì’†g‚Í•ÏX‚È‚µ ...
+        // ... Start()ï¿½Ì’ï¿½ï¿½gï¿½Í•ÏXï¿½È‚ï¿½ ...
         Cursor.visible = false;
-        if (cursorImage == null) { Debug.LogError("Cursor Image‚ªƒZƒbƒg‚³‚ê‚Ä‚¢‚Ü‚¹‚ñI"); return; }
+        if (cursorImage == null) { Debug.LogError("Cursor Imageï¿½ï¿½ï¿½Zï¿½bï¿½gï¿½ï¿½ï¿½ï¿½Ä‚ï¿½ï¿½Ü‚ï¿½ï¿½ï¿½I"); return; }
         cursorImage.raycastTarget = false;
         cursorImage.color = normalColor;
         cursorImage.rectTransform.localScale = Vector3.one * normalScale;
@@ -76,45 +77,45 @@ public class CursorController : MonoBehaviour
 
         if (targetNpc != null && targetNpc.isCursorInView)
         {
-            // --- ‹ŠE“à‚É‚¢‚éê‡ ---
+            // --- ï¿½ï¿½ï¿½Eï¿½ï¿½ï¿½É‚ï¿½ï¿½ï¿½ê‡ ---
             Vector3 mouseWorldPos = GetMouseWorldPosition();
             float distance = Vector3.Distance(targetNpc.transform.position, mouseWorldPos);
 
-            // ššš ’Ç‰ÁFŒ»İ‚Ìk‚¦‚Ì‹­‚³‚ğ•Û‚·‚é•Ï”‚ğéŒ¾ ššš
+            // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ç‰ï¿½ï¿½Fï¿½ï¿½ï¿½İ‚Ìkï¿½ï¿½ï¿½Ì‹ï¿½ï¿½ï¿½ï¿½ï¿½Ûï¿½ï¿½ï¿½ï¿½ï¿½Ïï¿½ï¿½ï¿½éŒ¾ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
             float currentShakeMagnitude = baseShakeMagnitude;
 
             if (distance < closeDistanceThreshold)
             {
-                // ‹ß‹——£‚Ìê‡
+                // ï¿½ß‹ï¿½ï¿½ï¿½ï¿½Ìê‡
                 cursorImage.color = closeColor;
                 cursorImage.rectTransform.localScale = Vector3.one * closeScale;
-                // ššš ’Ç‰ÁF‹ß‹——£‚Ì”{—¦‚ğ“K—p ššš
+                // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ç‰ï¿½ï¿½Fï¿½ß‹ï¿½ï¿½ï¿½ï¿½Ì”{ï¿½ï¿½ï¿½ï¿½Kï¿½p ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
                 currentShakeMagnitude *= closeShakeMultiplier;
             }
             else if (distance < mediumDistanceThreshold)
             {
-                // ’†‹——£‚Ìê‡
+                // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ìê‡
                 cursorImage.color = mediumColor;
                 cursorImage.rectTransform.localScale = Vector3.one * mediumScale;
-                // ššš ’Ç‰ÁF’†‹——£‚Ì”{—¦‚ğ“K—p ššš
+                // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ç‰ï¿½ï¿½Fï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ì”{ï¿½ï¿½ï¿½ï¿½Kï¿½p ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
                 currentShakeMagnitude *= mediumShakeMultiplier;
             }
             else
             {
-                // ‰“‹——£‚Ìê‡
+                // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ìê‡
                 cursorImage.color = farColor;
                 cursorImage.rectTransform.localScale = Vector3.one * farScale;
-                // ššš ’Ç‰ÁF‰“‹——£‚Ì”{—¦‚ğ“K—p ššš
+                // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ç‰ï¿½ï¿½Fï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ì”{ï¿½ï¿½ï¿½ï¿½Kï¿½p ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
                 currentShakeMagnitude *= farShakeMultiplier;
             }
 
-            // ÅI“I‚ÉŒvZ‚³‚ê‚½‹­‚³‚ÅƒJ[ƒ\ƒ‹‚ğk‚í‚¹‚é
+            // ï¿½ÅIï¿½Iï¿½ÉŒvï¿½Zï¿½ï¿½ï¿½ê‚½ï¿½ï¿½ï¿½ï¿½ï¿½ÅƒJï¿½[ï¿½\ï¿½ï¿½ï¿½ï¿½kï¿½í‚¹ï¿½ï¿½
             Vector2 shakeOffset = Random.insideUnitCircle * currentShakeMagnitude;
             cursorImage.rectTransform.position = mousePosition + shakeOffset;
         }
         else
         {
-            // --- ‹ŠEŠO‚É‚¢‚éê‡ ---
+            // --- ï¿½ï¿½ï¿½Eï¿½Oï¿½É‚ï¿½ï¿½ï¿½ê‡ ---
             cursorImage.color = normalColor;
             cursorImage.rectTransform.localScale = Vector3.one * normalScale;
             cursorImage.rectTransform.position = mousePosition;

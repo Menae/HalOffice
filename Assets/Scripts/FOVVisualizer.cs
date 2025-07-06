@@ -30,7 +30,7 @@ public class FOVVisualizer : MonoBehaviour
         float radius = targetNpc.viewRadius;
         float angle = targetNpc.viewAngle;
         Vector3 eyeOffset = targetNpc.eyeOffset;
-        Vector3 direction = targetNpc.direction;
+        Vector3 direction = targetNpc.GetDirection();
 
         int segments = 50;
         int vertexCount = segments + 2;

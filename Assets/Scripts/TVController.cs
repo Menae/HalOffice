@@ -1,34 +1,34 @@
-using UnityEngine;
+ï»¿using UnityEngine;
 using UnityEngine.Video;
 
 public class TVController : MonoBehaviour
 {
-    [Header("•K{ƒRƒ“ƒ|[ƒlƒ“ƒg")]
-    public VideoPlayer videoPlayer; // ‰f‘œ‚ğÄ¶‚·‚é–{‘Ì
-    public MeshRenderer screenRenderer; // ‰f‘œ‚ğ‰f‚·‰æ–Ê‚ÌƒŒƒ“ƒ_ƒ‰[
+    [Header("å¿…é ˆã‚³ãƒ³ãƒãƒ¼ãƒãƒ³ãƒˆ")]
+    public VideoPlayer videoPlayer; // æ˜ åƒã‚’å†ç”Ÿã™ã‚‹æœ¬ä½“
+    public MeshRenderer screenRenderer; // æ˜ åƒã‚’æ˜ ã™ç”»é¢ã®ãƒ¬ãƒ³ãƒ€ãƒ©ãƒ¼
 
-    [Header("ƒ}ƒeƒŠƒAƒ‹İ’è")]
-    public Material tvOffMaterial; // TV‚ªƒIƒt‚Ì‚Ég‚¤^‚Á•‚Èƒ}ƒeƒŠƒAƒ‹
+    [Header("ãƒãƒ†ãƒªã‚¢ãƒ«è¨­å®š")]
+    public Material tvOffMaterial; // TVãŒã‚ªãƒ•ã®æ™‚ã«ä½¿ã†çœŸã£é»’ãªãƒãƒ†ãƒªã‚¢ãƒ«
 
-    private Material tvOnMaterial; // TV‚ªƒIƒ“‚Ì‚Ìƒ}ƒeƒŠƒAƒ‹i‰f‘œ‚ª‰f‚é‚à‚Ìj
-    private bool isTVOn = false;   // TV‚ÌŒ»İ‚Ìó‘Ô
+    private Material tvOnMaterial; // TVãŒã‚ªãƒ³ã®æ™‚ã®ãƒãƒ†ãƒªã‚¢ãƒ«ï¼ˆæ˜ åƒãŒæ˜ ã‚‹ã‚‚ã®ï¼‰
+    private bool isTVOn = false;   // TVã®ç¾åœ¨ã®çŠ¶æ…‹
 
     void Start()
     {
-        // 1. ŠJn‚ÉAŒ»İ‰æ–Ê‚Éİ’è‚³‚ê‚Ä‚¢‚éu‰f‘œ‚ª‰f‚éƒ}ƒeƒŠƒAƒ‹v‚ğ‹L‰¯‚µ‚Ä‚¨‚­
+        // 1. é–‹å§‹æ™‚ã«ã€ç¾åœ¨ç”»é¢ã«è¨­å®šã•ã‚Œã¦ã„ã‚‹ã€Œæ˜ åƒãŒæ˜ ã‚‹ãƒãƒ†ãƒªã‚¢ãƒ«ã€ã‚’è¨˜æ†¶ã—ã¦ãŠã
         tvOnMaterial = screenRenderer.material;
 
-        // 2. ƒ‹[ƒvİ’è‚ğŠm”F‚µAÄ¶‚ğŠJn‚·‚éi‚±‚ê‚Å— ‚Å‚¸‚Á‚Æ—¬‚ê‘±‚¯‚éj
+        // 2. ãƒ«ãƒ¼ãƒ—è¨­å®šã‚’ç¢ºèªã—ã€å†ç”Ÿã‚’é–‹å§‹ã™ã‚‹ï¼ˆã“ã‚Œã§è£ã§ãšã£ã¨æµã‚Œç¶šã‘ã‚‹ï¼‰
         videoPlayer.isLooping = true;
         videoPlayer.Play();
 
-        // 3. ‚½‚¾‚µAÅ‰‚ÍTVƒIƒt‚Ìó‘Ô‚É‚·‚é
+        // 3. ãŸã ã—ã€æœ€åˆã¯TVã‚ªãƒ•ã®çŠ¶æ…‹ã«ã™ã‚‹
         TurnOffTV();
     }
 
     void OnMouseDown()
     {
-        // ƒNƒŠƒbƒN‚³‚ê‚½‚çAó‘Ô‚ğƒgƒOƒ‹iØ‚è‘Ö‚¦j‚·‚é
+        // ã‚¯ãƒªãƒƒã‚¯ã•ã‚ŒãŸã‚‰ã€çŠ¶æ…‹ã‚’ãƒˆã‚°ãƒ«ï¼ˆåˆ‡ã‚Šæ›¿ãˆï¼‰ã™ã‚‹
         if (isTVOn)
         {
             TurnOffTV();
@@ -41,9 +41,9 @@ public class TVController : MonoBehaviour
 
     void TurnOnTV()
     {
-        // ‰æ–Ê‚Ìƒ}ƒeƒŠƒAƒ‹‚ğu‰f‘œ‚ª‰f‚éƒ}ƒeƒŠƒAƒ‹v‚ÉØ‚è‘Ö‚¦‚é
+        // ç”»é¢ã®ãƒãƒ†ãƒªã‚¢ãƒ«ã‚’ã€Œæ˜ åƒãŒæ˜ ã‚‹ãƒãƒ†ãƒªã‚¢ãƒ«ã€ã«åˆ‡ã‚Šæ›¿ãˆã‚‹
         screenRenderer.material = tvOnMaterial;
-        // ‰¹º‚ğƒIƒ“‚É‚·‚é
+        // éŸ³å£°ã‚’ã‚ªãƒ³ã«ã™ã‚‹
         videoPlayer.SetDirectAudioMute(0, false);
 
         isTVOn = true;
@@ -51,9 +51,9 @@ public class TVController : MonoBehaviour
 
     void TurnOffTV()
     {
-        // ‰æ–Ê‚Ìƒ}ƒeƒŠƒAƒ‹‚ğu^‚Á•‚Èƒ}ƒeƒŠƒAƒ‹v‚ÉØ‚è‘Ö‚¦‚é
+        // ç”»é¢ã®ãƒãƒ†ãƒªã‚¢ãƒ«ã‚’ã€ŒçœŸã£é»’ãªãƒãƒ†ãƒªã‚¢ãƒ«ã€ã«åˆ‡ã‚Šæ›¿ãˆã‚‹
         screenRenderer.material = tvOffMaterial;
-        // ‰¹º‚ğƒ~ƒ…[ƒg‚É‚·‚é
+        // éŸ³å£°ã‚’ãƒŸãƒ¥ãƒ¼ãƒˆã«ã™ã‚‹
         videoPlayer.SetDirectAudioMute(0, true);
 
         isTVOn = false;

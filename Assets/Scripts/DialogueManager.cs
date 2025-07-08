@@ -12,12 +12,12 @@ public class DialogueManager : MonoBehaviour
     [SerializeField] private float typingSpeed = 0.04f;
     [SerializeField] private TextMeshProUGUI dialogueText;
 
-    private Coroutine displayLineCoroutine; // テキスト表示コルーチンを保持するための変数
-    private bool canContinueToNextLine = false; // 次の行に進めるか、または全文表示できるかを制御するフラグ
+    private Coroutine displayLineCoroutine;
+    private bool canContinueToNextLine = false;
 
     [Header("Audio")]
-    [SerializeField] private AudioSource typingAudioSource; // タイプ音を再生するためのAudioSource
-    [SerializeField] private AudioClip typingSoundClip; // 1文字ごとに再生するサウンドエフェクト
+    [SerializeField] private AudioSource typingAudioSource;
+    [SerializeField] private AudioClip typingSoundClip;
     [Range(0f, 1f)][SerializeField] private float typingVolume = 0.5f;
 
     [Header("Choices UI")]
@@ -64,38 +64,39 @@ public class DialogueManager : MonoBehaviour
 
     public void EnterDialogueMode(TextAsset inkJSON)
     {
+        // ★★★ 変更：GameManagerに入力停止を命令 ★★★
+        GameManager.Instance.SetInputEnabled(false);
+
         currentStory = new Story(inkJSON.text);
         dialogueIsPlaying = true;
-        //dialoguePanel.SetActive(true);
-
         OnDialogueStart?.Invoke();
-
         StartCoroutine(StartDialogue());
     }
 
-    private IEnumerator StartDialogue()
-    {
-        yield return null;
-        ContinueStory();
-    }
 
     private IEnumerator ExitDialogueMode()
     {
         yield return new WaitForSeconds(0.2f);
 
+        // ★★★ 変更：GameManagerに入力再開を命令 ★★★
+        GameManager.Instance.SetInputEnabled(true);
+
         dialogueIsPlaying = false;
-        //dialoguePanel.SetActive(false);
         dialogueText.text = "";
 
-        //ダイアログ終了時にAudioSourceを停止する
         if (typingAudioSource != null && typingAudioSource.isPlaying)
         {
             typingAudioSource.Stop();
         }
 
         Debug.Log("Dialogue ended. Enabling player controls.");
-
         OnDialogueEnd?.Invoke();
+    }
+
+    private IEnumerator StartDialogue()
+    {
+        yield return null;
+        ContinueStory();
     }
 
     private void ContinueStory()

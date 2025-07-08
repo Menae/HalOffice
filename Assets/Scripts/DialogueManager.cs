@@ -29,8 +29,11 @@ public class DialogueManager : MonoBehaviour
 
     public static event Action OnDialogueStart;
     public static event Action OnDialogueEnd;
+    // どの会話ファイルが終了したかを通知するイベント
+    public static event Action<TextAsset> OnDialogueFinished;
 
     private static DialogueManager instance;
+    private TextAsset currentPlayingInk; // 現在再生中のInkファイルを覚えておく
 
     //private bool waitingForPlayerInput = false;
 
@@ -64,6 +67,7 @@ public class DialogueManager : MonoBehaviour
 
     public void EnterDialogueMode(TextAsset inkJSON)
     {
+        currentPlayingInk = inkJSON; // 再生するファイルを覚えておく
         // ★★★ 変更：GameManagerに入力停止を命令 ★★★
         GameManager.Instance.SetInputEnabled(false);
 
@@ -77,6 +81,9 @@ public class DialogueManager : MonoBehaviour
     private IEnumerator ExitDialogueMode()
     {
         yield return new WaitForSeconds(0.2f);
+
+        // どの会話が終了したかを、その会話ファイルと共に通知する
+        OnDialogueFinished?.Invoke(currentPlayingInk);
 
         // ★★★ 変更：GameManagerに入力再開を命令 ★★★
         GameManager.Instance.SetInputEnabled(true);

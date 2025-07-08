@@ -16,51 +16,33 @@ public class CursorController : MonoBehaviour
     public float normalScale = 0.5f;
 
     [Header("視界内での変化（距離別）")]
-    // --- 遠距離 ---
-    [Tooltip("【遠距離】の色")]
     public Color farColor = Color.yellow;
     [Range(0f, 5f)]
-    [Tooltip("【遠距離】の震えの倍率")]
     public float farShakeMultiplier = 1.0f;
     [Range(0f, 10f)]
-    [Tooltip("【遠距離】の見つかり度上昇倍率")]
     public float farDetectionMultiplier = 1.0f;
-
-    // --- 中距離 ---
-    [Tooltip("【中距離】の色")]
     public Color mediumColor = new Color(1.0f, 0.5f, 0f); // オレンジ色
     [Range(0f, 5f)]
-    [Tooltip("【中距離】の震えの倍率")]
     public float mediumShakeMultiplier = 1.5f;
     [Range(0f, 10f)]
-    [Tooltip("【中距離】の見つかり度上昇倍率")]
     public float mediumDetectionMultiplier = 2.0f;
-    [Tooltip("この距離より近いとオレンジ色になる境界線")]
     public float mediumDistanceThreshold = 4.0f;
-
-    // --- 近距離 ---
-    [Tooltip("【近距離】の色")]
     public Color closeColor = Color.red;
     [Range(0f, 5f)]
-    [Tooltip("【近距離】の震えの倍率")]
     public float closeShakeMultiplier = 2.5f;
     [Range(0f, 10f)]
-    [Tooltip("【近距離】の見つかり度上昇倍率")]
     public float closeDetectionMultiplier = 4.0f;
-    [Tooltip("この距離より近いと赤色になる境界線")]
     public float closeDistanceThreshold = 2.0f;
 
     [Header("監視対象のNPC")]
     public NPCController targetNpc;
 
     [Header("震えの基本設定")]
-    [Tooltip("震えの基本となる強さ。これに各距離の倍率が掛かる")]
     public float baseShakeMagnitude = 2.0f;
 
     [Header("イベント発行")]
     public FloatEventChannelSO detectionIncreaseChannel;
-    [Tooltip("見つかり度が1秒あたりに上昇する基本量")]
-    public float detectionIncreaseRate = 10f; // 基本量として分かりやすく変更
+    public float detectionIncreaseRate = 10f;
 
     void Start()
     {
@@ -70,71 +52,94 @@ public class CursorController : MonoBehaviour
         SetCursorStateNormal();
     }
 
+    // ★★★ このメソッドのロジックをシンプル化しました ★★★
     void Update()
     {
-        if (cursorImage == null || uiCamera == null || parentCanvas == null) return;
+        if (cursorImage == null || uiCamera == null || parentCanvas == null || targetNpc == null) return;
 
-        // --- 1. カーソルの基本位置と見た目を設定 ---
-        Vector2 finalScreenPosition = Input.mousePosition;
+        // カーソルは常に表示
         cursorImage.enabled = true;
-        cursorImage.color = normalColor;
-        cursorImage.rectTransform.localScale = Vector3.one * normalScale;
 
-        // --- 2. ゲームの状態に応じて処理を分岐 ---
-        if (GameManager.Instance != null && GameManager.Instance.isInputEnabled)
+        Vector2 finalScreenPosition = Input.mousePosition;
+
+        // 常にNPCの視界に入っているかをチェックする
+        if (targetNpc.isCursorInView)
         {
-            // --- 入力が有効な場合（ゲームプレイ中）---
-            if (targetNpc != null && targetNpc.isCursorInView)
+            // --- 視界内にいる場合（会話中も含む）---
+
+            // 見つかり度を上昇させる
+            if (detectionIncreaseChannel != null)
             {
-                // --- 視界内にいる場合 ---
-                float currentShakeMultiplier = 1f;
-                float currentDetectionMultiplier = 1f;
-
-                Vector3 mouseWorldPos = GetMouseWorldPosition();
-                float distance = Vector3.Distance(targetNpc.transform.position, mouseWorldPos);
-
-                // 距離に応じて色と各種倍率を決定
-                if (distance < closeDistanceThreshold)
-                {
-                    cursorImage.color = closeColor;
-                    currentShakeMultiplier = closeShakeMultiplier;
-                    currentDetectionMultiplier = closeDetectionMultiplier;
-                }
-                else if (distance < mediumDistanceThreshold)
-                {
-                    cursorImage.color = mediumColor;
-                    currentShakeMultiplier = mediumShakeMultiplier;
-                    currentDetectionMultiplier = mediumDetectionMultiplier;
-                }
-                else
-                {
-                    cursorImage.color = farColor;
-                    currentShakeMultiplier = farShakeMultiplier;
-                }
-
-                // 震えを適用
-                float finalShakeMagnitude = baseShakeMagnitude * currentShakeMultiplier;
-                Vector2 shakeOffset = Random.insideUnitCircle * finalShakeMagnitude;
-                finalScreenPosition += shakeOffset;
-
-                // 見つかり度を上昇させるイベントを発行
-                if (detectionIncreaseChannel != null)
-                {
-                    float finalDetectionRate = detectionIncreaseRate * currentDetectionMultiplier;
-                    detectionIncreaseChannel.RaiseEvent(finalDetectionRate * Time.deltaTime);
-                }
+                float finalDetectionRate = GetCurrentDetectionMultiplier();
+                detectionIncreaseChannel.RaiseEvent(detectionIncreaseRate * Time.deltaTime);
             }
+
+            // 色、大きさ、震えの演出を適用する
+            float currentShakeMagnitude = GetCurrentShakeMagnitude();
+            Vector2 shakeOffset = Random.insideUnitCircle * currentShakeMagnitude;
+            finalScreenPosition += shakeOffset;
+        }
+        else
+        {
+            // --- 視界外にいる場合 ---
+            // カーソルを通常状態に戻す
+            SetCursorStateNormal();
         }
 
-        // --- 3. 最終的なカーソル位置を適用 ---
+        // 最終的なカーソル位置を適用する
         Vector3 screenPosWithZ = finalScreenPosition;
         screenPosWithZ.z = parentCanvas.planeDistance;
         cursorImage.rectTransform.position = uiCamera.ScreenToWorldPoint(screenPosWithZ);
     }
 
+    // 視界内にいる時の見た目の変化を適用し、震えの強さを返すメソッド
+    private float GetCurrentShakeMagnitude()
+    {
+        Vector3 mouseWorldPos = GetMouseWorldPosition();
+        float distance = Vector3.Distance(targetNpc.transform.position, mouseWorldPos);
+
+        cursorImage.rectTransform.localScale = Vector3.one * normalScale; // 大きさは常に通常
+
+        if (distance < closeDistanceThreshold)
+        {
+            cursorImage.color = closeColor;
+            return baseShakeMagnitude * closeShakeMultiplier;
+        }
+        else if (distance < mediumDistanceThreshold)
+        {
+            cursorImage.color = mediumColor;
+            return baseShakeMagnitude * mediumShakeMultiplier;
+        }
+        else
+        {
+            cursorImage.color = farColor;
+            return baseShakeMagnitude * farShakeMultiplier;
+        }
+    }
+
+    // 視界内にいる時の見つかり度上昇倍率を返すメソッド
+    private float GetCurrentDetectionMultiplier()
+    {
+        Vector3 mouseWorldPos = GetMouseWorldPosition();
+        float distance = Vector3.Distance(targetNpc.transform.position, mouseWorldPos);
+
+        if (distance < closeDistanceThreshold)
+        {
+            return detectionIncreaseRate * closeDetectionMultiplier;
+        }
+        else if (distance < mediumDistanceThreshold)
+        {
+            return detectionIncreaseRate * mediumDetectionMultiplier;
+        }
+        else
+        {
+            return detectionIncreaseRate * farDetectionMultiplier;
+        }
+    }
+
+    // カーソルを通常状態に戻す処理をまとめたメソッド
     private void SetCursorStateNormal()
     {
-        cursorImage.enabled = true;
         cursorImage.color = normalColor;
         cursorImage.rectTransform.localScale = Vector3.one * normalScale;
     }

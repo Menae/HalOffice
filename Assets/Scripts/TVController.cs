@@ -1,61 +1,65 @@
 ﻿using UnityEngine;
 using UnityEngine.Video;
 
+[RequireComponent(typeof(Collider2D))]
 public class TVController : MonoBehaviour
 {
     [Header("必須コンポーネント")]
-    public VideoPlayer videoPlayer; // 映像を再生する本体
-    public MeshRenderer screenRenderer; // 映像を映す画面のレンダラー
+    public VideoPlayer videoPlayer;
+    public MeshRenderer screenRenderer;
 
     [Header("マテリアル設定")]
-    public Material tvOffMaterial; // TVがオフの時に使う真っ黒なマテリアル
+    public Material tvOffMaterial;
 
-    private Material tvOnMaterial; // TVがオンの時のマテリアル（映像が映るもの）
-    private bool isTVOn = false;   // TVの現在の状態
+    private Material tvOnMaterial;
+    private bool isTVOn = false;
+
+    public bool IsTVOn { get { return isTVOn; } } // 外部に現在の状態を教えるための窓口
 
     void Start()
     {
-        // 1. 開始時に、現在画面に設定されている「映像が映るマテリアル」を記憶しておく
         tvOnMaterial = screenRenderer.material;
-
-        // 2. ループ設定を確認し、再生を開始する（これで裏でずっと流れ続ける）
         videoPlayer.isLooping = true;
         videoPlayer.Play();
-
-        // 3. ただし、最初はTVオフの状態にする
         TurnOffTV();
     }
 
-    void OnMouseDown()
+    void Update()
     {
-        // クリックされたら、状態をトグル（切り替え）する
-        if (isTVOn)
+        // 右クリックで電源をオン・オフする処理
+        RaycastHit2D[] hits = Physics2D.GetRayIntersectionAll(Camera.main.ScreenPointToRay(Input.mousePosition));
+        foreach (var hit in hits)
         {
-            TurnOffTV();
-        }
-        else
-        {
-            TurnOnTV();
+            if (hit.collider.gameObject == this.gameObject)
+            {
+                if (Input.GetMouseButtonDown(1)) // 1: 右クリック
+                {
+                    if (isTVOn)
+                    {
+                        TurnOffTV();
+                    }
+                    else
+                    {
+                        TurnOnTV();
+                    }
+                    break;
+                }
+            }
         }
     }
 
+
     void TurnOnTV()
     {
-        // 画面のマテリアルを「映像が映るマテリアル」に切り替える
         screenRenderer.material = tvOnMaterial;
-        // 音声をオンにする
         videoPlayer.SetDirectAudioMute(0, false);
-
         isTVOn = true;
     }
 
     void TurnOffTV()
     {
-        // 画面のマテリアルを「真っ黒なマテリアル」に切り替える
         screenRenderer.material = tvOffMaterial;
-        // 音声をミュートにする
         videoPlayer.SetDirectAudioMute(0, true);
-
         isTVOn = false;
     }
 }

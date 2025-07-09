@@ -14,6 +14,10 @@ public class TVController : MonoBehaviour
     private Material tvOnMaterial;
     private bool isTVOn = false;
 
+    [Header("見つかり度設定")]
+    public FloatEventChannelSO detectionIncreaseChannel;
+    public float detectionAmount = 30f;
+
     public bool IsTVOn { get { return isTVOn; } } // 外部に現在の状態を教えるための窓口
 
     void Start()
@@ -54,6 +58,13 @@ public class TVController : MonoBehaviour
         screenRenderer.material = tvOnMaterial;
         videoPlayer.SetDirectAudioMute(0, false);
         isTVOn = true;
+
+        // ★★★ この2行を追加 ★★★
+        // 見つかり度上昇イベントを発行する
+        if (detectionIncreaseChannel != null)
+        {
+            detectionIncreaseChannel.RaiseEvent(detectionAmount);
+        }
     }
 
     void TurnOffTV()

@@ -1,129 +1,151 @@
 using UnityEngine;
-using UnityEngine.UI; // UI.Image���������߂ɕK�v
+using UnityEngine.UI;
 
 public class CursorController : MonoBehaviour
 {
-    [Header("�J�[�\���̐ݒ�")]
-    [Tooltip("�Q�[�����ŃJ�[�\���Ƃ��ĕ\������UI Image")]
+    [Header("UI参照")]
+    public Canvas parentCanvas;
+    public Camera uiCamera;
+
+    [Header("カーソルの設定")]
     public Image cursorImage;
 
-    [Header("�ʏ펞�̏��")]
-    [Tooltip("���E�O�ɂ��鎞�̃J�[�\���̐F�i���Ō��̐F�j")]
+    [Header("カーソルの状態")]
     public Color normalColor = Color.white;
     [Range(0.1f, 5f)]
-    [Tooltip("�ʏ펞�̃J�[�\���̕\���{��")]
     public float normalScale = 0.5f;
 
-    [Header("���E���ł̕ω�")]
-    // --- ������ ---
-    [Tooltip("�y�������z�̐F")]
+    [Header("視界内での変化（距離別）")]
     public Color farColor = Color.yellow;
-    [Range(0.1f, 5f)]
-    [Tooltip("�y�������z�̕\���{��")]
-    public float farScale = 0.6f;
     [Range(0f, 5f)]
-    [Tooltip("�y�������z�̐k���̔{��")]
     public float farShakeMultiplier = 1.0f;
-
-    // --- ������ ---
-    [Tooltip("�y�������z�̐F")]
-    public Color mediumColor = new Color(1.0f, 0.5f, 0f); // �I�����W�F
-    [Range(0.1f, 5f)]
-    [Tooltip("�y�������z�̕\���{��")]
-    public float mediumScale = 0.7f;
+    [Range(0f, 10f)]
+    public float farDetectionMultiplier = 1.0f;
+    public Color mediumColor = new Color(1.0f, 0.5f, 0f); // オレンジ色
     [Range(0f, 5f)]
-    [Tooltip("�y�������z�̐k���̔{��")]
     public float mediumShakeMultiplier = 1.5f;
-    [Tooltip("���̋������߂��ƃI�����W�F�ɂȂ鋫�E��")]
+    [Range(0f, 10f)]
+    public float mediumDetectionMultiplier = 2.0f;
     public float mediumDistanceThreshold = 4.0f;
-
-    // --- �ߋ��� ---
-    [Tooltip("�y�ߋ����z�̐F")]
     public Color closeColor = Color.red;
-    [Range(0.1f, 5f)]
-    [Tooltip("�y�ߋ����z�̕\���{��")]
-    public float closeScale = 0.8f;
     [Range(0f, 5f)]
-    [Tooltip("�y�ߋ����z�̐k���̔{��")]
     public float closeShakeMultiplier = 2.5f;
-    [Tooltip("���̋������߂��ƐԐF�ɂȂ鋫�E��")]
+    [Range(0f, 10f)]
+    public float closeDetectionMultiplier = 4.0f;
     public float closeDistanceThreshold = 2.0f;
 
-    [Header("�Ď��Ώۂ�NPC")]
-    [Tooltip("�k���̔���Ɏg������NPC�̃I�u�W�F�N�g")]
-    public NPCMove_v1 targetNpc;
+    [Header("監視対象のNPC")]
+    public NPCController targetNpc;
 
-    // ������ �ύX�F��{�̐k���̋�����ݒ� ������
-    [Header("�k���̊�{�ݒ�")]
-    [Tooltip("�k���̊�{�ƂȂ鋭���B����Ɋe�����̔{�����|����")]
+    [Header("震えの基本設定")]
     public float baseShakeMagnitude = 2.0f;
 
-    // ゲームが開始された時に一度だけ呼ばれる関数
+    [Header("イベント発行")]
+    public FloatEventChannelSO detectionIncreaseChannel;
+    public float detectionIncreaseRate = 10f;
+
     void Start()
     {
-        // ... Start()�̒��g�͕ύX�Ȃ� ...
         Cursor.visible = false;
-        if (cursorImage == null) { Debug.LogError("Cursor Image���Z�b�g����Ă��܂���I"); return; }
+        if (cursorImage == null) { Debug.LogError("Cursor Imageがセットされていません！"); return; }
         cursorImage.raycastTarget = false;
+        SetCursorStateNormal();
+    }
+
+    // ★★★ このメソッドのロジックをシンプル化しました ★★★
+    void Update()
+    {
+        if (cursorImage == null || uiCamera == null || parentCanvas == null || targetNpc == null) return;
+
+        // カーソルは常に表示
+        cursorImage.enabled = true;
+
+        Vector2 finalScreenPosition = Input.mousePosition;
+
+        // 常にNPCの視界に入っているかをチェックする
+        if (targetNpc.isCursorInView)
+        {
+            // --- 視界内にいる場合（会話中も含む）---
+            // 見つかり度を上昇させる
+            if (detectionIncreaseChannel != null)
+            {
+                float finalDetectionRate = GetCurrentDetectionMultiplier();
+                detectionIncreaseChannel.RaiseEvent(detectionIncreaseRate * Time.deltaTime);
+            }
+
+            // 色、大きさ、震えの演出を適用する
+            float currentShakeMagnitude = GetCurrentShakeMagnitude();
+            Vector2 shakeOffset = Random.insideUnitCircle * currentShakeMagnitude;
+            finalScreenPosition += shakeOffset;
+        }
+        else
+        {
+            // --- 視界外にいる場合 ---
+            // カーソルを通常状態に戻す
+            SetCursorStateNormal();
+        }
+
+        // 最終的なカーソル位置を適用する
+        Vector3 screenPosWithZ = finalScreenPosition;
+        screenPosWithZ.z = parentCanvas.planeDistance;
+        cursorImage.rectTransform.position = uiCamera.ScreenToWorldPoint(screenPosWithZ);
+    }
+
+    // 視界内にいる時の見た目の変化を適用し、震えの強さを返すメソッド
+    private float GetCurrentShakeMagnitude()
+    {
+        Vector3 mouseWorldPos = GetMouseWorldPosition();
+        float distance = Vector3.Distance(targetNpc.transform.position, mouseWorldPos);
+
+        cursorImage.rectTransform.localScale = Vector3.one * normalScale; // 大きさは常に通常
+
+        if (distance < closeDistanceThreshold)
+        {
+            cursorImage.color = closeColor;
+            return baseShakeMagnitude * closeShakeMultiplier;
+        }
+        else if (distance < mediumDistanceThreshold)
+        {
+            cursorImage.color = mediumColor;
+            return baseShakeMagnitude * mediumShakeMultiplier;
+        }
+        else
+        {
+            cursorImage.color = farColor;
+            return baseShakeMagnitude * farShakeMultiplier;
+        }
+    }
+
+    // 視界内にいる時の見つかり度上昇倍率を返すメソッド
+    private float GetCurrentDetectionMultiplier()
+    {
+        Vector3 mouseWorldPos = GetMouseWorldPosition();
+        float distance = Vector3.Distance(targetNpc.transform.position, mouseWorldPos);
+
+        if (distance < closeDistanceThreshold)
+        {
+            return detectionIncreaseRate * closeDetectionMultiplier;
+        }
+        else if (distance < mediumDistanceThreshold)
+        {
+            return detectionIncreaseRate * mediumDetectionMultiplier;
+        }
+        else
+        {
+            return detectionIncreaseRate * farDetectionMultiplier;
+        }
+    }
+
+    // カーソルを通常状態に戻す処理をまとめたメソッド
+    private void SetCursorStateNormal()
+    {
         cursorImage.color = normalColor;
         cursorImage.rectTransform.localScale = Vector3.one * normalScale;
     }
 
-    void Update()
-    {
-        if (cursorImage == null) return;
-
-        Vector2 mousePosition = Input.mousePosition;
-
-        if (targetNpc != null && targetNpc.isCursorInView)
-        {
-            // --- ���E���ɂ���ꍇ ---
-            Vector3 mouseWorldPos = GetMouseWorldPosition();
-            float distance = Vector3.Distance(targetNpc.transform.position, mouseWorldPos);
-
-            // ������ �ǉ��F���݂̐k���̋�����ێ�����ϐ���錾 ������
-            float currentShakeMagnitude = baseShakeMagnitude;
-
-            if (distance < closeDistanceThreshold)
-            {
-                // �ߋ����̏ꍇ
-                cursorImage.color = closeColor;
-                cursorImage.rectTransform.localScale = Vector3.one * closeScale;
-                // ������ �ǉ��F�ߋ����̔{����K�p ������
-                currentShakeMagnitude *= closeShakeMultiplier;
-            }
-            else if (distance < mediumDistanceThreshold)
-            {
-                // �������̏ꍇ
-                cursorImage.color = mediumColor;
-                cursorImage.rectTransform.localScale = Vector3.one * mediumScale;
-                // ������ �ǉ��F�������̔{����K�p ������
-                currentShakeMagnitude *= mediumShakeMultiplier;
-            }
-            else
-            {
-                // �������̏ꍇ
-                cursorImage.color = farColor;
-                cursorImage.rectTransform.localScale = Vector3.one * farScale;
-                // ������ �ǉ��F�������̔{����K�p ������
-                currentShakeMagnitude *= farShakeMultiplier;
-            }
-
-            // �ŏI�I�Ɍv�Z���ꂽ�����ŃJ�[�\����k�킹��
-            Vector2 shakeOffset = Random.insideUnitCircle * currentShakeMagnitude;
-            cursorImage.rectTransform.position = mousePosition + shakeOffset;
-        }
-        else
-        {
-            // --- ���E�O�ɂ���ꍇ ---
-            cursorImage.color = normalColor;
-            cursorImage.rectTransform.localScale = Vector3.one * normalScale;
-            cursorImage.rectTransform.position = mousePosition;
-        }
-    }
-
     private Vector3 GetMouseWorldPosition()
     {
+        if (targetNpc == null) return Vector3.zero;
         Vector3 mousePos = Input.mousePosition;
         float distanceFromCamera = Mathf.Abs(targetNpc.transform.position.z - Camera.main.transform.position.z);
         mousePos.z = distanceFromCamera;

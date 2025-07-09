@@ -1,61 +1,76 @@
-using UnityEngine;
+ï»¿using UnityEngine;
 using UnityEngine.Video;
 
+[RequireComponent(typeof(Collider2D))]
 public class TVController : MonoBehaviour
 {
-    [Header("•K{ƒRƒ“ƒ|[ƒlƒ“ƒg")]
-    public VideoPlayer videoPlayer; // ‰f‘œ‚ğÄ¶‚·‚é–{‘Ì
-    public MeshRenderer screenRenderer; // ‰f‘œ‚ğ‰f‚·‰æ–Ê‚ÌƒŒƒ“ƒ_ƒ‰[
+    [Header("å¿…é ˆã‚³ãƒ³ãƒãƒ¼ãƒãƒ³ãƒˆ")]
+    public VideoPlayer videoPlayer;
+    public MeshRenderer screenRenderer;
 
-    [Header("ƒ}ƒeƒŠƒAƒ‹İ’è")]
-    public Material tvOffMaterial; // TV‚ªƒIƒt‚Ì‚Ég‚¤^‚Á•‚Èƒ}ƒeƒŠƒAƒ‹
+    [Header("ãƒãƒ†ãƒªã‚¢ãƒ«è¨­å®š")]
+    public Material tvOffMaterial;
 
-    private Material tvOnMaterial; // TV‚ªƒIƒ“‚Ì‚Ìƒ}ƒeƒŠƒAƒ‹i‰f‘œ‚ª‰f‚é‚à‚Ìj
-    private bool isTVOn = false;   // TV‚ÌŒ»İ‚Ìó‘Ô
+    private Material tvOnMaterial;
+    private bool isTVOn = false;
+
+    [Header("è¦‹ã¤ã‹ã‚Šåº¦è¨­å®š")]
+    public FloatEventChannelSO detectionIncreaseChannel;
+    public float detectionAmount = 30f;
+
+    public bool IsTVOn { get { return isTVOn; } } // å¤–éƒ¨ã«ç¾åœ¨ã®çŠ¶æ…‹ã‚’æ•™ãˆã‚‹ãŸã‚ã®çª“å£
 
     void Start()
     {
-        // 1. ŠJn‚ÉAŒ»İ‰æ–Ê‚Éİ’è‚³‚ê‚Ä‚¢‚éu‰f‘œ‚ª‰f‚éƒ}ƒeƒŠƒAƒ‹v‚ğ‹L‰¯‚µ‚Ä‚¨‚­
         tvOnMaterial = screenRenderer.material;
-
-        // 2. ƒ‹[ƒvİ’è‚ğŠm”F‚µAÄ¶‚ğŠJn‚·‚éi‚±‚ê‚Å— ‚Å‚¸‚Á‚Æ—¬‚ê‘±‚¯‚éj
         videoPlayer.isLooping = true;
         videoPlayer.Play();
-
-        // 3. ‚½‚¾‚µAÅ‰‚ÍTVƒIƒt‚Ìó‘Ô‚É‚·‚é
         TurnOffTV();
     }
 
-    void OnMouseDown()
+    void Update()
     {
-        // ƒNƒŠƒbƒN‚³‚ê‚½‚çAó‘Ô‚ğƒgƒOƒ‹iØ‚è‘Ö‚¦j‚·‚é
-        if (isTVOn)
+        // å³ã‚¯ãƒªãƒƒã‚¯ã§é›»æºã‚’ã‚ªãƒ³ãƒ»ã‚ªãƒ•ã™ã‚‹å‡¦ç†
+        RaycastHit2D[] hits = Physics2D.GetRayIntersectionAll(Camera.main.ScreenPointToRay(Input.mousePosition));
+        foreach (var hit in hits)
         {
-            TurnOffTV();
-        }
-        else
-        {
-            TurnOnTV();
+            if (hit.collider.gameObject == this.gameObject)
+            {
+                if (Input.GetMouseButtonDown(1)) // 1: å³ã‚¯ãƒªãƒƒã‚¯
+                {
+                    if (isTVOn)
+                    {
+                        TurnOffTV();
+                    }
+                    else
+                    {
+                        TurnOnTV();
+                    }
+                    break;
+                }
+            }
         }
     }
 
+
     void TurnOnTV()
     {
-        // ‰æ–Ê‚Ìƒ}ƒeƒŠƒAƒ‹‚ğu‰f‘œ‚ª‰f‚éƒ}ƒeƒŠƒAƒ‹v‚ÉØ‚è‘Ö‚¦‚é
         screenRenderer.material = tvOnMaterial;
-        // ‰¹º‚ğƒIƒ“‚É‚·‚é
         videoPlayer.SetDirectAudioMute(0, false);
-
         isTVOn = true;
+
+        // â˜…â˜…â˜… ã“ã®2è¡Œã‚’è¿½åŠ  â˜…â˜…â˜…
+        // è¦‹ã¤ã‹ã‚Šåº¦ä¸Šæ˜‡ã‚¤ãƒ™ãƒ³ãƒˆã‚’ç™ºè¡Œã™ã‚‹
+        if (detectionIncreaseChannel != null)
+        {
+            detectionIncreaseChannel.RaiseEvent(detectionAmount);
+        }
     }
 
     void TurnOffTV()
     {
-        // ‰æ–Ê‚Ìƒ}ƒeƒŠƒAƒ‹‚ğu^‚Á•‚Èƒ}ƒeƒŠƒAƒ‹v‚ÉØ‚è‘Ö‚¦‚é
         screenRenderer.material = tvOffMaterial;
-        // ‰¹º‚ğƒ~ƒ…[ƒg‚É‚·‚é
         videoPlayer.SetDirectAudioMute(0, true);
-
         isTVOn = false;
     }
 }

@@ -5,7 +5,7 @@
 public class AspectRatioController : MonoBehaviour
 {
     // 目標のアスペクト比 (16:9)
-    private const float TARGET_ASPECT = 16.0f / 9.0f;
+    private const float TARGET_ASPECT = 4.0f / 3.0f;
 
     private Camera cameraComponent;
 

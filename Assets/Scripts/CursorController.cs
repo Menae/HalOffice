@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using UnityEngine.UI;
 
 public class CursorController : MonoBehaviour
@@ -66,7 +66,6 @@ public class CursorController : MonoBehaviour
         if (targetNpc.isCursorInView)
         {
             // --- 視界内にいる場合（会話中も含む）---
-
             // 見つかり度を上昇させる
             if (detectionIncreaseChannel != null)
             {

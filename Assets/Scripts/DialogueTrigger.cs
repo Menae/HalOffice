@@ -46,8 +46,23 @@ public class DialogueTrigger : MonoBehaviour
         }
     }
 
-    private void OnMouseDown()
+    private void Update()
     {
+        // 右クリックが押された瞬間じゃなければ、何もしない
+        if (!Input.GetMouseButtonDown(1)) // 1: 右クリック
+        {
+            return;
+        }
+
+        // マウスカーソルの下にあるオブジェクトが、このオブジェクト自身かチェック
+        RaycastHit2D hit = Physics2D.Raycast(Camera.main.ScreenToWorldPoint(Input.mousePosition), Vector2.zero);
+        if (hit.collider == null || hit.collider.gameObject != this.gameObject)
+        {
+            return;
+        }
+
+        // --- 以下、元のOnMouseDownと同じロジック ---
+
         if (GameManager.Instance != null && !GameManager.Instance.isInputEnabled) return;
         if (EventSystem.current.IsPointerOverGameObject()) return;
 

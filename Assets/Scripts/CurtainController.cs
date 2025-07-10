@@ -43,8 +43,8 @@ public class CurtainController : MonoBehaviour
         // --- 2. 操作の前提条件をチェック ---
         // マウスが上になければ何もしない
         if (!isMouseOver) return;
-        // 右クリックが押されていなければ何もしない
-        if (!Input.GetMouseButton(1)) return;
+        // 左クリックが押されていなければ何もしない
+        if (!Input.GetMouseButton(0)) return;
 
         // --- 3. このフレームでホイールが動いたかチェック ---
         float currentFrameScroll = scrollHistory.Peek(); // 最後に追加された値（今のフレームの回転量）

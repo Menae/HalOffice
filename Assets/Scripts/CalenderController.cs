@@ -46,7 +46,7 @@ public class CalendarController : MonoBehaviour
         }
 
         // 2. 操作の前提条件をチェック
-        if (!isMouseOver || !Input.GetMouseButton(1) || IsPageTurned)
+        if (!isMouseOver || !Input.GetMouseButton(0) || IsPageTurned)
         {
             return;
         }

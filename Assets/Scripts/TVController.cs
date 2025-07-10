@@ -36,7 +36,7 @@ public class TVController : MonoBehaviour
         {
             if (hit.collider.gameObject == this.gameObject)
             {
-                if (Input.GetMouseButtonDown(1)) // 1: 右クリック
+                if (Input.GetMouseButtonDown(0)) // 0: 左クリック
                 {
                     if (isTVOn)
                     {

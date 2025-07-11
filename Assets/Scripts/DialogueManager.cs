@@ -12,6 +12,10 @@ public class DialogueManager : MonoBehaviour
     [SerializeField] private float typingSpeed = 0.04f;
     [SerializeField] private TextMeshProUGUI dialogueText;
 
+    [Header("連動オブジェクト")]
+    [Tooltip("ダイアログ再生中にのみ表示するオブジェクト")]
+    public GameObject objectToActivateDuringDialogue;
+
     private Coroutine displayLineCoroutine;
     private bool canContinueToNextLine = false;
 
@@ -67,6 +71,11 @@ public class DialogueManager : MonoBehaviour
         //GameManagerに入力停止を命令
         GameManager.Instance.SetInputEnabled(false);
 
+        if (objectToActivateDuringDialogue != null)
+        {
+            objectToActivateDuringDialogue.SetActive(true);
+        }
+
         currentStory = new Story(inkJSON.text);
         dialogueIsPlaying = true;
         OnDialogueStart?.Invoke();
@@ -90,6 +99,12 @@ public class DialogueManager : MonoBehaviour
         if (typingAudioSource != null && typingAudioSource.isPlaying)
         {
             typingAudioSource.Stop();
+        }
+
+        // オブジェクトを非表示化
+        if (objectToActivateDuringDialogue != null)
+        {
+            objectToActivateDuringDialogue.SetActive(false);
         }
 
         Debug.Log("Dialogue ended. Enabling player controls.");

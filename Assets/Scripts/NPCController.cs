@@ -3,6 +3,7 @@ using System.Collections;
 using UnityEngine.EventSystems;
 
 [RequireComponent(typeof(Animator))]
+[RequireComponent(typeof(Rigidbody2D), typeof(Collider2D))]
 public class NPCController : MonoBehaviour
 {
     [Header("移動と待機の設定")]
@@ -30,15 +31,31 @@ public class NPCController : MonoBehaviour
     public bool isCursorInView { get; private set; }
     private bool isFacingRight = true;
     private Animator animator;
+    private Rigidbody2D rb;
 
     void Start()
     {
         animator = GetComponent<Animator>();
+        rb = GetComponent<Rigidbody2D>();
+
         if (fovObject != null)
         {
             fovObject.SetActive(false);
         }
         StartCoroutine(NPCBehaviorRoutine());
+    }
+
+    void FixedUpdate()
+    {
+        // アニメーターが歩行状態の時だけ、物理的な力を加える
+        if (animator.GetBool("isWalking"))
+        {
+            rb.velocity = GetDirection() * moveSpeed;
+        }
+        else
+        {
+            rb.velocity = Vector2.zero; // 止まっている時は速度をゼロに
+        }
     }
 
     void Update()
@@ -54,22 +71,18 @@ public class NPCController : MonoBehaviour
     {
         while (true)
         {
+            //待機フェーズ
             animator.SetBool("isWalking", false);
             yield return new WaitForSeconds(Random.Range(minWaitTime, maxWaitTime));
+
+            //歩行準備
             Flip();
+
+            //歩行フェーズ
             animator.SetBool("isWalking", true);
-
-            //今回歩く距離をランダムに決定
-            float walkDistance = Random.Range(minWalkDistance, maxWalkDistance);
-            //歩き始める位置を記憶
-            Vector3 startPosition = transform.position;
-
-            //目標距離に到達するまで歩き続ける
-            while (Vector3.Distance(startPosition, transform.position) < walkDistance)
-            {
-                transform.position += GetDirection() * moveSpeed * Time.deltaTime;
-                yield return null;
-            }
+            //ランダムな「時間」だけ歩行状態を維持する
+            float walkTimer = Random.Range(minWalkDistance, maxWalkDistance) / moveSpeed; //距離を速度で割って時間を計算
+            yield return new WaitForSeconds(walkTimer);
         }
     }
 

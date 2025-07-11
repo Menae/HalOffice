@@ -945,9 +945,9 @@ Camera:
   m_NormalizedViewPortRect:
     serializedVersion: 2
     x: 0
-    y: 0
+    y: 0.00025355816
     width: 1
-    height: 1
+    height: 0.9994929
   near clip plane: 0.3
   far clip plane: 1000
   field of view: 60
@@ -5588,7 +5588,7 @@ VideoPlayer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1459555409}
   m_Enabled: 1
-  m_VideoClip: {fileID: 32900000, guid: 7f0e19f2b5b514343a9b903894a7a0e1, type: 3}
+  m_VideoClip: {fileID: 32900000, guid: a40c7517bfaf16946a1b7406f4db0190, type: 3}
   m_TargetCameraAlpha: 1
   m_TargetCamera3DLayout: 0
   m_TargetCamera: {fileID: 0}
@@ -6964,7 +6964,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e1544eef89425574bbbe50c54e8b6b4b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  recordingClip: {fileID: 8300000, guid: e7b60e3a56d20794c9c209f959bda544, type: 3}
+  recordingClip: {fileID: 8300000, guid: 4fb5221bfa794674a973c281f766bcac, type: 3}
   recordingVolume: 0.1
 --- !u!82 &1809329968
 AudioSource:

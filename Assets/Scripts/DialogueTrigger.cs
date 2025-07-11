@@ -13,7 +13,6 @@ public class DialogueTrigger : MonoBehaviour
     [SerializeField] private TextAsset specialDialogue;
     [SerializeField] private TextMeshProUGUI textToEnableAfterSpecial;
 
-    // --- 内部で使う変数 ---
     private TVController tvController;
     private CurtainController curtainController;
     private CalendarController calendarController;
@@ -48,20 +47,18 @@ public class DialogueTrigger : MonoBehaviour
 
     private void Update()
     {
-        // 右クリックが押された瞬間じゃなければ、何もしない
-        if (!Input.GetMouseButtonDown(1)) // 1: 右クリック
+        //右クリックが押された瞬間じゃなければ、何もしない
+        if (!Input.GetMouseButtonDown(1)) //1:右クリック
         {
             return;
         }
 
-        // マウスカーソルの下にあるオブジェクトが、このオブジェクト自身かチェック
+        // マウスカーソルの下にあるオブジェクトがこのオブジェクト自身かチェック
         RaycastHit2D hit = Physics2D.Raycast(Camera.main.ScreenToWorldPoint(Input.mousePosition), Vector2.zero);
         if (hit.collider == null || hit.collider.gameObject != this.gameObject)
         {
             return;
         }
-
-        // --- 以下、元のOnMouseDownと同じロジック ---
 
         if (GameManager.Instance != null && !GameManager.Instance.isInputEnabled) return;
         if (EventSystem.current.IsPointerOverGameObject()) return;
@@ -94,13 +91,13 @@ public class DialogueTrigger : MonoBehaviour
             return specialDialogue;
         }
 
-        // もし電話コントローラーがあって、録音が再生中なら
+        // もし電話コントローラーがあって録音が再生中なら
         if (telephoneController != null && telephoneController.IsPlayingRecording)
         {
             return specialDialogue;
         }
 
-        // それ以外の場合は、デフォルトの会話を返す
+        // それ以外の場合はデフォルトの会話を返す
         return defaultDialogue;
     }
 

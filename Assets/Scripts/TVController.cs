@@ -18,7 +18,7 @@ public class TVController : MonoBehaviour
     public FloatEventChannelSO detectionIncreaseChannel;
     public float detectionAmount = 30f;
 
-    public bool IsTVOn { get { return isTVOn; } } // 外部に現在の状態を教えるための窓口
+    public bool IsTVOn { get { return isTVOn; } } //外部に現在の状態を教えるための窓口
 
     void Start()
     {
@@ -30,13 +30,13 @@ public class TVController : MonoBehaviour
 
     void Update()
     {
-        // 右クリックで電源をオン・オフする処理
+        //右クリックで電源をオン・オフする処理
         RaycastHit2D[] hits = Physics2D.GetRayIntersectionAll(Camera.main.ScreenPointToRay(Input.mousePosition));
         foreach (var hit in hits)
         {
             if (hit.collider.gameObject == this.gameObject)
             {
-                if (Input.GetMouseButtonDown(0)) // 0: 左クリック
+                if (Input.GetMouseButtonDown(0)) //0:左クリック
                 {
                     if (isTVOn)
                     {
@@ -59,8 +59,7 @@ public class TVController : MonoBehaviour
         videoPlayer.SetDirectAudioMute(0, false);
         isTVOn = true;
 
-        // ★★★ この2行を追加 ★★★
-        // 見つかり度上昇イベントを発行する
+        //見つかり度上昇イベントを発行する
         if (detectionIncreaseChannel != null)
         {
             detectionIncreaseChannel.RaiseEvent(detectionAmount);

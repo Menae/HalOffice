@@ -6,7 +6,6 @@ public class TelephoneController : MonoBehaviour
     [Header("オーディオ設定")]
     [Tooltip("右クリックで再生する録音のオーディオクリップ")]
     public AudioClip recordingClip;
-    // ★★★ 追加 ★★★
     [Range(0f, 1f)]
     [Tooltip("録音の音量")]
     public float recordingVolume = 1.0f;
@@ -51,7 +50,6 @@ public class TelephoneController : MonoBehaviour
 
     private void TurnOnRecording()
     {
-        // ★★★ 追加 ★★★
         audioSource.volume = recordingVolume; // 再生前に音量を設定
         audioSource.Play();
         Debug.Log("電話の録音を再生します。");

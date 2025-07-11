@@ -1,8 +1,6 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
-using UnityEngine.EventSystems;
 
-// IDropHandlerはもう使わないので削除
 public class JudgementZone : MonoBehaviour
 {
     [Header("色の設定")]
@@ -18,8 +16,8 @@ public class JudgementZone : MonoBehaviour
         backgroundImage = GetComponent<Image>();
     }
 
-    // ★★★ OnDropメソッドを削除し、新しい命令受け取り用のメソッドを追加 ★★★
-    // DraggableStampから直接呼ばれる、スタンプを押す処理
+    //命令受け取り用のメソッド
+    //DraggableStampから直接呼ばれるスタンプを押す処理
     public void ApplyStamp(bool isApprove)
     {
         if (isApprove)

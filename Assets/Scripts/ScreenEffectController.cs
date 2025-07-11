@@ -42,7 +42,7 @@ public class ScreenEffectsController : MonoBehaviour
             postProcessVolume.profile.TryGet(out filmGrainEffect);
         }
 
-        // 開始時はすべてのエフェクトをオフに
+        //開始時はすべてのエフェクトをオフに
         if (lensDistortionEffect != null)
         {
             lensDistortionEffect.intensity.value = 0f;
@@ -60,21 +60,21 @@ public class ScreenEffectsController : MonoBehaviour
         }
     }
 
-    // 「LensDistortion」を一時的に再生するメソッド
+    //LensDistortionを一時的に再生するメソッド
     public void FlashGlitchEffect(float duration)
     {
         if (glitchCoroutine != null) StopCoroutine(glitchCoroutine);
         glitchCoroutine = StartCoroutine(FlashLensDistortionRoutine(duration));
     }
 
-    // 「FilmGrain」を一時的に再生するメソッド
+    //FilmGrainを一時的に再生するメソッド
     public void FlashFilmGrain(float duration)
     {
         if (filmGrainCoroutine != null) StopCoroutine(filmGrainCoroutine);
         filmGrainCoroutine = StartCoroutine(FlashFilmGrainRoutine(duration));
     }
 
-    // 「FilmGrain」を永続的に再生/停止するメソッド
+    //FilmGrainを永続的に再生/停止するメソッド
     public void SetPersistentFilmGrain(bool isActive)
     {
         if (filmGrainEffect != null)
@@ -83,7 +83,7 @@ public class ScreenEffectsController : MonoBehaviour
         }
     }
 
-    // LensDistortionを再生するコルーチン
+    //LensDistortionを再生するコルーチン
     private IEnumerator FlashLensDistortionRoutine(float duration)
     {
         if (lensDistortionEffect == null) yield break;
@@ -98,7 +98,7 @@ public class ScreenEffectsController : MonoBehaviour
         lensDistortionEffect.scale.value = 1f;
     }
 
-    // FilmGrainを再生するコルーチン
+    //FilmGrainを再生するコルーチン
     private IEnumerator FlashFilmGrainRoutine(float duration)
     {
         if (filmGrainEffect == null) yield break;
@@ -111,7 +111,7 @@ public class ScreenEffectsController : MonoBehaviour
         filmGrainEffect.intensity.value = 0f;
     }
 
-    // TVオフ演出のメソッド
+    //TVオフ演出のメソッド
     public void TriggerTvOff()
     {
         if (audioSource != null && tvOffSoundClip != null)

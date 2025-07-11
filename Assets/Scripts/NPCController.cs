@@ -59,12 +59,12 @@ public class NPCController : MonoBehaviour
             Flip();
             animator.SetBool("isWalking", true);
 
-            // 今回歩く距離をランダムに決定
+            //今回歩く距離をランダムに決定
             float walkDistance = Random.Range(minWalkDistance, maxWalkDistance);
-            // 歩き始める位置を記憶
+            //歩き始める位置を記憶
             Vector3 startPosition = transform.position;
 
-            // 目標距離に到達するまで歩き続ける
+            //目標距離に到達するまで歩き続ける
             while (Vector3.Distance(startPosition, transform.position) < walkDistance)
             {
                 transform.position += GetDirection() * moveSpeed * Time.deltaTime;

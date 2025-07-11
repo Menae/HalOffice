@@ -3390,9 +3390,9 @@ MonoBehaviour:
   totalTimeInSeconds: 300
   eventA_TriggerTime: 150
   imageObjectA: {fileID: 734024673}
-  eventB_TriggerTime: 10
+  eventB_TriggerTime: 60
   imageObjectB: {fileID: 88109651}
-  imageDisplayDuration: 60
+  imageDisplayDuration: 5
   notificationSound: {fileID: 8300000, guid: d2f2a546e73c5a2499e0c518ac002c57, type: 3}
   notificationVolume: 1
   detectionManager: {fileID: 458289580}

@@ -108,6 +108,14 @@ public class DetectionManager : MonoBehaviour
             isPersistentGrainActive = false;
             screenEffects.SetPersistentFilmGrain(false);
         }
+
+        //見つかり度がMAXになったか？
+        if (currentDetection >= maxDetection)
+        {
+            //HandleTimeUpメソッドは、時間切れと見つかり度MAXの両方で使える
+            //ゲームオーバー処理なので、これを呼び出す
+            HandleTimeUp();
+        }
     }
 
     //指定秒数待ってからシーンをロード

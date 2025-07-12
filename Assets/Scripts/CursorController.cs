@@ -56,47 +56,48 @@ public class CursorController : MonoBehaviour
     {
         if (cursorImage == null || uiCamera == null || parentCanvas == null || targetNpc == null) return;
 
-        //カーソルは常に表示
         cursorImage.enabled = true;
 
         Vector2 finalScreenPosition = Input.mousePosition;
 
-        // 常にNPCの視界に入っているかをチェック
+        // 常にNPCの視界に入っているかをチェックし、見た目とイベント発行を処理
         if (targetNpc.isCursorInView)
         {
-            //視界内にいる場合（会話中も含む）
-            //見つかり度を上昇
+            // --- 視界内にいる場合（会話中も含む）---
+
+            // 見つかり度を上昇させる
             if (detectionIncreaseChannel != null)
             {
                 float finalDetectionRate = GetCurrentDetectionMultiplier();
-                detectionIncreaseChannel.RaiseEvent(detectionIncreaseRate * Time.deltaTime);
+                detectionIncreaseChannel.RaiseEvent(finalDetectionRate * Time.deltaTime);
             }
 
-            //色、大きさ、震えの演出を適用
+            // 色、大きさ、震えの演出を適用する
             float currentShakeMagnitude = GetCurrentShakeMagnitude();
             Vector2 shakeOffset = Random.insideUnitCircle * currentShakeMagnitude;
             finalScreenPosition += shakeOffset;
         }
         else
         {
-            //視界外にいる場合
-            //カーソルを通常状態に戻す
+            // --- 視界外にいる場合 ---
+            // カーソルを通常状態に戻す
             SetCursorStateNormal();
         }
 
-        //最終的なカーソル位置を適用する
+        // 最終的なカーソル位置を適用する
         Vector3 screenPosWithZ = finalScreenPosition;
         screenPosWithZ.z = parentCanvas.planeDistance;
         cursorImage.rectTransform.position = uiCamera.ScreenToWorldPoint(screenPosWithZ);
     }
 
-    //視界内にいる時の見た目の変化を適用し震えの強さを返すメソッド
+    // 視界内にいる時の見た目の変化を適用し、震えの強さを返すメソッド
     private float GetCurrentShakeMagnitude()
     {
         Vector3 mouseWorldPos = GetMouseWorldPosition();
         float distance = Vector3.Distance(targetNpc.transform.position, mouseWorldPos);
 
-        cursorImage.rectTransform.localScale = Vector3.one * normalScale; //大きさは常に通常
+        // 視界内では大きさは常に一定
+        cursorImage.rectTransform.localScale = Vector3.one * normalScale;
 
         if (distance < closeDistanceThreshold)
         {
@@ -115,7 +116,7 @@ public class CursorController : MonoBehaviour
         }
     }
 
-    //視界内にいる時の見つかり度上昇倍率を返すメソッド
+    // 視界内にいる時の見つかり度上昇倍率を返すメソッド
     private float GetCurrentDetectionMultiplier()
     {
         Vector3 mouseWorldPos = GetMouseWorldPosition();
@@ -135,7 +136,7 @@ public class CursorController : MonoBehaviour
         }
     }
 
-    //カーソルを通常状態に戻す処理をまとめたメソッド
+    // カーソルを通常状態に戻す処理をまとめたメソッド
     private void SetCursorStateNormal()
     {
         cursorImage.color = normalColor;

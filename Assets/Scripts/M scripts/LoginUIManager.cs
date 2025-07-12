@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.UI;
 using System.Collections;
 
@@ -54,7 +54,7 @@ public class LoginUIManager : MonoBehaviour
         }
 
         // 5秒後に画像表示＋tuuchiKari再生
-        StartCoroutine(ShowAfterDelay(tuuchImage, 3f));
+        StartCoroutine(ShowAfterDelay(tuuchImage, 10f));
     }
 
     public void OnExitClick()

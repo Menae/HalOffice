@@ -33,11 +33,15 @@ public class BGMManager : MonoBehaviour
     {
         // シーンがロードされた時に、PlayBGMForSceneメソッドを呼ぶように登録
         SceneManager.sceneLoaded += PlayBGMForScene;
+        // DetectionManagerからのゲームオーバー通知を受け取るように登録
+        DetectionManager.OnGameOver += StopMusic;
     }
 
     private void OnDisable()
     {
         SceneManager.sceneLoaded -= PlayBGMForScene;
+        // 登録を解除（お作法）
+        DetectionManager.OnGameOver -= StopMusic;
     }
 
     // シーンがロードされた時に自動的に呼ばれるメソッド
@@ -67,5 +71,10 @@ public class BGMManager : MonoBehaviour
             audioSource.Stop();
             audioSource.clip = null;
         }
+    }
+
+    public void StopMusic()
+    {
+        audioSource.Stop();
     }
 }

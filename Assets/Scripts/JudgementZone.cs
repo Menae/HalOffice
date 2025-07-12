@@ -9,6 +9,9 @@ public class JudgementZone : MonoBehaviour
     [Tooltip("却下スタンプが置かれた時の色")]
     public Color rejectColor = Color.red;
 
+    [Header("参照")]
+    public JudgementSequenceManager sequenceManager;
+
     private Image backgroundImage;
 
     private void Awake()
@@ -16,10 +19,12 @@ public class JudgementZone : MonoBehaviour
         backgroundImage = GetComponent<Image>();
     }
 
-    //命令受け取り用のメソッド
-    //DraggableStampから直接呼ばれるスタンプを押す処理
+    // DraggableStampから直接呼ばれるスタンプを押す処理
     public void ApplyStamp(bool isApprove)
     {
+        // ▼▼▼ ここから修正 ▼▼▼
+
+        // --- 1. まず、色を変える処理を実行 ---
         if (isApprove)
         {
             backgroundImage.color = approveColor;
@@ -30,5 +35,19 @@ public class JudgementZone : MonoBehaviour
             backgroundImage.color = rejectColor;
             Debug.Log("却下スタンプが押されました！");
         }
+
+        // --- 2. 次に、Managerにスタンプの種類を伝える ---
+        if (sequenceManager != null)
+        {
+            sequenceManager.OnStampApplied(isApprove);
+        }
+        else
+        {
+            Debug.LogError("JudgementSequenceManagerが設定されていません！");
+        }
+
+        // ▲▲▲ ここまで修正 ▲▲▲
     }
+
+    // ApplyStampColorメソッドはApplyStampに統合されたため不要
 }

@@ -1,9 +1,12 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 using System.Collections;
 using UnityEngine.SceneManagement;
 
 public class DetectionManager : MonoBehaviour
 {
+    public static event Action OnGameOver;
+
     [Header("イベントチャンネル")]
     public FloatEventChannelSO detectionChannel;
     [Header("参照")]
@@ -46,7 +49,9 @@ public class DetectionManager : MonoBehaviour
     }
     void IncreaseDetection(float amount)
     {
-        if (isGameOver) return;
+        // ▼▼▼ 追加 ▼▼▼
+        // ゲームがアクティブでなければ、見つかり度を上昇させない
+        if (isGameOver || !GameManager.Instance.isGameActive) return;
         currentDetection += amount;
     }
 
@@ -56,6 +61,8 @@ public class DetectionManager : MonoBehaviour
         //ゲームオーバー処理
         if (isGameOver) return;
         isGameOver = true;
+        // ゲームオーバーの合図を送信！
+        OnGameOver?.Invoke();
 
         if (screenEffects != null)
         {
@@ -66,6 +73,15 @@ public class DetectionManager : MonoBehaviour
 
     void Update()
     {
+        // ゲームがアクティブになるまでUpdate処理を停止
+        if (isGameOver || screenEffects == null || !GameManager.Instance.isGameActive) return;
+
+        //見つかり度を時間経過で減少させる
+        if (currentDetection > 0)
+        {
+            currentDetection -= 5f * Time.deltaTime; //仮の減少率
+        }
+
         if (isGameOver || screenEffects == null) return;
 
         //見つかり度を時間経過で減少させる

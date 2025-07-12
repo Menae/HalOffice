@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: c9b18f05366f6486cbecdc87611ab77f
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences:
+  - SignInPanel: {instanceID: 0}
+  - DesktopPanel: {instanceID: 0}
+  - tenkai03: {instanceID: 0}
+  - arrowCursor: {fileID: 2800000, guid: 68d93d7532b46b9499aecab4aa919811, type: 3}
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine.SceneManagement; // シーン遷移に必要
 
 public class JudgementSequenceManager : MonoBehaviour
@@ -20,10 +21,16 @@ public class JudgementSequenceManager : MonoBehaviour
     [Header("結果表示設定")]
     [Tooltip("結果を表示するImageコンポーネント")]
     public Image resultImage;
+    [Tooltip("結果表示と同時にアクティブにする追加のイメージ")]
+    public List<Image> additionalResultImages;
     [Tooltip("承認（緑スタンプ）の時に表示するスプライト")]
     public Sprite approveSprite;
     [Tooltip("却下（赤スタンプ）の時に表示するスプライト")]
     public Sprite rejectSprite;
+
+    [Header("演出オブジェクト参照")]
+    [Tooltip("TVOFFアニメーションを持つAnimatorコンポーネント")]
+    public Animator tvOffAnimator;
 
     [Header("フェードと遅延の設定")]
     [Tooltip("画面の暗転に使う黒いImage")]
@@ -34,12 +41,15 @@ public class JudgementSequenceManager : MonoBehaviour
     public float resultDisplayDuration = 3.0f;
     [Tooltip("フェードにかかる時間")]
     public float fadeDuration = 1.0f;
-    [Tooltip("最後の暗転後、シーン遷移するまでの待機時間")]
-    public float delayAfterFinalFade = 1.5f;
 
     [Header("サウンド設定")]
     public AudioSource audioSource;
     public AudioClip submitSound;
+    public AudioClip resultSound;
+    [Tooltip("TVOFF演出時に鳴らす効果音")]
+    public AudioClip tvOffSound;
+    [Range(0f, 1f)]
+    public float tvOffSoundVolume = 1.0f;
 
     [Header("シーン設定")]
     [Tooltip("最後に戻るタイトルシーンの名前")]
@@ -54,6 +64,13 @@ public class JudgementSequenceManager : MonoBehaviour
         submitButton.interactable = false;
         closeButton.interactable = false;
         resultImage.gameObject.SetActive(false);
+        if (additionalResultImages != null)
+        {
+            foreach (var img in additionalResultImages)
+            {
+                if (img != null) img.gameObject.SetActive(false);
+            }
+        }
         if (fadePanel != null) fadePanel.gameObject.SetActive(false);
 
         // ボタンにクリック時の処理を登録
@@ -107,12 +124,32 @@ public class JudgementSequenceManager : MonoBehaviour
         // 画面を暗転させる
         yield return StartCoroutine(Fade(Color.black));
 
+        BGMManager.Instance.StopMusic();
+
         // 1秒待つ
         yield return new WaitForSeconds(1.0f);
+
+        // 結果表示の効果音を再生
+        if (audioSource != null && resultSound != null)
+        {
+            audioSource.PlayOneShot(resultSound);
+        }
+
+        // 1秒待つ
+        yield return new WaitForSeconds(2.0f);
 
         // 結果のスプライトを設定し、表示
         resultImage.sprite = stampedResultIsApprove ? approveSprite : rejectSprite;
         resultImage.gameObject.SetActive(true);
+
+        // 追加イメージも全てアクティブにする
+        if (additionalResultImages != null)
+        {
+            foreach (var img in additionalResultImages)
+            {
+                if (img != null) img.gameObject.SetActive(true);
+            }
+        }
 
         // 画面を元に戻す（フェードイン）
         yield return StartCoroutine(Fade(Color.clear));
@@ -120,11 +157,24 @@ public class JudgementSequenceManager : MonoBehaviour
         // 数秒間、結果を表示
         yield return new WaitForSeconds(resultDisplayDuration);
 
-        // 再び画面を暗転させる
-        yield return StartCoroutine(Fade(Color.black));
+        // TVOFFの効果音鳴らす
+        if (audioSource != null && tvOffSound != null)
+        {
+            audioSource.PlayOneShot(tvOffSound, tvOffSoundVolume);
+        }
 
-        // 指定した時間、待機する
-        yield return new WaitForSeconds(delayAfterFinalFade);
+        // TVOFFアニメーションをトリガー
+        if (tvOffAnimator != null)
+        {
+            tvOffAnimator.SetTrigger("TVOFF");
+        }
+        else
+        {
+            Debug.LogWarning("tvOffAnimatorが設定されていません。");
+        }
+
+        // 1秒待つ
+        yield return new WaitForSeconds(3.0f);
 
         // タイトルシーンに戻る
         SceneManager.LoadScene(titleSceneName);

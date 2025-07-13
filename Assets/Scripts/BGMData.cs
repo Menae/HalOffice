@@ -11,4 +11,6 @@ public class BGMData : ScriptableObject
     [Range(0f, 1f)]
     [Tooltip("このBGMの音量")]
     public float volume = 0.5f;
+    [Tooltip("シーンロード時に自動で再生を開始するかどうか")]
+    public bool playOnLoad = true;
 }

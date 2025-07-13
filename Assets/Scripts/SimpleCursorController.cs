@@ -1,49 +1,94 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
 
+[RequireComponent(typeof(AudioSource))]
 public class SimpleCursorController : MonoBehaviour
 {
     [Header("UI参照")]
     [Tooltip("カーソルとして表示するUIのImageコンポーネント")]
     public Image cursorImage;
+    [Tooltip("カーソルが属する親のCanvas")]
+    public Canvas parentCanvas;
+
+    [Header("効果音設定")]
+    [Tooltip("左クリックした時に鳴らす効果音")]
+    public AudioClip leftClickSound;
+    [Range(0f, 1f)]
+    [Tooltip("左クリック効果音の音量")]
+    public float leftClickVolume = 1.0f;
+
+    [Tooltip("右クリックした時に鳴らす効果音")]
+    public AudioClip rightClickSound;
+    [Range(0f, 1f)]
+    [Tooltip("右クリック効果音の音量")]
+    public float rightClickVolume = 1.0f;
+
+    private AudioSource audioSource;
 
     void Start()
     {
-        // デフォルトのシステムカーソルを非表示にする
+        audioSource = GetComponent<AudioSource>();
+
         Cursor.visible = false;
 
-        // cursorImageが設定されているかチェック
-        if (cursorImage == null)
+        if (cursorImage == null || parentCanvas == null)
         {
-            Debug.LogError("Cursor Imageが設定されていません！このコンポーネントを無効にします。");
+            Debug.LogError("Cursor Image または Parent Canvas が設定されていません！このコンポーネントを無効にします。");
             this.enabled = false;
             return;
         }
 
-        // カーソル画像自体がクリックイベントをブロックしないように設定
         cursorImage.raycastTarget = false;
     }
 
     void Update()
     {
-        // 毎フレーム、UI画像の位置をマウスカーソルのスクリーン座標に合わせる
-        if (cursorImage != null)
+        if (cursorImage == null) return;
+
+        // --- カーソルの位置更新処理 ---
+        if (parentCanvas.renderMode == RenderMode.ScreenSpaceOverlay)
         {
             cursorImage.rectTransform.position = Input.mousePosition;
         }
+        else
+        {
+            RectTransformUtility.ScreenPointToLocalPointInRectangle(
+                parentCanvas.transform as RectTransform,
+                Input.mousePosition,
+                parentCanvas.worldCamera,
+                out Vector2 localPoint
+            );
+            cursorImage.rectTransform.anchoredPosition = localPoint;
+        }
+
+        // ▼▼▼ 以下をすべて追加 ▼▼▼
+
+        // --- 左クリック効果音の再生 ---
+        if (Input.GetMouseButtonDown(0)) // 0は左クリック
+        {
+            if (leftClickSound != null)
+            {
+                audioSource.PlayOneShot(leftClickSound, leftClickVolume);
+            }
+        }
+
+        // --- 右クリック効果音の再生 ---
+        if (Input.GetMouseButtonDown(1)) // 1は右クリック
+        {
+            if (rightClickSound != null)
+            {
+                audioSource.PlayOneShot(rightClickSound, rightClickVolume);
+            }
+        }
     }
 
-    // ゲームが終了、またはエディタの再生が停止した時に呼ばれる
     private void OnDestroy()
     {
-        // システムカーソルを元に戻す
         Cursor.visible = true;
     }
 
-    // このオブジェクトが無効になった時に呼ばれる
     private void OnDisable()
     {
-        // システムカーソルを元に戻す
         Cursor.visible = true;
     }
 }

@@ -9,9 +9,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3b42febb3a66d504a96d27d269fd6241, type: 3}
-  m_Name: P3_BGM
+  m_Script: {fileID: 11500000, guid: 2ae9e9bb2e370484fa35cc4afd10c40a, type: 3}
+  m_Name: MomHospitalized
   m_EditorClassIdentifier: 
-  sceneName: P3_Stealth
-  bgmClip: {fileID: 8300000, guid: 2a92d1affad17c549880baba62ca7a57, type: 3}
-  volume: 0.3
+  clueID: MomHospitalized
+  description: "\u6162\u6027\u7684\u306B\u5165\u9662\u3057\u3066\u3044\u308B\u6BCD\u89AA"
+  isUnlocked: 1

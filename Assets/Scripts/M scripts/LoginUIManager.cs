@@ -9,20 +9,15 @@ public class LoginUIManager : MonoBehaviour
     public GameObject DesktopPanel;
     public GameObject tuuchImage;
     public GameObject TuchiPanel;
-    public Button tabCloseButton; 
+    public Button tabCloseButton;
 
-    [Header("Audio / Cursor")]
-    public AudioClip tenkai03;
+    // ヘッダーを整理
+    [Header("Audio")]
     public AudioClip tuuchiKari;
     public AudioSource audioSource;
-    public Texture2D arrowCursor;
-    public Vector2 cursorHotspot = Vector2.zero;
 
     private void Start()
     {
-        // カーソル変更
-        Cursor.SetCursor(arrowCursor, cursorHotspot, CursorMode.Auto);
-
         // 初期表示
         SignInPanel?.SetActive(true);
         DesktopPanel?.SetActive(false);
@@ -39,22 +34,10 @@ public class LoginUIManager : MonoBehaviour
         SignInPanel?.SetActive(false);
         DesktopPanel?.SetActive(true);
 
-        // 音再生
-        if (tenkai03 != null)
-        {
-            if (audioSource != null)
-            {
-                audioSource.clip = tenkai03;
-                audioSource.Play();
-            }
-            else
-            {
-                AudioSource.PlayClipAtPoint(tenkai03, Camera.main.transform.position);
-            }
-        }
+        BGMManager.Instance.TriggerBGMPlayback();
 
         // 5秒後に画像表示＋tuuchiKari再生
-        StartCoroutine(ShowAfterDelay(tuuchImage, 10f));
+        StartCoroutine(ShowAfterDelay(tuuchImage, 6f));
     }
 
     public void OnExitClick()

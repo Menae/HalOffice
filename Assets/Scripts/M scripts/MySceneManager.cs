@@ -22,7 +22,7 @@ public class MySceneManager : MonoBehaviour
         if (Instance == null)
         {
             Instance = this;
-            DontDestroyOnLoad(gameObject); // シーンをまたいで存在させる
+            //DontDestroyOnLoad(gameObject); // シーンをまたいで存在させる
         }
         else
         {

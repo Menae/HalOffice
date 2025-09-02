@@ -9,11 +9,11 @@ EditorBuildSettings:
     path: Assets/Scenes/SampleScene.unity
     guid: 8c9cfa26abfee488c85f1582747f6a02
   - enabled: 1
-    path: Assets/Scenes/P3_Stealth.unity
-    guid: 51564be30f71fb54ba82f65e327e7169
-  - enabled: 1
     path: Assets/Scenes/P1_StartScene.unity
     guid: 51961eff84dc04074bf03dbf92a5c273
+  - enabled: 1
+    path: Assets/Scenes/P3_Stealth.unity
+    guid: 51564be30f71fb54ba82f65e327e7169
   - enabled: 1
     path: Assets/Scenes/P4_InvestigationRecord.unity
     guid: 942d286cd97d4264984165bde65f7d26

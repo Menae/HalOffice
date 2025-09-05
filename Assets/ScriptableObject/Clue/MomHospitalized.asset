@@ -14,4 +14,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   clueID: MomHospitalized
   description: "\u6162\u6027\u7684\u306B\u5165\u9662\u3057\u3066\u3044\u308B\u6BCD\u89AA"
-  isUnlocked: 1
+  isUnlocked: 0

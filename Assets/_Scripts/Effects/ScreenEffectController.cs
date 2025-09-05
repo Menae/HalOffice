@@ -28,14 +28,13 @@ public class ScreenEffectsController : MonoBehaviour
     private AudioSource audioSource;
     private Animator tvOffAnimator;
     private bool hasTriggeredEffect30 = false;
-    private bool hasTriggeredEffect70Sound = false;
+    private bool hasTriggeredEffect70 = false; // 70に到達したかのフラグ
     private Coroutine effect30Coroutine;
 
     private void Start()
     {
         audioSource = GetComponent<AudioSource>();
 
-        // 必須コンポーネントが設定されているか確認
         if (glitchController == null || detectionManager == null)
         {
             Debug.LogError("Glitch Controller または Detection Manager がアサインされていません！このコンポーネントは動作を停止します。", this.gameObject);
@@ -43,7 +42,6 @@ public class ScreenEffectsController : MonoBehaviour
             return;
         }
 
-        // 開始時にエフェクトを確実にオフにする
         glitchController.noiseAmount = 0f;
         glitchController.glitchStrength = 0f;
 
@@ -56,62 +54,62 @@ public class ScreenEffectsController : MonoBehaviour
 
     private void Update()
     {
-        // 参照がなければ何もしない
         if (glitchController == null || detectionManager == null) return;
 
         float currentDetection = detectionManager.GetCurrentDetection();
 
-        // 70以上の時の処理 (最優先)
+        // --- 1. しきい値を超えた瞬間のトリガー処理 ---
+        
+        // 70に達した瞬間の処理
+        if (currentDetection >= 70f && !hasTriggeredEffect70)
+        {
+            hasTriggeredEffect70 = true;
+            audioSource.PlayOneShot(glitchSoundClip, glitchVolumeScale);
+        }
+        // 30に達した瞬間の処理
+        else if (currentDetection >= 30f && !hasTriggeredEffect30)
+        {
+            hasTriggeredEffect30 = true;
+            if (effect30Coroutine != null) StopCoroutine(effect30Coroutine);
+            effect30Coroutine = StartCoroutine(Effect30Routine());
+        }
+
+        // --- 2. フラグのリセット処理 ---
+        if (currentDetection < 70f) hasTriggeredEffect70 = false;
+        if (currentDetection < 30f) hasTriggeredEffect30 = false;
+
+
+        // --- 3. 状態に応じた永続的なエフェクト処理 ---
+
+        // 30のコルーチンが動いている間は、コルーチンがエフェクトを管理する
+        if (effect30Coroutine != null) return;
+
+        // 70以上の時は永続的にエフェクトをかける
         if (currentDetection >= 70f)
         {
-            // 常にエフェクトを最大にする
-            glitchController.noiseAmount = 100f;
+            glitchController.noiseAmount = 30f;
             glitchController.glitchStrength = 200f;
-
-            // 70に達した瞬間に一度だけ効果音を鳴らす
-            if (!hasTriggeredEffect70Sound)
-            {
-                audioSource.PlayOneShot(glitchSoundClip, glitchVolumeScale);
-                hasTriggeredEffect70Sound = true;
-            }
         }
-        // 70未満の時の処理
+        // それ以外の時はエフェクトをオフにする
         else
         {
-            // 70のフラグをリセット
-            hasTriggeredEffect70Sound = false;
-
-            // 30に達した瞬間の処理
-            if (currentDetection >= 30f && !hasTriggeredEffect30)
-            {
-                hasTriggeredEffect30 = true;
-                if (effect30Coroutine != null) StopCoroutine(effect30Coroutine);
-                effect30Coroutine = StartCoroutine(Effect30Routine());
-            }
-            // 30未満に落ちた時の処理
-            else if (currentDetection < 30f)
-            {
-                hasTriggeredEffect30 = false;
-                // 永続エフェクトがオフ、かつ30のコルーチンも動いていないなら、エフェクトを確実にオフにする
-                if (effect30Coroutine == null)
-                {
-                    glitchController.noiseAmount = 0f;
-                    glitchController.glitchStrength = 0f;
-                }
-            }
+            glitchController.noiseAmount = 0f;
+            glitchController.glitchStrength = 0f;
         }
     }
 
-    // 見つかり度30の時に1秒間だけエフェクトを再生するコルーチン
+    // 見つかり度30の時に0.5秒間だけエフェクトを再生するコルーチン
     private IEnumerator Effect30Routine()
     {
+        // 30に達した時の効果音はこちらで再生
         audioSource.PlayOneShot(glitchSoundClip, glitchVolumeScale);
+
         glitchController.noiseAmount = 30f;
         glitchController.glitchStrength = 200f;
 
-        yield return new WaitForSeconds(1f);
+        yield return new WaitForSeconds(0.5f);
 
-        // 1秒後、もし70以上の永続エフェクトが発動していなければ、エフェクトをオフに戻す
+        // 0.5秒後、もし70以上の永続エフェクトが発動していなければ、エフェクトをオフに戻す
         if (detectionManager.GetCurrentDetection() < 70f)
         {
             glitchController.noiseAmount = 0f;
@@ -121,7 +119,7 @@ public class ScreenEffectsController : MonoBehaviour
         effect30Coroutine = null;
     }
 
-    // TVオフ演出のメソッド (これは外部から呼ばれる可能性があるので残す)
+    // TVオフ演出のメソッド
     public void TriggerTvOff()
     {
         if (audioSource != null && tvOffSoundClip != null)

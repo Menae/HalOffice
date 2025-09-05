@@ -254,7 +254,7 @@ public class NPCController : MonoBehaviour
 
     public void HearSound(Vector3 soundPosition, float detectionAmount)
     {
-        if (currentState == NPCState.Investigate) return; 
+        if (currentState == NPCState.Investigate) return;
         
         Debug.Log($"音源({soundPosition})を検知！警戒します。");
 

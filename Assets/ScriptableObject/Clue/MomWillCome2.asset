@@ -14,4 +14,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   clueID: MomWillCome2
   description: "\u3060\u3063\u305F\u3002"
-  isUnlocked: 1
+  isUnlocked: 0

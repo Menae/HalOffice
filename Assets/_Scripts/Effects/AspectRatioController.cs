@@ -4,8 +4,15 @@
 [ExecuteAlways] //エディタ上での変更にも即座に反応
 public class AspectRatioController : MonoBehaviour
 {
-    // 目標のアスペクト比
-    private const float TARGET_ASPECT = 4.0f / 3.0f;
+    // 以下の定数を削除
+    // private const float TARGET_ASPECT = 4.0f / 3.0f;
+
+    // ▼▼▼ Inspectorで設定できる変数に置き換え ▼▼▼
+    [Header("アスペクト比設定")]
+    [Tooltip("目標アスペクト比の幅")]
+    public float targetWidth = 4.0f;
+    [Tooltip("目標アスペクト比の高さ")]
+    public float targetHeight = 3.0f;
 
     private Camera cameraComponent;
 
@@ -31,10 +38,15 @@ public class AspectRatioController : MonoBehaviour
     {
         if (cameraComponent == null) return;
 
+        // ▼▼▼ Inspectorの値から目標アスペクト比を計算 ▼▼▼
+        // 0で割るのを防ぐための安全チェック
+        if (targetHeight <= 0) return;
+        float targetAspect = targetWidth / targetHeight;
+
         //画面の現在のアスペクト比
         float screenAspect = (float)Screen.width / Screen.height;
         //目標のアスペクト比と現在の比率との差
-        float scaleRatio = screenAspect / TARGET_ASPECT;
+        float scaleRatio = screenAspect / targetAspect;
 
         Rect rect = cameraComponent.rect;
 

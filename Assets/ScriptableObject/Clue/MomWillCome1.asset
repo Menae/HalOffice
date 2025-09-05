@@ -14,4 +14,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   clueID: MomWillCome1
   description: "\u4ECA\u56DE\u306E\u904B\u52D5\u4F1A\u3067\u81EA\u5206\u306E\u6210\u9577\u3057\u305F\u59FF\u3092\u6BCD\u306B\u898B\u305B\u308B\u4E88\u5B9A"
-  isUnlocked: 1
+  isUnlocked: 0

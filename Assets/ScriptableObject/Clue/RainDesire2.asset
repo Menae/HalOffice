@@ -14,4 +14,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   clueID: RainDesire2
   description: "\u308A\u3001\u7FCC\u65E5\u306F\u6570\u304B\u6708\u3076\u308A\u306E\u96E8\u304C\u964D\u308B\u4E88\u5B9A"
-  isUnlocked: 1
+  isUnlocked: 0

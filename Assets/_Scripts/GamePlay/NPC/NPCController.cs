@@ -9,17 +9,12 @@ public class NPCController : MonoBehaviour
 {
     // ステートを定義するEnum
     public enum NPCState { Patrol, Investigate }
-    private enum PatrolSubState { Wandering, MovingToPOI, Inspecting }
 
     [Header("AIの状態")]
     [SerializeField] private NPCState currentState = NPCState.Patrol;
 
     [Header("移動と待機の設定")]
     public float moveSpeed = 1f;
-    [Tooltip("NPCが歩く最短距離")]
-    public float minWalkDistance = 2f;
-    [Tooltip("NPCが歩く最長距離")]
-    public float maxWalkDistance = 5f;
     public float minWaitTime = 2f;
     public float maxWaitTime = 5f;
 
@@ -37,6 +32,12 @@ public class NPCController : MonoBehaviour
     public GameObject fovObject;
 
     [Header("通常ルーティーン設定 (Patrol)")]
+    [Tooltip("NPCが放浪するX座標の最小値")]
+    public float wanderMinX = -5f;
+    [Tooltip("NPCが放浪するX座標の最大値")]
+    public float wanderMaxX = 5f;
+    [Tooltip("一度に放浪する最大距離")]
+    public float wanderRadius = 3f;
     [Tooltip("NPCが興味を示す家具などの場所リスト")]
     public List<Transform> pointsOfInterest;
     [Tooltip("家具などを調査する時間")]
@@ -94,7 +95,7 @@ public class NPCController : MonoBehaviour
         switch (currentState)
         {
             case NPCState.Patrol:
-                UpdatePatrolState();
+                // PatrolのUpdate処理は現在空
                 break;
             case NPCState.Investigate:
                 UpdateInvestigateState();
@@ -147,16 +148,28 @@ public class NPCController : MonoBehaviour
         animator.SetBool("isInspecting", false);
         timeInView = 0f;
     }
-
+    
     private IEnumerator PatrolRoutine()
     {
         while (currentState == NPCState.Patrol)
         {
-            // 1. 目的なくうろつく (Wandering)
-            if (Random.value > 0.5f) Flip();
+            // 1. 目的地ベースでうろつく (Wandering)
+            // 現在地からwanderRadius内のランダムな地点を目的地候補とする
+            float randomDistance = Random.Range(-wanderRadius, wanderRadius);
+            float targetX = transform.position.x + randomDistance;
+            // 目的地が活動範囲内に収まるようにクランプする
+            targetX = Mathf.Clamp(targetX, wanderMinX, wanderMaxX);
+            
+            Vector3 wanderTarget = new Vector3(targetX, transform.position.y, transform.position.z);
+
+            // 目的地に向かって歩く
+            FaceTowards(wanderTarget);
             animator.SetBool("isWalking", true);
-            float walkTimer = Random.Range(minWalkDistance, maxWalkDistance) / moveSpeed;
-            yield return new WaitForSeconds(walkTimer);
+            while (Mathf.Abs(transform.position.x - wanderTarget.x) > 0.1f)
+            {
+                if (currentState != NPCState.Patrol) yield break;
+                yield return null;
+            }
             animator.SetBool("isWalking", false);
             yield return new WaitForSeconds(Random.Range(minWaitTime, maxWaitTime));
 
@@ -165,28 +178,21 @@ public class NPCController : MonoBehaviour
             // 2. 家具に向かって歩く (MovingToPOI)
             Transform targetPOI = pointsOfInterest[Random.Range(0, pointsOfInterest.Count)];
             investigationTarget = targetPOI.position;
-
-            // まず、移動を開始する前に「一度だけ」向きを決定する
+            
             FaceTowards(investigationTarget);
-
-            // 歩行を開始する
             animator.SetBool("isWalking", true);
-
-            // X軸の距離で到着を判定する
             while (Mathf.Abs(transform.position.x - investigationTarget.x) > 0.5f)
             {
                 if (currentState != NPCState.Patrol) yield break;
                 yield return null;
             }
             animator.SetBool("isWalking", false);
-
+            
             // 3. 家具を調べる (Inspecting)
-            FaceTowards(investigationTarget); // 調査開始時に念のため再度向きを合わせる
+            FaceTowards(investigationTarget);
             animator.SetBool("isInspecting", true);
             yield return new WaitForSeconds(inspectDuration);
             animator.SetBool("isInspecting", false);
-
-            if (Random.value > 0.5f) Flip();
         }
     }
 
@@ -196,7 +202,7 @@ public class NPCController : MonoBehaviour
         if (Vector2.Distance(transform.position, investigationTarget) > 0.5f)
         {
             animator.SetBool("isWalking", true);
-            while (Vector2.Distance(transform.position, investigationTarget) > 0.5f)
+            while (Mathf.Abs(transform.position.x - investigationTarget.x) > 0.1f)
             {
                 FaceTowards(investigationTarget); // 移動中も向きを合わせる
                 yield return null;
@@ -213,11 +219,6 @@ public class NPCController : MonoBehaviour
         // 3. 通常ステートに戻る
         SwitchState(NPCState.Patrol);
     }
-    
-    private void UpdatePatrolState()
-    {
-        // ▼▼▼ 修正点: 処理をコルーチンに移動したため、このメソッドは空にする ▼▼▼
-    }
 
     private void UpdateInvestigateState()
     {
@@ -226,7 +227,7 @@ public class NPCController : MonoBehaviour
 
     private void HandleTriggers()
     {
-        if (currentState == NPCState.Investigate || !GameManager.Instance.isInputEnabled) return;
+        if (currentState == NPCState.Investigate || (GameManager.Instance != null && !GameManager.Instance.isInputEnabled)) return;
 
         if (isCursorInView)
         {
@@ -254,7 +255,7 @@ public class NPCController : MonoBehaviour
 
     public void HearSound(Vector3 soundPosition, float detectionAmount)
     {
-        if (currentState == NPCState.Investigate) return;
+        if (currentState == NPCState.Investigate) return; 
         
         Debug.Log($"音源({soundPosition})を検知！警戒します。");
 
@@ -325,6 +326,7 @@ public class NPCController : MonoBehaviour
 
     private Vector3 GetMouseWorldPosition()
     {
+        if (Camera.main == null) return Vector3.zero;
         Vector3 cursorPos = Input.mousePosition;
         float distance_from_camera = Mathf.Abs(transform.position.z - Camera.main.transform.position.z);
         cursorPos.z = distance_from_camera;

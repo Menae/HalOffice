@@ -41,6 +41,16 @@ public class DesktopManager : MonoBehaviour
     [Tooltip("アイコンをホバーした時に表示する白い枠のImage")]
     public Image iconHoverFrame;
 
+    [Header("チュートリアル会話設定")]
+    [Tooltip("シーン内のChatController")]
+    public ChatController chatController;
+    [Tooltip("最初に再生する会話のInkファイル(JSONアセット)")]
+    public TextAsset tutorialChatInk;
+
+    [Header("デバッグ設定")]
+    [Tooltip("チェックを入れると、エディタ実行時に毎回チュートリアルが再生されます")]
+    public bool forceShowTutorialInEditor = false;
+
     [System.Serializable]
     public class AppEntry
     {
@@ -218,7 +228,8 @@ public class DesktopManager : MonoBehaviour
     private IEnumerator LoginRoutine()
     {
         isFading = true;
-        
+
+        // 1. フェードアウト
         fadeImage.gameObject.SetActive(true);
         float timer = 0f;
         while (timer < fadeDuration)
@@ -229,6 +240,7 @@ public class DesktopManager : MonoBehaviour
         }
         fadeImage.color = new Color(fadeImage.color.r, fadeImage.color.g, fadeImage.color.b, 1f);
 
+        // 2. UIの切り替え
         if (loginScreenCanvasGroup != null)
         {
             loginScreenCanvasGroup.alpha = 0;
@@ -240,6 +252,10 @@ public class DesktopManager : MonoBehaviour
             desktopScreen.SetActive(true);
         }
 
+        // 3. 1フレーム待機
+        yield return null; 
+
+        // 4. フェードイン
         timer = 0f;
         while (timer < fadeDuration)
         {
@@ -251,9 +267,41 @@ public class DesktopManager : MonoBehaviour
 
         isFading = false;
         
-        StartCoroutine(ShowNotificationRoutine());
+        // 5. チュートリアル or 通常通知の開始
+        bool shouldShowTutorial = false;
+
+        // もしUnityエディタで実行していて、強制表示フラグがONなら、チュートリアルを再生
+        #if UNITY_EDITOR
+        if (forceShowTutorialInEditor)
+        {
+            shouldShowTutorial = true;
+        }
+        else
+        {
+            // フラグがOFFなら、通常通りPlayerPrefsを確認
+            shouldShowTutorial = (PlayerPrefs.GetInt("HasSeenTutorial", 0) == 0);
+        }
+        #else
+        // エディタ以外（ビルドしたゲーム）では、常にPlayerPrefsを確認
+        shouldShowTutorial = (PlayerPrefs.GetInt("HasSeenTutorial", 0) == 0);
+        #endif
+
+        if (shouldShowTutorial)
+        {
+            // --- 初回プレイ時の処理 ---
+            if (chatController != null && tutorialChatInk != null)
+            {
+                chatController.StartConversation(tutorialChatInk);
+                PlayerPrefs.SetInt("HasSeenTutorial", 1);
+            }
+        }
+        else
+        {
+            // --- 2回目以降のプレイ時の処理 ---
+            StartCoroutine(ShowNotificationRoutine());
+        }
     }
-    
+
     private IEnumerator ShowNotificationRoutine()
     {
         yield return new WaitForSeconds(notificationDelay);

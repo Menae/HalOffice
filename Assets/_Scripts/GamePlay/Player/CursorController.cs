@@ -10,6 +10,11 @@ public class CursorController : MonoBehaviour
     [Header("カーソルの設定")]
     public Image cursorImage;
 
+    [Header("慣性設定")]
+    [Tooltip("カーソルの追従の滑らかさ。値が小さいほど機敏に、大きいほど重くなる。")]
+    [Range(0.01f, 0.5f)]
+    public float smoothTime = 0.1f;
+
     [Header("カーソルの状態")]
     public Color normalColor = Color.white;
     [Range(0.1f, 5f)]
@@ -48,12 +53,19 @@ public class CursorController : MonoBehaviour
     [Tooltip("カーソルの表示位置を微調整します (X:左右, Y:上下)")]
     public Vector2 cursorOffset;
 
+    // --- 内部変数 ---
+    private Vector3 currentCursorPosition; // ゲーム内カーソルの現在位置
+    private Vector3 cursorVelocity = Vector3.zero; // SmoothDampで使う速度変数
+
     void Start()
     {
         Cursor.visible = false;
         if (cursorImage == null) { Debug.LogError("Cursor Imageがセットされていません！"); return; }
         cursorImage.raycastTarget = false;
         SetCursorStateNormal();
+
+        // 起動時のカーソル位置を、現在のマウス位置で初期化
+        currentCursorPosition = Input.mousePosition;
     }
 
     void Update()
@@ -62,13 +74,12 @@ public class CursorController : MonoBehaviour
 
         cursorImage.enabled = true;
 
-        Vector2 finalScreenPosition = (Vector2)Input.mousePosition + cursorOffset;
+        // 1. 「目標となる位置」を計算する (実際のOSマウスカーソルの位置)
+        Vector3 targetPosition = (Vector2)Input.mousePosition + cursorOffset;
 
-        // 常にNPCの視界に入っているかをチェックし、見た目とイベント発行を処理
+        // 2. 視界内に入っているかチェックし、見た目とイベント発行を処理
         if (targetNpc.isCursorInView)
         {
-            // --- 視界内にいる場合（会話中も含む）---
-
             // 見つかり度を上昇させる
             if (detectionIncreaseChannel != null)
             {
@@ -76,20 +87,22 @@ public class CursorController : MonoBehaviour
                 detectionIncreaseChannel.RaiseEvent(finalDetectionRate * Time.deltaTime);
             }
 
-            // 色、大きさ、震えの演出を適用する
+            // 震えの演出を「目標位置」に加える
             float currentShakeMagnitude = GetCurrentShakeMagnitude();
             Vector2 shakeOffset = Random.insideUnitCircle * currentShakeMagnitude;
-            finalScreenPosition += shakeOffset;
+            targetPosition += (Vector3)shakeOffset;
         }
         else
         {
-            // --- 視界外にいる場合 ---
-            // カーソルを通常状態に戻す
+            // 視界外なら通常状態に戻す
             SetCursorStateNormal();
         }
 
-        // 最終的なカーソル位置を適用する
-        Vector3 screenPosWithZ = finalScreenPosition;
+        // 3. ゲーム内カーソルの現在位置を、目標位置に向かって滑らかに移動させる
+        currentCursorPosition = Vector3.SmoothDamp(currentCursorPosition, targetPosition, ref cursorVelocity, smoothTime);
+
+        // 4. 最終的なカーソル位置を、滑らかに移動した後の位置を使って適用する
+        Vector3 screenPosWithZ = currentCursorPosition;
         screenPosWithZ.z = parentCanvas.planeDistance;
         cursorImage.rectTransform.position = uiCamera.ScreenToWorldPoint(screenPosWithZ);
     }

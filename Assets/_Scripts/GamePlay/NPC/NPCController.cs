@@ -32,15 +32,9 @@ public class NPCController : MonoBehaviour
     public GameObject fovObject;
 
     [Header("通常ルーティーン設定 (Patrol)")]
-    [Tooltip("NPCが放浪するX座標の最小値")]
-    public float wanderMinX = -5f;
-    [Tooltip("NPCが放浪するX座標の最大値")]
-    public float wanderMaxX = 5f;
-    [Tooltip("一度に放浪する最大距離")]
-    public float wanderRadius = 3f;
-    [Tooltip("NPCが興味を示す家具などの場所リスト")]
+    [Tooltip("NPCが巡回する地点のリスト")]
     public List<Transform> pointsOfInterest;
-    [Tooltip("家具などを調査する時間")]
+    [Tooltip("各地点に到着してから次の目的地に向かうまでの待機時間")]
     public float inspectDuration = 3.0f;
 
     [Header("警戒ステート設定 (Investigate)")]
@@ -48,7 +42,9 @@ public class NPCController : MonoBehaviour
     public float sightAlertThreshold = 1.5f;
     [Tooltip("周囲を見渡して警戒する時間")]
     public float searchDuration = 4.0f;
-    
+    [Tooltip("警戒ステート移行後、この半径以内にカーソルがあれば見つかり度が上昇する")]
+    public float detectionCheckRadius = 2.0f;
+
     [Header("イベント発行")]
     [Tooltip("見つかり度を上げるためのイベントチャンネル")]
     public FloatEventChannelSO detectionIncreaseChannel;
@@ -60,9 +56,9 @@ public class NPCController : MonoBehaviour
     private Rigidbody2D rb;
 
     private Coroutine behaviorCoroutine;
-    private Vector3 investigationTarget; // 警戒時の目標地点
-    private float timeInView = 0f; // 視界に入っている時間のカウンター
-    private bool isMouseOverNPC = false; // カーソルがNPC本体の上にあるか
+    private Vector3 investigationTarget;
+    private float timeInView = 0f;
+    private bool isMouseOverNPC = false;
 
     void Start()
     {
@@ -76,26 +72,22 @@ public class NPCController : MonoBehaviour
             fovObject.SetActive(false);
         }
 
-        // 開始時に最初の行動を開始する
         SwitchState(NPCState.Patrol);
     }
 
     void Update()
     {
-        // 常に視界とカーソルの接触判定は行う
         CheckFieldOfView();
         HandleTriggers();
-        
+
         if (fovObject != null)
         {
             fovObject.SetActive(isCursorInView);
         }
 
-        // 現在のステートに応じたUpdate処理を呼び出す
         switch (currentState)
         {
             case NPCState.Patrol:
-                // PatrolのUpdate処理は現在空
                 break;
             case NPCState.Investigate:
                 UpdateInvestigateState();
@@ -105,7 +97,6 @@ public class NPCController : MonoBehaviour
 
     void FixedUpdate()
     {
-        // 物理的な移動はFixedUpdateで
         if (animator.GetBool("isWalking"))
         {
             rb.velocity = GetDirection() * moveSpeed;
@@ -118,10 +109,8 @@ public class NPCController : MonoBehaviour
 
     private void SwitchState(NPCState newState)
     {
-        // 現在のステートの終了処理
         OnExitState();
         currentState = newState;
-        // 新しいステートの開始処理
         OnEnterState();
     }
 
@@ -148,75 +137,84 @@ public class NPCController : MonoBehaviour
         animator.SetBool("isInspecting", false);
         timeInView = 0f;
     }
-    
+
     private IEnumerator PatrolRoutine()
     {
+        // pointsOfInterestが設定されていない場合は、エラーを防ぐために何もしない
+        if (pointsOfInterest == null || pointsOfInterest.Count == 0)
+        {
+            Debug.LogWarning("NPCController: PointsOfInterestが設定されていないため、Patrol行動を停止します。", this.gameObject);
+            yield break; // コルーチンを終了
+        }
+
+        // currentStateがPatrolである限り、永遠に巡回を続ける
         while (currentState == NPCState.Patrol)
         {
-            // 1. 目的地ベースでうろつく (Wandering)
-            // 現在地からwanderRadius内のランダムな地点を目的地候補とする
-            float randomDistance = Random.Range(-wanderRadius, wanderRadius);
-            float targetX = transform.position.x + randomDistance;
-            // 目的地が活動範囲内に収まるようにクランプする
-            targetX = Mathf.Clamp(targetX, wanderMinX, wanderMaxX);
-            
-            Vector3 wanderTarget = new Vector3(targetX, transform.position.y, transform.position.z);
-
-            // 目的地に向かって歩く
-            FaceTowards(wanderTarget);
-            animator.SetBool("isWalking", true);
-            while (Mathf.Abs(transform.position.x - wanderTarget.x) > 0.1f)
-            {
-                if (currentState != NPCState.Patrol) yield break;
-                yield return null;
-            }
-            animator.SetBool("isWalking", false);
-            yield return new WaitForSeconds(Random.Range(minWaitTime, maxWaitTime));
-
-            if (pointsOfInterest == null || pointsOfInterest.Count == 0) continue;
-
-            // 2. 家具に向かって歩く (MovingToPOI)
+            // 1. 目的地をランダムに選ぶ
             Transform targetPOI = pointsOfInterest[Random.Range(0, pointsOfInterest.Count)];
-            investigationTarget = targetPOI.position;
-            
-            FaceTowards(investigationTarget);
+            Vector3 targetPosition = targetPOI.position;
+
+            // 2. 目的地に向かって歩く
+            FaceTowards(targetPosition);
             animator.SetBool("isWalking", true);
-            while (Mathf.Abs(transform.position.x - investigationTarget.x) > 0.5f)
+            while (Mathf.Abs(transform.position.x - targetPosition.x) > 0.5f)
             {
-                if (currentState != NPCState.Patrol) yield break;
+                if (currentState != NPCState.Patrol) yield break; // 途中で警戒ステートに切り替わったら中断
                 yield return null;
             }
             animator.SetBool("isWalking", false);
-            
-            // 3. 家具を調べる (Inspecting)
-            FaceTowards(investigationTarget);
+
+            // 3. 目的地で待機＆調査
+            FaceTowards(targetPosition);
             animator.SetBool("isInspecting", true);
             yield return new WaitForSeconds(inspectDuration);
             animator.SetBool("isInspecting", false);
+
+            // 4. 次の目的地に向かう前に少し待つ
+            yield return new WaitForSeconds(Random.Range(minWaitTime, maxWaitTime));
         }
     }
 
     private IEnumerator InvestigateRoutine()
     {
-        // 1. 調査地点に向かう
-        if (Vector2.Distance(transform.position, investigationTarget) > 0.5f)
+        // ▼▼▼ ここからが追加ロジック ▼▼▼
+        // 1. 警戒ステートに移行して0.5秒待機
+        yield return new WaitForSeconds(0.5f);
+
+        // 2. カーソルとの距離を測定
+        float distanceToCursor = Vector3.Distance(transform.position, GetMouseWorldPosition());
+
+        // 3. もし距離が指定した半径以内なら、見つかり度を40上昇させる
+        if (distanceToCursor < detectionCheckRadius)
+        {
+            Debug.Log("警戒中にカーソルが近すぎたため、見つかり度が上昇！");
+            if (detectionIncreaseChannel != null)
+            {
+                detectionIncreaseChannel.RaiseEvent(40f);
+            }
+        }
+        // ▲▲▲ ここまで ▲▲▲
+
+        // --- 以下は既存のロジック ---
+        // 4. 調査地点に向かう
+        if (Vector3.Distance(transform.position, investigationTarget) > 0.5f)
         {
             animator.SetBool("isWalking", true);
             while (Mathf.Abs(transform.position.x - investigationTarget.x) > 0.1f)
             {
-                FaceTowards(investigationTarget); // 移動中も向きを合わせる
+                FaceTowards(investigationTarget);
                 yield return null;
             }
             animator.SetBool("isWalking", false);
         }
         
-        // 2. その場で周囲を見回す
+        // 5. その場で周囲を見回す
         FaceTowards(investigationTarget);
         animator.SetBool("isSearching", true);
         yield return new WaitForSeconds(searchDuration);
         animator.SetBool("isSearching", false);
 
-        // 3. 通常ステートに戻る
+        // 6. 通常ステートに戻る
         SwitchState(NPCState.Patrol);
     }
 

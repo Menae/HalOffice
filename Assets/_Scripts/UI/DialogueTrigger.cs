@@ -57,27 +57,21 @@ public class DialogueTrigger : MonoBehaviour
 
     private void Update()
     {
-        //右クリックが押された瞬間じゃなければ、何もしない
-        if (!Input.GetMouseButtonDown(1)) //1:右クリック
-        {
-            return;
-        }
-
-        // マウスカーソルの下にあるオブジェクトがこのオブジェクト自身かチェック
-        RaycastHit2D hit = Physics2D.Raycast(Camera.main.ScreenToWorldPoint(Input.mousePosition), Vector2.zero);
-        if (hit.collider == null || hit.collider.gameObject != this.gameObject)
-        {
-            return;
-        }
-
+        if (!Input.GetMouseButtonDown(1)) return;
         if (GameManager.Instance != null && !GameManager.Instance.isInputEnabled) return;
-        if (EventSystem.current.IsPointerOverGameObject()) return;
 
-        TextAsset dialogueToPlay = GetDialogueToPlay();
-
-        if (dialogueToPlay != null && !DialogueManager.GetInstance().dialogueIsPlaying)
+        // 新しい座標変換を使う
+        if (ScreenToWorldConverter.Instance.GetWorldPosition(Input.mousePosition, out Vector3 worldPos))
         {
-            DialogueManager.GetInstance().EnterDialogueMode(dialogueToPlay);
+            RaycastHit2D hit = Physics2D.Raycast(worldPos, Vector2.zero);
+            if (hit.collider != null && hit.collider.gameObject == this.gameObject)
+            {
+                TextAsset dialogueToPlay = GetDialogueToPlay();
+                if (dialogueToPlay != null && !DialogueManager.GetInstance().dialogueIsPlaying)
+                {
+                    DialogueManager.GetInstance().EnterDialogueMode(dialogueToPlay);
+                }
+            }
         }
     }
 

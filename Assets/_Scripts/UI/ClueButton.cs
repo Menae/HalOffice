@@ -18,24 +18,29 @@ public class ClueButton : MonoBehaviour
 
     void Start()
     {
-        // InvestigationManagerが存在するか確認
-        if (InvestigationManager.Instance == null)
+        // ▼▼▼ このメソッドのロジックを全面的に修正 ▼▼▼
+
+        // GameManagerが存在するか確認
+        if (GameManager.Instance == null)
         {
-            Debug.LogError("InvestigationManagerが見つかりません！");
+            Debug.LogError("GameManagerが見つかりません！");
             buttonText.text = "ERROR";
             return;
         }
 
-        // 証拠がアンロックされているか確認して、テキストと色を更新
-        if (InvestigationManager.Instance.IsClueUnlocked(associatedClue))
+        // GameManagerが運んできた「発見済みの証拠リスト」に、このボタンの証拠が含まれているか確認
+        if (GameManager.Instance.collectedCluesForReport != null &&
+            GameManager.Instance.collectedCluesForReport.Contains(associatedClue))
         {
+            // 含まれていれば、アンロック済みとして表示
             buttonText.text = associatedClue.description;
-            buttonText.color = unlockedColor; // アンロック時の色を設定
+            buttonText.color = unlockedColor;
         }
         else
         {
+            // 含まれていなければ、未調査として表示
             buttonText.text = "未調査";
-            buttonText.color = lockedColor; // 未調査時の色を設定
+            buttonText.color = lockedColor;
         }
     }
 }

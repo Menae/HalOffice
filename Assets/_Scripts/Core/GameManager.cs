@@ -1,213 +1,65 @@
-﻿using System;
-using UnityEngine;
-using UnityEngine.UI; // UIコンポーネントを使うために必要
-using System.Collections;
+﻿using UnityEngine;
+using System.Collections.Generic;
+using System;
 
-[RequireComponent(typeof(AudioSource))]
 public class GameManager : MonoBehaviour
 {
     public static GameManager Instance { get; private set; }
 
+    // --- Inspectorに表示される変数の宣言 ---
+
+    [Header("永続データ (Persistent Data)")]
+    [Tooltip("ゲームに登場する全ての証拠リスト")]
+    public List<Clue> allCluesInGame;
+    public int reputationScore = 0;
+    public bool justFinishedInvestigation = false;
+    public List<Clue> collectedCluesForReport;
+
+    // --- Inspectorに表示されないプロパティ ---
+    
+    // 他のスクリプトが安全にアクセスするためのパブリック「プロパティ」
+    // (ヘッダーを付けられないため、Inspectorには表示されない)
     public bool isInputEnabled { get; private set; } = true;
 
-    // ▼▼▼ 追加 ▼▼▼
-    [Header("ゲーム開始設定")]
-    [Tooltip("操作説明などを表示するパネル")]
-    public GameObject instructionPanel;
-    [Tooltip("画面をフェードインさせるための黒い画像")]
-    public Image screenFadeImage;
-    [Tooltip("フェードインにかかる時間（秒）")]
-    public float fadeInDuration = 2.0f;
 
-    // ゲームがアクティブかどうかを管理するフラグ
-    public bool isGameActive { get; private set; } = false;
-    // ▲▲▲ ここまで ▲▲▲
-
-    [Header("タイマー設定")]
-    [Tooltip("カウントダウンの開始時間（秒）")]
-    public float totalTimeInSeconds = 300f;
-
-    [Header("時間経過イベント")]
-    [Tooltip("この残り秒数になったら、オブジェクトAを表示する")]
-    public float eventA_TriggerTime = 120f;
-    public GameObject imageObjectA;
-    [Tooltip("この残り秒数になったら、オブジェクトBを表示する")]
-    public float eventB_TriggerTime = 60f;
-    public GameObject imageObjectB;
-
-    [Header("通知エフェクト設定")]
-    [Tooltip("通知が表示される時の効果音")]
-    public AudioClip notificationSound;
-    [Range(0f, 1f)]
-    [Tooltip("通知効果音の音量")]
-    public float notificationVolume = 1.0f;
-
-    // ... (他の変数はそのまま) ...
-    private float currentTime;
-    private bool eventATriggered = false;
-    private bool eventBTriggered = false;
-    private AudioSource audioSource;
-    private bool isTimeUp = false;
-
-    public static event Action OnTimeUp;
+    // --- メソッドの定義 ---
 
     private void Awake()
     {
-        if (Instance != null && Instance != this) { Destroy(this.gameObject); }
-        else { Instance = this; }
-    }
-
-    void Start()
-    {
-        audioSource = GetComponent<AudioSource>();
-        currentTime = totalTimeInSeconds;
-        if (imageObjectA != null) imageObjectA.SetActive(false);
-        if (imageObjectB != null) imageObjectB.SetActive(false);
-
-        // ▼▼▼ 修正 ▼▼▼
-        // ゲーム開始時の初期化処理
-        isGameActive = false; // ゲームを非アクティブ状態で開始
-        if (instructionPanel != null) instructionPanel.SetActive(true);
-        if (screenFadeImage != null)
+        // シーンをまたいで存在し続けるシングルトンの実装
+        if (Instance == null)
         {
-            screenFadeImage.gameObject.SetActive(true);
-            screenFadeImage.color = Color.black; // 完全な黒から開始
-            StartCoroutine(SceneStartSequence()); // フェードイン処理を開始
+            Instance = this;
+            DontDestroyOnLoad(gameObject);
+            
+            // ▼▼▼ 以下を追加 ▼▼▼
+            // ゲームが起動する最初の瞬間に、全ての証拠の状態をリセットする
+            ResetAllClues();
         }
         else
         {
-            // フェードがない場合は、即座にゲームを開始する
-            StartGame();
+            Destroy(gameObject);
         }
     }
-
-
-    void Update()
+    
+    /// <summary>
+    /// ゲーム開始時などに、全ての証拠の状態を未発見に戻す
+    /// </summary>
+    public void ResetAllClues()
     {
-        // ▼▼▼ 修正 ▼▼▼
-        // ゲームがアクティブになるまでタイマーを進めない
-        if (!isGameActive || isTimeUp) return;
-
-        if (currentTime > 0)
+        if (allCluesInGame == null) return;
+        foreach (var clue in allCluesInGame)
         {
-            currentTime -= Time.deltaTime;
+            if (clue != null) clue.ResetStatus();
         }
-        else
-        {
-            currentTime = 0;
-            isTimeUp = true;
-            TriggerTimesUp();
-        }
-        CheckTimedEvents();
+        Debug.Log("全ての証拠の状態をリセットしました。");
     }
 
-    private IEnumerator SceneStartSequence()
-    {
-        // フェードイン処理
-        float timer = 0f;
-        while (timer < fadeInDuration)
-        {
-            // 徐々に透明にする
-            screenFadeImage.color = Color.Lerp(Color.black, Color.clear, timer / fadeInDuration);
-            timer += Time.deltaTime;
-            yield return null;
-        }
-        screenFadeImage.color = Color.clear; // 完全に透明にする
-        screenFadeImage.gameObject.SetActive(false);
-    }
-
-    public void StartGame()
-    {
-        isGameActive = true;
-        if (instructionPanel != null)
-        {
-            instructionPanel.SetActive(false);
-        }
-    }
-
-    private void CheckTimedEvents()
-    {
-        if (!eventATriggered && currentTime <= eventA_TriggerTime)
-        {
-            eventATriggered = true;
-            TriggerNotification(imageObjectA);
-        }
-
-        if (!eventBTriggered && currentTime <= eventB_TriggerTime)
-        {
-            eventBTriggered = true;
-            TriggerNotification(imageObjectB);
-        }
-    }
-
-    private void TriggerNotification(GameObject notificationObject)
-    {
-        if (notificationObject == null) return;
-
-        if (audioSource != null && notificationSound != null)
-        {
-            audioSource.PlayOneShot(notificationSound, notificationVolume);
-        }
-
-        notificationObject.SetActive(true);
-
-        Animator animator = notificationObject.GetComponent<Animator>();
-        if (animator != null)
-        {
-            animator.SetTrigger("fadein");
-        }
-
-        // ▼▼▼ 変更点1: コルーチンの呼び出しを削除 ▼▼▼
-        // StartCoroutine(TriggerFadeOutAfterDelay(notificationObject, imageDisplayDuration));
-    }
-
-    // ▼▼▼ 変更点2: 不要になったコルーチンを削除 ▼▼▼
-    /*
-    private IEnumerator TriggerFadeOutAfterDelay(GameObject obj, float delay)
-    {
-        yield return new WaitForSeconds(delay);
-        Animator animator = obj.GetComponent<Animator>();
-        if (animator != null)
-        {
-            animator.SetTrigger("fadeout");
-        }
-    }
-    */
-
-    // ▼▼▼ 変更点3: ボタンから呼び出すためのメソッドを追加 ▼▼▼
-    public void DismissNotificationA()
-    {
-        TriggerFadeOut(imageObjectA);
-    }
-
-    public void DismissNotificationB()
-    {
-        TriggerFadeOut(imageObjectB);
-    }
-
-    private void TriggerFadeOut(GameObject obj)
-    {
-        if (obj == null) return;
-        Animator animator = obj.GetComponent<Animator>();
-        if (animator != null)
-        {
-            animator.SetTrigger("fadeout");
-        }
-    }
-    // ▲▲▲ ここまでが変更点3 ▲▲▲
-
-    private void TriggerTimesUp()
-    {
-        Debug.Log("時間切れ！ゲームオーバー。");
-        SetInputEnabled(false);
-        OnTimeUp?.Invoke();
-    }
-
+    /// <summary>
+    /// プレイヤーの入力を有効/無効にする
+    /// </summary>
     public void SetInputEnabled(bool enabled)
     {
         isInputEnabled = enabled;
     }
-
-    public float GetCurrentTime() { return currentTime; } // メソッド名を修正
-    public float GetTotalTime() { return totalTimeInSeconds; } // メソッド名を修正
 }

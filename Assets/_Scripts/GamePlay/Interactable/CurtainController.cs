@@ -32,6 +32,19 @@ public class CurtainController : MonoBehaviour
 
     private void Update()
     {
+        // ▼▼▼ 以下の判定ロジックをUpdateの冒頭に追加 ▼▼▼
+        // ScreenToWorldConverterを使って、マウス下のオブジェクトを特定する
+        isMouseOver = false; // 毎フレーム、一旦falseにリセット
+        if (ScreenToWorldConverter.Instance != null &&
+            ScreenToWorldConverter.Instance.GetWorldPosition(Input.mousePosition, out Vector3 worldPos))
+        {
+            RaycastHit2D hit = Physics2D.Raycast(worldPos, Vector2.zero);
+            if (hit.collider != null && hit.collider.gameObject == this.gameObject)
+            {
+                isMouseOver = true; // カーソルが自身の上にあればtrueにする
+            }
+        }
+
         //毎フレーム最新の回転量を記憶し古いものを忘れる
         scrollHistory.Enqueue(Input.GetAxis("Mouse ScrollWheel"));
         if (scrollHistory.Count > frameHistoryCount)
@@ -66,16 +79,6 @@ public class CurtainController : MonoBehaviour
         {
             CloseCurtain(Mathf.Abs(recentScrollSum));
         }
-    }
-
-    private void OnMouseEnter()
-    {
-        isMouseOver = true;
-    }
-
-    private void OnMouseExit()
-    {
-        isMouseOver = false;
     }
 
     private void OpenCurtain(float scrollSum)

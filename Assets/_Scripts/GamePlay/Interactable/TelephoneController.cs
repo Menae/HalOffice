@@ -23,13 +23,20 @@ public class TelephoneController : MonoBehaviour
 
     private void Update()
     {
+        // ▼▼▼ このメソッドの全文を以下のように書き換え ▼▼▼
         if (Input.GetMouseButtonDown(0))
         {
-            RaycastHit2D hit = Physics2D.Raycast(Camera.main.ScreenToWorldPoint(Input.mousePosition), Vector2.zero);
-
-            if (hit.collider != null && hit.collider.gameObject == this.gameObject)
+            // ScreenToWorldConverterを使って、正しいワールド座標を取得
+            if (ScreenToWorldConverter.Instance != null &&
+                ScreenToWorldConverter.Instance.GetWorldPosition(Input.mousePosition, out Vector3 worldPos))
             {
-                ToggleRecording();
+                // 取得した座標に何があるかチェック
+                RaycastHit2D hit = Physics2D.Raycast(worldPos, Vector2.zero);
+                if (hit.collider != null && hit.collider.gameObject == this.gameObject)
+                {
+                    // 電話がヒットしたら、録音を切り替える
+                    ToggleRecording();
+                }
             }
         }
     }

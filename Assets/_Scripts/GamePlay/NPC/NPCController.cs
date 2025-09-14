@@ -268,12 +268,40 @@ public class NPCController : MonoBehaviour
 
     private void CheckFieldOfView()
     {
-        if (EventSystem.current.IsPointerOverGameObject())
+        // 1. マウスカーソルの下にUIがあるかを詳細にチェックする
+        PointerEventData eventData = new PointerEventData(EventSystem.current);
+        eventData.position = Input.mousePosition;
+        List<RaycastResult> results = new List<RaycastResult>();
+        EventSystem.current.RaycastAll(eventData, results);
+
+        // 2. ヒットしたUIの中に、ゲーム画面(Raw Image)以外のものが含まれているかチェック
+        bool isOverRealUI = false;
+        if (ScreenToWorldConverter.Instance != null && ScreenToWorldConverter.Instance.gameScreen != null)
+        {
+            foreach (var result in results)
+            {
+                // もしヒットしたのがゲーム画面でなければ、それは「本物のUI」の上だと判断
+                if (result.gameObject != ScreenToWorldConverter.Instance.gameScreen.gameObject)
+                {
+                    isOverRealUI = true;
+                    break; // 1つでも見つかればチェック終了
+                }
+            }
+        }
+        else if (results.Count > 0)
+        {
+            // ScreenToWorldConverterが設定されていない場合は、以前の挙動に fallback
+            isOverRealUI = true;
+        }
+
+        // 3. もし「本物のUI」の上なら、視界検知をせずに終了
+        if (isOverRealUI)
         {
             isCursorInView = false;
             return;
         }
-
+        
+        // --- 以下は既存の視界検知ロジック（変更なし） ---
         Vector3 eyePosition = transform.TransformPoint(eyeOffset);
         Vector3 mouseWorldPos = GetMouseWorldPosition();
         float distanceToCursor = Vector3.Distance(eyePosition, mouseWorldPos);
@@ -324,10 +352,16 @@ public class NPCController : MonoBehaviour
 
     private Vector3 GetMouseWorldPosition()
     {
-        if (Camera.main == null) return Vector3.zero;
-        Vector3 cursorPos = Input.mousePosition;
-        float distance_from_camera = Mathf.Abs(transform.position.z - Camera.main.transform.position.z);
-        cursorPos.z = distance_from_camera;
-        return Camera.main.ScreenToWorldPoint(cursorPos);
+        // ScreenToWorldConverterがインスタンス化されており、かつ座標を取得できた場合
+        if (ScreenToWorldConverter.Instance != null && 
+            ScreenToWorldConverter.Instance.GetWorldPosition(Input.mousePosition, out Vector3 worldPos))
+        {
+            // 正しいワールド座標を返す
+            return worldPos;
+        }
+
+        // カーソルがゲーム画面の外にあるなど、座標が取得できなかった場合
+        // 非常に遠い座標を返すことで、NPCが決して反応しないようにする
+        return new Vector3(float.MaxValue, float.MaxValue, float.MaxValue);
     }
 }

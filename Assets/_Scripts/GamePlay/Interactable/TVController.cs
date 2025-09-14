@@ -30,14 +30,17 @@ public class TVController : MonoBehaviour
 
     void Update()
     {
-        //右クリックで電源をオン・オフする処理
-        RaycastHit2D[] hits = Physics2D.GetRayIntersectionAll(Camera.main.ScreenPointToRay(Input.mousePosition));
-        foreach (var hit in hits)
+        if (Input.GetMouseButtonDown(0)) // 0:左クリック
         {
-            if (hit.collider.gameObject == this.gameObject)
+            // ScreenToWorldConverterを使って、正しいワールド座標を取得
+            if (ScreenToWorldConverter.Instance != null &&
+                ScreenToWorldConverter.Instance.GetWorldPosition(Input.mousePosition, out Vector3 worldPos))
             {
-                if (Input.GetMouseButtonDown(0)) //0:左クリック
+                // 取得した座標に何があるかチェック
+                RaycastHit2D hit = Physics2D.Raycast(worldPos, Vector2.zero);
+                if (hit.collider != null && hit.collider.gameObject == this.gameObject)
                 {
+                    // TVがヒットしたら、電源を切り替える
                     if (isTVOn)
                     {
                         TurnOffTV();
@@ -46,7 +49,6 @@ public class TVController : MonoBehaviour
                     {
                         TurnOnTV();
                     }
-                    break;
                 }
             }
         }

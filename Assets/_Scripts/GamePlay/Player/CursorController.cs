@@ -162,10 +162,16 @@ public class CursorController : MonoBehaviour
 
     private Vector3 GetMouseWorldPosition()
     {
-        if (targetNpc == null) return Vector3.zero;
-        Vector3 mousePos = Input.mousePosition;
-        float distanceFromCamera = Mathf.Abs(targetNpc.transform.position.z - Camera.main.transform.position.z);
-        mousePos.z = distanceFromCamera;
-        return Camera.main.ScreenToWorldPoint(mousePos);
+        // ScreenToWorldConverterがインスタンス化されており、かつ座標を取得できた場合
+        if (ScreenToWorldConverter.Instance != null && 
+            ScreenToWorldConverter.Instance.GetWorldPosition(Input.mousePosition, out Vector3 worldPos))
+        {
+            // 正しいワールド座標を返す
+            return worldPos;
+        }
+
+        // カーソルがゲーム画面の外にあるなど、座標が取得できなかった場合
+        // 非常に遠い座標を返すことで、NPCが決して反応しないようにする
+        return new Vector3(float.MaxValue, float.MaxValue, float.MaxValue);
     }
 }

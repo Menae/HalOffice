@@ -36,6 +36,19 @@ public class CalendarController : MonoBehaviour
 
     private void Update()
     {
+        // ▼▼▼ 以下の判定ロジックをUpdateの冒頭に追加 ▼▼▼
+        // ScreenToWorldConverterを使って、マウス下のオブジェクトを特定する
+        isMouseOver = false; // 毎フレーム、一旦falseにリセット
+        if (ScreenToWorldConverter.Instance != null &&
+            ScreenToWorldConverter.Instance.GetWorldPosition(Input.mousePosition, out Vector3 worldPos))
+        {
+            RaycastHit2D hit = Physics2D.Raycast(worldPos, Vector2.zero);
+            if (hit.collider != null && hit.collider.gameObject == this.gameObject)
+            {
+                isMouseOver = true; // カーソルが自身の上にあればtrueにする
+            }
+        }
+
         //毎フレーム最新の回転量を記憶し、古いものを忘れる
         scrollHistory.Enqueue(Input.GetAxis("Mouse ScrollWheel"));
         if (scrollHistory.Count > frameHistoryCount)
@@ -63,16 +76,6 @@ public class CalendarController : MonoBehaviour
 
         //どちらかの方向に回ったら、合計の勢いでページをめくる
         TurnPage(Mathf.Abs(recentScrollSum));
-    }
-
-    private void OnMouseEnter()
-    {
-        isMouseOver = true;
-    }
-
-    private void OnMouseExit()
-    {
-        isMouseOver = false;
     }
 
     private void TurnPage(float scrollSum)

@@ -1,60 +1,60 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
-using System; // Actionを使うために必要
+using System;
+using System.Linq; // Linqを使うために必要
 
 public class InvestigationManager : MonoBehaviour
 {
+    // このシーン内でのみ有効なシングルトン
     public static InvestigationManager Instance { get; private set; }
 
-    // 全ての証拠データを保持するリスト
-    public List<Clue> allClues;
+    [Tooltip("この調査シーンで登場する可能性のある全ての証拠")]
+    public List<Clue> allCluesInThisScene;
 
-    // 証拠がアンロックされた時に他のスクリプトに通知するためのイベント
     public static event Action<Clue> OnClueUnlocked;
 
     private void Awake()
     {
-        // シーンをまたいで存在し続けるシングルトンの実装
-        if (Instance == null)
+        // シーン内シングルトンの実装
+        if (Instance != null)
         {
-            Instance = this;
-            DontDestroyOnLoad(gameObject);
-            ResetAllClues(); // ゲーム開始時に全ての証拠を未発見状態にする
+            Debug.LogWarning("InvestigationManagerがシーンに複数存在します。");
+            Destroy(this.gameObject);
+            return;
         }
-        else
-        {
-            Destroy(gameObject);
-        }
+        Instance = this;
+        // DontDestroyOnLoadを削除！
     }
 
-    // 全ての証拠をリセットする
-    public void ResetAllClues()
+    /// <summary>
+    /// このシーンでアンロックされた証拠だけをGameManagerに渡す
+    /// </summary>
+    public void PassCluesToGameManager()
     {
-        foreach (var clue in allClues)
+        if (GameManager.Instance == null)
         {
-            clue.ResetStatus();
+            Debug.LogError("GameManagerが見つかりません！");
+            return;
         }
+
+        // isUnlockedがtrueになっている証拠だけを抽出してリスト化する
+        List<Clue> unlockedClues = allCluesInThisScene.Where(clue => clue.isUnlocked).ToList();
+        
+        // GameManagerの「運び屋」変数に、抽出したリストを渡す
+        GameManager.Instance.collectedCluesForReport = unlockedClues;
+
+        Debug.Log($"{unlockedClues.Count}個の証拠をGameManagerに渡しました。");
     }
 
     // 指定された証拠をアンロックするメソッド
     public void UnlockClue(Clue clueToUnlock)
     {
-        if (clueToUnlock == null) return;
-
-        // ▼▼▼ デバッグログを追加 ▼▼▼
-        // どの証拠をアンロックしようとしているか、そのインスタンスIDと名前、現在の状態を出力
-        Debug.Log($"UnlockClueが呼ばれました。対象: [{clueToUnlock.GetInstanceID()}] {clueToUnlock.name}, 現在のisUnlocked: {clueToUnlock.isUnlocked}");
-
-        // すでにアンロック済みなら、ここで処理を終了
+        if (clueToUnlock == null || !allCluesInThisScene.Contains(clueToUnlock)) return;
         if (clueToUnlock.isUnlocked) return;
 
         clueToUnlock.isUnlocked = true;
-
-        // 変更後の状態をログに出力
-        Debug.Log($"===> 結果: [{clueToUnlock.GetInstanceID()}] {clueToUnlock.name} の isUnlocked を true に設定しました。");
-
-        // 証拠がアンロックされたことを通知
         OnClueUnlocked?.Invoke(clueToUnlock);
+        Debug.Log($"証拠をアンロックしました: {clueToUnlock.name}");
     }
 
     // 指定された証拠がアンロック済みか確認するメソッド

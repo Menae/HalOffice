@@ -353,7 +353,7 @@ public class NPCController : MonoBehaviour
     private Vector3 GetMouseWorldPosition()
     {
         // ScreenToWorldConverterがインスタンス化されており、かつ座標を取得できた場合
-        if (ScreenToWorldConverter.Instance != null && 
+        if (ScreenToWorldConverter.Instance != null &&
             ScreenToWorldConverter.Instance.GetWorldPosition(Input.mousePosition, out Vector3 worldPos))
         {
             // 正しいワールド座標を返す

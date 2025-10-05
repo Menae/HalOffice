@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using System.Collections;
@@ -6,21 +6,33 @@ using System.Collections.Generic;
 using Ink.Runtime;
 
 /// <summary>
-/// Inkストーリーを再生し、会話UI（吹き出し、選択肢など）を管理するコントローラー
+/// Inkストーリーを再生し、会話UI(吹き出し、選択肢など)の生成と管理を行うシングルトンクラス。
+/// ゲーム内の様々なトリガーから呼び出され、指定された会話劇を演出します。
 /// </summary>
 public class ChatController : MonoBehaviour
 {
-    [Header("UI参照")]
-    [Tooltip("会話ログをスクロールさせるためのScroll Rect")]
+    // --- シングルトンインスタンス ---
+    public static ChatController Instance { get; private set; }
+
+    /// <summary>
+    /// 会話が完全に終了したことを外部のシステムに通知するための静的イベント。
+    /// </summary>
+    public static event System.Action OnConversationFinished;
+
+
+    // --- Inspectorで設定する項目 ---
+
+    [Header("UI参照 (UI References)")]
+    [Tooltip("表示/非表示を切り替えたいチャットパネル本体")]
+    [SerializeField] private GameObject chatPanel;
+    [Tooltip("会話ログをスクロールさせるためのScroll Rectコンポーネント")]
     [SerializeField] private ScrollRect scrollRect;
     [Tooltip("吹き出しが生成される親オブジェクト(ScrollViewのContent)")]
     [SerializeField] private RectTransform contentContainer;
-    [Tooltip("会話を進めるための、画面全体を覆う透明なボタン")]
-    [SerializeField] private Button advanceButton;
-    [Tooltip("選択肢を並べる親オブジェクト")]
+    [Tooltip("選択肢のボタンが生成される親オブジェクト")]
     [SerializeField] private GameObject choicesContainer;
 
-    [Header("吹き出しプレハブ")]
+    [Header("吹き出しプレハブ (Bubble Prefabs)")]
     [Tooltip("発言者アイコンが左にある吹き出しのプレハブ")]
     [SerializeField] private GameObject bubblePrefabLeft;
     [Tooltip("発言者アイコンが右にある吹き出しのプレハブ")]
@@ -30,38 +42,111 @@ public class ChatController : MonoBehaviour
     [Tooltip("選択肢ボタンのプレハブ")]
     [SerializeField] private GameObject choiceButtonPrefab;
 
-    [Header("発言者プロフィール")]
+    [Header("発言者プロフィール (Speaker Profiles)")]
     [Tooltip("Inkのタグと、それに対応するアイコン画像を登録するリスト")]
     [SerializeField] private List<SpeakerProfile> speakerProfiles;
 
-    // 発言者のタグとアイコン画像を紐づけるための内部データベース
+
+    // --- 内部処理用の変数 ---
     private Dictionary<string, Sprite> speakerIconDatabase;
     private Story currentStory;
 
     /// <summary>
-    /// 発言者のタグとアイコン画像をセットで管理するためのクラス
+    /// Inspector上で発言者のタグとアイコン画像をセットで管理するためのクラス。
     /// </summary>
     [System.Serializable]
     public class SpeakerProfile
     {
-        [Tooltip("Inkファイルで使うタグ名(例: boss_normal, player_happy)")]
+        [Tooltip("Inkファイルで使うタグ名(例: Boss, Player_Happy)")]
         public string tag;
         [Tooltip("上記タグに対応するキャラクターのアイコン画像")]
         public Sprite icon;
     }
 
+    #region Unity Lifecycle Methods
+
     private void Awake()
     {
+        if (Instance == null) { Instance = this; }
+        else { Destroy(gameObject); return; }
         InitializeDatabase();
+    }
 
-        if (advanceButton != null)
+    #endregion
+
+    #region Public Methods
+
+    /// <summary>
+    /// 新しい会話を開始する。DesktopManagerなど外部のトリガーから呼び出す。
+    /// </summary>
+    /// <param name="inkJsonAsset">再生するInkストーリーのJSONアセット</param>
+    public void StartConversation(TextAsset inkJsonAsset)
+    {
+        if (chatPanel != null) chatPanel.SetActive(true);
+
+        if (speakerIconDatabase == null) InitializeDatabase();
+
+        if (GameManager.Instance != null) GameManager.Instance.conversationLog.Clear();
+        foreach (Transform child in contentContainer) Destroy(child.gameObject);
+
+        currentStory = new Story(inkJsonAsset.text);
+        AdvanceConversation();
+    }
+
+    /// <summary>
+    /// 会話を一行進める。UIのクリックイベント(EventTrigger)から呼び出す。
+    /// </summary>
+    public void AdvanceConversation()
+    {
+        if (choicesContainer.activeInHierarchy) return;
+
+        if (currentStory != null && !currentStory.canContinue)
         {
-            advanceButton.onClick.AddListener(AdvanceConversation);
+            OnConversationFinished?.Invoke();
+            chatPanel.SetActive(false);
+            currentStory = null;
+            return;
+        }
+
+        if (currentStory == null)
+        {
+            chatPanel.SetActive(false); // パネルを閉じる
+            return;                     // 処理を終了する
+        }
+
+        string currentLine = currentStory.Continue();
+        List<string> currentTags = new List<string>(currentStory.currentTags);
+
+        if (GameManager.Instance != null)
+        {
+            GameManager.Instance.conversationLog.Add(new DialogueLineData { text = currentLine, tags = currentTags });
+        }
+
+        DisplayLine(currentLine, currentTags);
+
+        if (currentStory.currentChoices.Count > 0)
+        {
+            DisplayChoices();
         }
     }
 
     /// <summary>
-    /// SpeakerProfilesリストを元に、アイコン検索用のデータベースを初期化する
+    /// チャットウィンドウの表示/非表示を切り替える
+    /// </summary>
+    public void ToggleChatWindow()
+    {
+        if (chatPanel == null) return;
+        bool willBeActive = !chatPanel.activeSelf;
+        chatPanel.SetActive(willBeActive);
+        if (willBeActive) RebuildLog();
+    }
+
+    #endregion
+
+    #region Private Methods
+
+    /// <summary>
+    /// InspectorのSpeakerProfilesリストを元に、アイコン検索用のデータベースを構築する。
     /// </summary>
     private void InitializeDatabase()
     {
@@ -78,60 +163,7 @@ public class ChatController : MonoBehaviour
     }
 
     /// <summary>
-    /// 新しい会話を開始するためのメソッド。DesktopManagerなどから呼び出す。
-    /// </summary>
-    public void StartConversation(TextAsset inkJsonAsset)
-    {
-        this.gameObject.SetActive(true);
-
-        if (speakerIconDatabase == null)
-        {
-            InitializeDatabase();
-        }
-
-        // 以前の会話ログを全て削除
-        foreach (Transform child in contentContainer)
-        {
-            Destroy(child.gameObject);
-        }
-
-        currentStory = new Story(inkJsonAsset.text);
-        AdvanceConversation();
-    }
-
-    /// <summary>
-    /// 会話を一行進める、または会話を終了する
-    /// </summary>
-    public void AdvanceConversation()
-    {
-        // プレイヤーが選択肢を選んでいる最中は、会話を進めない
-        if (choicesContainer.activeInHierarchy) return;
-
-        // これ以上会話が続かない場合は、ChatPanel自身を非アクティブにして終了
-        if (currentStory != null && !currentStory.canContinue)
-        {
-            this.gameObject.SetActive(false);
-            return;
-        }
-
-        if (currentStory == null) return;
-
-        // Inkから次の行の情報を取得
-        string currentLine = currentStory.Continue();
-        List<string> currentTags = currentStory.currentTags;
-
-        // 新しい吹き出しを表示
-        DisplayLine(currentLine, currentTags);
-
-        // もしこの後に選択肢があれば、それを表示する
-        if (currentStory.currentChoices.Count > 0)
-        {
-            DisplayChoices();
-        }
-    }
-
-    /// <summary>
-    /// 受け取った情報から、適切な吹き出しを生成して表示する
+    /// 受け取った情報から、適切な吹き出しを生成して表示する。
     /// </summary>
     private void DisplayLine(string text, List<string> tags)
     {
@@ -143,15 +175,11 @@ public class ChatController : MonoBehaviour
         DialogueBubble bubble = newBubbleObject.GetComponent<DialogueBubble>();
         if (bubble == null)
         {
-            Debug.LogError("プレハブにDialogueBubbleスクリプトがアタッチされていません!", newBubbleObject);
+            Debug.LogError("プレハブにDialogueBubbleスクリプトがアタッチされていません！", newBubbleObject);
             return;
         }
 
-        // 仲介役を通じて、安全かつ高速に各部品にアクセスする
-        if (bubble.textComponent != null)
-        {
-            bubble.textComponent.text = text;
-        }
+        if (bubble.textComponent != null) bubble.textComponent.text = text;
 
         if (bubble.iconImage != null)
         {
@@ -170,7 +198,7 @@ public class ChatController : MonoBehaviour
     }
 
     /// <summary>
-    /// プレイヤーに選択肢を提示する
+    /// Inkストーリーに選択肢がある場合に、UIボタンを生成して表示する。
     /// </summary>
     private void DisplayChoices()
     {
@@ -202,17 +230,17 @@ public class ChatController : MonoBehaviour
     }
 
     /// <summary>
-    /// プレイヤーが選択肢を選んだ時の処理
+    /// プレイヤーが選択肢ボタンをクリックした時の処理。
     /// </summary>
     private void MakeChoice(int choiceIndex)
     {
         currentStory.ChooseChoiceIndex(choiceIndex);
         choicesContainer.SetActive(false);
-        AdvanceConversation();
+        AdvanceConversation(); // 選択後の会話に進む
     }
 
     /// <summary>
-    /// Inkタグを解析し、使用すべきプレハブを返す
+    /// Inkタグを解析し、使用すべきプレハブを返す。
     /// </summary>
     private GameObject GetPrefabFromTags(List<string> tags)
     {
@@ -232,11 +260,11 @@ public class ChatController : MonoBehaviour
                 }
             }
         }
-        return bubblePrefabLeft; // デフォルトは左吹き出し
+        return bubblePrefabLeft; // タグが見つからない場合のデフォルト
     }
 
     /// <summary>
-    /// Inkタグを解析し、使用すべきアイコン画像を返す
+    /// Inkタグを解析し、使用すべきアイコン画像を返す。
     /// </summary>
     private Sprite GetSpeakerIconFromTags(List<string> tags)
     {
@@ -244,7 +272,6 @@ public class ChatController : MonoBehaviour
 
         foreach (string tag in tags)
         {
-            // speaker: タグの場合、":"以降の部分だけをキーとして使う
             if (tag.StartsWith("speaker:"))
             {
                 string speakerKey = tag.Substring("speaker:".Length).Trim();
@@ -253,14 +280,59 @@ public class ChatController : MonoBehaviour
                     return speakerIconDatabase[speakerKey];
                 }
             }
-            // 短いタグにも対応
+            // "speaker:"接頭辞なしの短いタグにも対応
             if (speakerIconDatabase.ContainsKey(tag))
             {
                 return speakerIconDatabase[tag];
             }
         }
-        return null;
+        return null; // 対応するアイコンが見つからなければnull
     }
+
+    /// <summary>
+    /// GameManagerに保存されたログを元に会話を再生成する
+    /// </summary>
+    private void RebuildLog()
+    {
+        foreach (Transform child in contentContainer) Destroy(child.gameObject);
+        if (GameManager.Instance == null) return;
+        
+        foreach (var logEntry in GameManager.Instance.conversationLog)
+        {
+            DisplayLine(logEntry.text, logEntry.tags);
+        }
+    }
+
+    /// <summary>
+    /// RebuildLog専用。スクロール処理を伴わないDisplayLine。
+    /// </summary>
+    private void DisplayLineWithoutScroll(string text, List<string> tags)
+    {
+        GameObject prefabToUse = GetPrefabFromTags(tags);
+        Sprite iconToUse = GetSpeakerIconFromTags(tags);
+
+        GameObject newBubbleObject = Instantiate(prefabToUse, contentContainer);
+        DialogueBubble bubble = newBubbleObject.GetComponent<DialogueBubble>();
+        if (bubble == null) return;
+
+        if (bubble.textComponent != null) bubble.textComponent.text = text;
+        if (bubble.iconImage != null)
+        {
+            if (iconToUse != null)
+            {
+                bubble.iconImage.sprite = iconToUse;
+                bubble.iconImage.gameObject.SetActive(true);
+            }
+            else
+            {
+                bubble.iconImage.gameObject.SetActive(false);
+            }
+        }
+    }
+
+    #endregion
+
+    #region Coroutines
 
     private void ScrollToBottom()
     {
@@ -269,11 +341,13 @@ public class ChatController : MonoBehaviour
 
     private IEnumerator ForceScrollDown()
     {
-        // レイアウトグループの計算が終わるのを待ってからスクロール位置を正しく設定する
+        // レイアウトグループの計算が完了するのを待つため、フレームの終わりに実行
         yield return new WaitForEndOfFrame();
         if (scrollRect != null)
         {
             scrollRect.verticalNormalizedPosition = 0f;
         }
     }
+
+    #endregion
 }

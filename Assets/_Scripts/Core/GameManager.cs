@@ -2,6 +2,13 @@
 using System.Collections.Generic;
 using System;
 
+[System.Serializable]
+public class DialogueLineData
+{
+    public string text;
+    public List<string> tags;
+}
+
 public class GameManager : MonoBehaviour
 {
     public static GameManager Instance { get; private set; }
@@ -15,8 +22,11 @@ public class GameManager : MonoBehaviour
     public bool justFinishedInvestigation = false;
     public List<Clue> collectedCluesForReport;
 
+    [Header("会話ログ")]
+    public List<DialogueLineData> conversationLog = new List<DialogueLineData>();
+
     // --- Inspectorに表示されないプロパティ ---
-    
+
     // 他のスクリプトが安全にアクセスするためのパブリック「プロパティ」
     // (ヘッダーを付けられないため、Inspectorには表示されない)
     public bool isInputEnabled { get; private set; } = true;
@@ -26,22 +36,23 @@ public class GameManager : MonoBehaviour
 
     private void Awake()
     {
-        // シーンをまたいで存在し続けるシングルトンの実装
+        // 他のシーンから来たGameManagerがまだいないか？
         if (Instance == null)
         {
+            // いなければ、自分が最初のインスタンスになる
             Instance = this;
             DontDestroyOnLoad(gameObject);
-            
-            // ▼▼▼ 以下を追加 ▼▼▼
-            // ゲームが起動する最初の瞬間に、全ての証拠の状態をリセットする
+
+            // GameManager独自の初期化処理
             ResetAllClues();
         }
         else
         {
+            // 既に存在している場合は、このオブジェクトは不要なので破壊する
             Destroy(gameObject);
         }
     }
-    
+
     /// <summary>
     /// ゲーム開始時などに、全ての証拠の状態を未発見に戻す
     /// </summary>

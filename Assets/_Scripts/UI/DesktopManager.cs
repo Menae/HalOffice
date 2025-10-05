@@ -1,33 +1,34 @@
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.UI;
 using System.Collections;
-using UnityEngine.EventSystems;
 using System.Collections.Generic;
-using UnityEngine.SceneManagement; // シーン遷移に必要
+using UnityEngine.EventSystems;
+using UnityEngine.SceneManagement;
 
+/// <summary>
+/// ゲームのスタート画面（ログイン画面、デスクトップ画面）のUI遷移と、
+/// デスクトップ上の各アプリケーションの挙動を一元管理するクラス。
+/// </summary>
 public class DesktopManager : MonoBehaviour
 {
-    // === Inspectorで設定する項目 ===
+    // --- Inspectorで設定する項目 ---
+
     [Header("ログインシーケンス設定")]
     [Tooltip("ログイン画面の「はじめる」ボタン")]
     public Button startButton;
-    [Tooltip("画面遷移に使う暗転用のImage")]
-    public Image fadeImage;
     [Tooltip("ログイン画面全体を管理する親オブジェクトのCanvas Group")]
     public CanvasGroup loginScreenCanvasGroup;
     [Tooltip("ログイン後に表示するデスクトップ画面の親オブジェクト")]
     public GameObject desktopScreen;
-    [Tooltip("フェードにかかる時間（秒）")]
-    public float fadeDuration = 1.0f;
     [Tooltip("アプリケーションを終了するためのボタン")]
     public Button exitButton;
 
     [Header("通知設定")]
-    [Tooltip("通知アプリの右上の赤い丸")]
+    [Tooltip("通知アプリアイコンの右上に表示するバッジ")]
     public GameObject notificationBadge;
-    [Tooltip("デスクトップ表示後、通知が来るまでの時間（秒）")]
+    [Tooltip("デスクトップ表示後、通知が表示されるまでの待機時間(秒)")]
     public float notificationDelay = 3.0f;
-    [Tooltip("通知が来た時に再生する効果音")]
+    [Tooltip("通知が表示される時に再生する効果音")]
     public AudioClip notificationSound;
     [Range(0f, 1f)]
     [Tooltip("通知効果音の音量")]
@@ -38,32 +39,38 @@ public class DesktopManager : MonoBehaviour
     [Header("デスクトップ設定")]
     [Tooltip("デスクトップのアプリ情報をまとめたリスト")]
     public List<AppEntry> desktopApps;
-    [Tooltip("アイコンをホバーした時に表示する白い枠のImage")]
+    [Tooltip("アプリアイコンをホバーした時に表示する背景のImage")]
     public Image iconHoverFrame;
 
     [Header("チュートリアル会話設定")]
     [Tooltip("シーン内のChatController")]
     public ChatController chatController;
-    [Tooltip("最初に再生する会話のInkファイル(JSONアセット)")]
+    [Tooltip("最初に再生する会話のInkファイル（JSONアセット）")]
     public TextAsset tutorialChatInk;
 
     [Header("デバッグ設定")]
     [Tooltip("チェックを入れると、エディタ実行時に毎回チュートリアルが再生されます")]
     public bool forceShowTutorialInEditor = false;
 
+    /// <summary>
+    /// デスクトップ上の各アプリのUI要素をセットで管理するためのクラス。
+    /// </summary>
     [System.Serializable]
     public class AppEntry
     {
+        [Tooltip("Inspector上でアプリを識別するための名前")]
         public string appName;
+        [Tooltip("アプリを起動するためのアイコンボタン")]
         public Button appIconButton;
+        [Tooltip("アイコンクリック時に表示されるウィンドウパネル")]
         public GameObject appPanel;
+        [Tooltip("ウィンドウを閉じるためのボタン（複数可）")]
         public List<Button> closeButtons;
 
         [Header("オプション設定")]
         [Tooltip("アイコンクリック時にパネルと一緒にアクティブになるImage（任意）")]
         public Image imageToActivate;
-        
-        // ▼▼▼ 以下を復活 ▼▼▼
+
         [Header("シーン遷移設定（任意）")]
         [Tooltip("このボタンを押すと指定したシーンに遷移する（任意）")]
         public Button sceneLoadButton;
@@ -71,33 +78,28 @@ public class DesktopManager : MonoBehaviour
         public string sceneNameToLoad;
     }
 
-    // === 内部処理用の変数 ===
+    // --- 内部処理用の変数 ---
     private bool isFading = false;
     private bool hasClearedFirstNotification = false;
 
+    #region Unity Lifecycle Methods
+
+    private void OnEnable()
+    {
+        ChatController.OnConversationFinished += HandleTutorialFinished;
+    }
+
+    private void OnDisable()
+    {
+        ChatController.OnConversationFinished -= HandleTutorialFinished;
+    }
+
     void Start()
     {
-        // --- 初期化処理 ---
-        loginScreenCanvasGroup.gameObject.SetActive(true);
-        desktopScreen.SetActive(false);
-
-        if (fadeImage != null)
-        {
-            fadeImage.color = new Color(fadeImage.color.r, fadeImage.color.g, fadeImage.color.b, 0);
-            fadeImage.gameObject.SetActive(false);
-        }
-        if (notificationBadge != null)
-        {
-            notificationBadge.SetActive(false);
-        }
-        if (iconHoverFrame != null)
-        {
-            iconHoverFrame.gameObject.SetActive(false);
-        }
-
         // --- ボタンのクリックイベントをスクリプトから登録 ---
         if (startButton != null)
         {
+            startButton.interactable = false;
             startButton.onClick.AddListener(StartLoginSequence);
         }
         if (exitButton != null)
@@ -105,38 +107,32 @@ public class DesktopManager : MonoBehaviour
             exitButton.onClick.AddListener(ExitApplication);
         }
 
+        // --- デスクトップアプリの初期設定 ---
         for (int i = 0; i < desktopApps.Count; i++)
         {
             AppEntry app = desktopApps[i];
             GameObject panelToToggle = app.appPanel;
             Image imageToToggle = app.imageToActivate;
 
-            // --- アイコンボタンのクリックイベント設定 ---
             if (app.appIconButton != null)
             {
-                if (i == 0)
+                if (i == 0) // Element 0 (通知アプリ) の場合
                 {
                     app.appIconButton.onClick.AddListener(OnFirstAppIconClick);
+
+                    // 開始時は通知アプリアイコンをクリックできないようにする
+                    app.appIconButton.interactable = false;
                 }
-                else
+                else // それ以外のアプリ
                 {
                     app.appIconButton.onClick.AddListener(() => {
                         if (panelToToggle != null) panelToToggle.SetActive(true);
                         if (imageToToggle != null) imageToToggle.gameObject.SetActive(true);
                     });
                 }
-
-                // --- ホバーイベントの動的設定 ---
-                EventTrigger trigger = app.appIconButton.gameObject.GetComponent<EventTrigger>() ?? app.appIconButton.gameObject.AddComponent<EventTrigger>();
-                EventTrigger.Entry entryEnter = new EventTrigger.Entry { eventID = EventTriggerType.PointerEnter };
-                entryEnter.callback.AddListener((eventData) => { ShowHoverFrame(app.appIconButton.transform); });
-                trigger.triggers.Add(entryEnter);
-                EventTrigger.Entry entryExit = new EventTrigger.Entry { eventID = EventTriggerType.PointerExit };
-                entryExit.callback.AddListener((eventData) => { HideHoverFrame(); });
-                trigger.triggers.Add(entryExit);
+                SetupHoverEvents(app.appIconButton);
             }
 
-            // --- 閉じるボタンのクリックイベント設定 ---
             if (app.closeButtons != null && app.closeButtons.Count > 0)
             {
                 foreach (Button button in app.closeButtons)
@@ -151,25 +147,177 @@ public class DesktopManager : MonoBehaviour
                 }
             }
 
-            // ▼▼▼ 以下を復活 ▼▼▼
-            // --- シーン遷移ボタンのクリックイベント設定 ---
             if (app.sceneLoadButton != null && !string.IsNullOrEmpty(app.sceneNameToLoad))
             {
                 string sceneName = app.sceneNameToLoad;
-                app.sceneLoadButton.onClick.AddListener(() => StartCoroutine(LoadSceneRoutine(sceneName)));
+                app.sceneLoadButton.onClick.AddListener(() => {
+                    var sequenceManager = FindObjectOfType<StartupSequenceManager>();
+                    if (sequenceManager != null)
+                    {
+                        StartCoroutine(LoadSceneRoutine(sceneName, sequenceManager));
+                    }
+                });
             }
-            // ▲▲▲ ここまで ▲▲▲
 
-            // --- 開始時の非表示設定 ---
-            if (panelToToggle != null)
+            if (panelToToggle != null) panelToToggle.SetActive(false);
+            if (imageToToggle != null) imageToToggle.gameObject.SetActive(false);
+        }
+    }
+
+    #endregion
+
+    #region Public Methods
+
+    public void InitializeForSequence()
+    {
+        if (loginScreenCanvasGroup != null) loginScreenCanvasGroup.gameObject.SetActive(true);
+        if (desktopScreen != null) desktopScreen.SetActive(false);
+        if (notificationBadge != null) notificationBadge.SetActive(false);
+    }
+
+    public void TakeOverControl()
+    {
+        if (startButton != null) startButton.interactable = true;
+    }
+
+    public void StartLoginSequence()
+    {
+        if (isFading) return;
+        StartCoroutine(LoginToDesktopRoutine());
+    }
+
+    public void ExitApplication()
+    {
+#if UNITY_EDITOR
+        UnityEditor.EditorApplication.isPlaying = false;
+#else
+        Application.Quit();
+#endif
+    }
+
+    #endregion
+
+    #region Private Methods & Coroutines
+
+    private void OnFirstAppIconClick()
+    {
+        if (desktopApps.Count > 0)
+        {
+            AppEntry firstApp = desktopApps[0];
+            if (firstApp.appPanel != null) firstApp.appPanel.SetActive(true);
+            if (firstApp.imageToActivate != null) firstApp.imageToActivate.gameObject.SetActive(true);
+        }
+
+        if (!hasClearedFirstNotification && notificationBadge != null && notificationBadge.activeSelf)
+        {
+            notificationBadge.SetActive(false);
+            hasClearedFirstNotification = true;
+        }
+    }
+
+    private IEnumerator LoginToDesktopRoutine()
+    {
+        isFading = true;
+
+        var sequenceManager = FindObjectOfType<StartupSequenceManager>();
+        if (sequenceManager != null)
+        {
+            yield return StartCoroutine(sequenceManager.Fade(Color.black));
+        }
+
+        if (loginScreenCanvasGroup != null)
+        {
+            loginScreenCanvasGroup.alpha = 0;
+            loginScreenCanvasGroup.interactable = false;
+            loginScreenCanvasGroup.gameObject.SetActive(false);
+        }
+        if (desktopScreen != null)
+        {
+            desktopScreen.SetActive(true);
+        }
+
+        // デスクトップ画面に切り替わったので、タスクバーを表示する
+        if (GlobalUIManager.Instance != null)
+        {
+            GlobalUIManager.Instance.SetDesktopUIVisibility(true);
+        }
+
+        if (sequenceManager != null)
+        {
+            yield return StartCoroutine(sequenceManager.Fade(Color.clear));
+        }
+
+        isFading = false;
+
+        bool shouldShowTutorial = (PlayerPrefs.GetInt("HasSeenTutorial", 0) == 0);
+#if UNITY_EDITOR
+        if (forceShowTutorialInEditor) { shouldShowTutorial = true; }
+#endif
+
+        if (shouldShowTutorial)
+        {
+            // シングルトン経由でChatControllerを呼び出す
+            if (ChatController.Instance != null && tutorialChatInk != null)
             {
-                panelToToggle.SetActive(false);
-            }
-            if (imageToToggle != null)
-            {
-                imageToToggle.gameObject.SetActive(false);
+                ChatController.Instance.StartConversation(tutorialChatInk);
+                PlayerPrefs.SetInt("HasSeenTutorial", 1);
             }
         }
+        else
+        {
+            StartCoroutine(ShowNotificationRoutine());
+        }
+    }
+
+    private void HandleTutorialFinished()
+    {
+        StartCoroutine(ShowNotificationRoutine());
+    }
+
+    private IEnumerator ShowNotificationRoutine()
+    {
+        yield return new WaitForSeconds(notificationDelay);
+
+        if (notificationBadge != null)
+        {
+            notificationBadge.SetActive(true);
+        }
+
+        if (audioSource != null && notificationSound != null)
+        {
+            audioSource.PlayOneShot(notificationSound, notificationVolume);
+        }
+
+        // ▼▼▼ 以下を追加 ▼▼▼
+        // 通知が表示されたので、アイコンをクリック可能にする
+        if (desktopApps.Count > 0 && desktopApps[0].appIconButton != null)
+        {
+            desktopApps[0].appIconButton.interactable = true;
+        }
+    }
+
+    private IEnumerator LoadSceneRoutine(string sceneName, StartupSequenceManager sequenceManager)
+    {
+        if (isFading) yield break;
+        isFading = true;
+
+        if (sequenceManager != null)
+        {
+            yield return StartCoroutine(sequenceManager.Fade(Color.black));
+        }
+
+        SceneManager.LoadScene(sceneName);
+    }
+
+    private void SetupHoverEvents(Button button)
+    {
+        EventTrigger trigger = button.gameObject.GetComponent<EventTrigger>() ?? button.gameObject.AddComponent<EventTrigger>();
+        EventTrigger.Entry entryEnter = new EventTrigger.Entry { eventID = EventTriggerType.PointerEnter };
+        entryEnter.callback.AddListener((eventData) => { ShowHoverFrame(button.transform); });
+        trigger.triggers.Add(entryEnter);
+        EventTrigger.Entry entryExit = new EventTrigger.Entry { eventID = EventTriggerType.PointerExit };
+        entryExit.callback.AddListener((eventData) => { HideHoverFrame(); });
+        trigger.triggers.Add(entryExit);
     }
 
     private void ShowHoverFrame(Transform iconTransform)
@@ -187,154 +335,6 @@ public class DesktopManager : MonoBehaviour
         if (iconHoverFrame == null) return;
         iconHoverFrame.gameObject.SetActive(false);
     }
-    
-    private void OnFirstAppIconClick()
-    {
-        if (desktopApps.Count > 0)
-        {
-            AppEntry firstApp = desktopApps[0];
-            if (firstApp.appPanel != null)
-            {
-                firstApp.appPanel.SetActive(true);
-            }
-            if (firstApp.imageToActivate != null)
-            {
-                firstApp.imageToActivate.gameObject.SetActive(true);
-            }
-        }
-        
-        if (!hasClearedFirstNotification && notificationBadge != null && notificationBadge.activeSelf)
-        {
-            notificationBadge.SetActive(false);
-            hasClearedFirstNotification = true;
-        }
-    }
-    
-    public void StartLoginSequence()
-    {
-        if (isFading) return;
-        StartCoroutine(LoginRoutine());
-    }
-    
-    public void ExitApplication()
-    {
-#if UNITY_EDITOR
-        UnityEditor.EditorApplication.isPlaying = false;
-#else
-        Application.Quit();
-#endif
-    }
 
-    private IEnumerator LoginRoutine()
-    {
-        isFading = true;
-
-        // 1. フェードアウト
-        fadeImage.gameObject.SetActive(true);
-        float timer = 0f;
-        while (timer < fadeDuration)
-        {
-            timer += Time.deltaTime;
-            fadeImage.color = new Color(fadeImage.color.r, fadeImage.color.g, fadeImage.color.b, timer / fadeDuration);
-            yield return null;
-        }
-        fadeImage.color = new Color(fadeImage.color.r, fadeImage.color.g, fadeImage.color.b, 1f);
-
-        // 2. UIの切り替え
-        if (loginScreenCanvasGroup != null)
-        {
-            loginScreenCanvasGroup.alpha = 0;
-            loginScreenCanvasGroup.interactable = false;
-            loginScreenCanvasGroup.gameObject.SetActive(false);
-        }
-        if (desktopScreen != null)
-        {
-            desktopScreen.SetActive(true);
-        }
-
-        // 3. 1フレーム待機
-        yield return null; 
-
-        // 4. フェードイン
-        timer = 0f;
-        while (timer < fadeDuration)
-        {
-            timer += Time.deltaTime;
-            fadeImage.color = new Color(fadeImage.color.r, fadeImage.color.g, fadeImage.color.b, 1f - (timer / fadeDuration));
-            yield return null;
-        }
-        fadeImage.gameObject.SetActive(false);
-
-        isFading = false;
-        
-        // 5. チュートリアル or 通常通知の開始
-        bool shouldShowTutorial = false;
-
-        // もしUnityエディタで実行していて、強制表示フラグがONなら、チュートリアルを再生
-        #if UNITY_EDITOR
-        if (forceShowTutorialInEditor)
-        {
-            shouldShowTutorial = true;
-        }
-        else
-        {
-            // フラグがOFFなら、通常通りPlayerPrefsを確認
-            shouldShowTutorial = (PlayerPrefs.GetInt("HasSeenTutorial", 0) == 0);
-        }
-        #else
-        // エディタ以外（ビルドしたゲーム）では、常にPlayerPrefsを確認
-        shouldShowTutorial = (PlayerPrefs.GetInt("HasSeenTutorial", 0) == 0);
-        #endif
-
-        if (shouldShowTutorial)
-        {
-            // --- 初回プレイ時の処理 ---
-            if (chatController != null && tutorialChatInk != null)
-            {
-                chatController.StartConversation(tutorialChatInk);
-                PlayerPrefs.SetInt("HasSeenTutorial", 1);
-            }
-        }
-        else
-        {
-            // --- 2回目以降のプレイ時の処理 ---
-            StartCoroutine(ShowNotificationRoutine());
-        }
-    }
-
-    private IEnumerator ShowNotificationRoutine()
-    {
-        yield return new WaitForSeconds(notificationDelay);
-        if (notificationBadge != null)
-        {
-            notificationBadge.SetActive(true);
-        }
-        if (audioSource != null && notificationSound != null)
-        {
-            audioSource.PlayOneShot(notificationSound, notificationVolume);
-        }
-    }
-
-    // ▼▼▼ 以下を復活 ▼▼▼
-    /// <summary>
-    /// 指定されたシーンにフェードアウトして遷移するコルーチン
-    /// </summary>
-    private IEnumerator LoadSceneRoutine(string sceneName)
-    {
-        if (isFading) yield break;
-        isFading = true;
-
-        // 1. フェードアウト
-        fadeImage.gameObject.SetActive(true);
-        float timer = 0f;
-        while (timer < fadeDuration)
-        {
-            timer += Time.deltaTime;
-            fadeImage.color = new Color(fadeImage.color.r, fadeImage.color.g, fadeImage.color.b, timer / fadeDuration);
-            yield return null;
-        }
-
-        // 2. シーンをロード
-        SceneManager.LoadScene(sceneName);
-    }
+    #endregion
 }

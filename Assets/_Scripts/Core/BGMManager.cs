@@ -16,16 +16,15 @@ public class BGMManager : MonoBehaviour
 
     private void Awake()
     {
-        if (Instance != null && Instance != this)
+        if (Instance == null)
         {
-            Destroy(this.gameObject);
-            return;
+            Instance = this;
+            DontDestroyOnLoad(gameObject);
         }
-        Instance = this;
-        DontDestroyOnLoad(this.gameObject);
-
-        audioSource = GetComponent<AudioSource>();
-        audioSource.loop = true;
+        else
+        {
+            Destroy(gameObject);
+        }
     }
 
     private void OnEnable()

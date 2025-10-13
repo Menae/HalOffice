@@ -3998,6 +3998,14 @@ PrefabInstance:
       propertyPath: m_Name
       value: BGMManager
       objectReference: {fileID: 0}
+    - target: {fileID: 4946640057098321150, guid: c679bca286c437f4caa67e0559272410, type: 3}
+      propertyPath: bgmDataList.Array.size
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 4946640057098321150, guid: c679bca286c437f4caa67e0559272410, type: 3}
+      propertyPath: bgmDataList.Array.data[1]
+      value: 
+      objectReference: {fileID: 11400000, guid: 45ea498d9081d2c459b5346a97b26b3c, type: 2}
     - target: {fileID: 6120846828488155350, guid: c679bca286c437f4caa67e0559272410, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0

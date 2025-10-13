@@ -19,22 +19,41 @@ public class BGMManager : MonoBehaviour
         if (Instance == null)
         {
             Instance = this;
-            DontDestroyOnLoad(gameObject);
+            DontDestroyOnLoad(this.gameObject);
+
+            // AudioSourceの取得と、nullチェックをここで行う
+            audioSource = GetComponent<AudioSource>();
+            if (audioSource == null)
+            {
+                // エラーの原因が明確にわかるように、ログを出して処理を停止する
+                Debug.LogError("BGMManagerにAudioSourceコンポーネントがアタッチされていません！ Inspectorを確認してください。", this.gameObject);
+                this.enabled = false; // スクリプトを無効化して、これ以上エラーが出ないようにする
+                return;
+            }
+            audioSource.loop = true;
         }
-        else
+        else if (Instance != this)
         {
-            Destroy(gameObject);
+            Destroy(this.gameObject);
         }
     }
 
     private void OnEnable()
     {
+        // 自分がシングルトンの本物インスタンスでない場合は、
+        // 何もせずに即座に処理を終了する
+        if (Instance != null && Instance != this) return;
+
         SceneManager.sceneLoaded += PlayBGMForScene;
         DetectionManager.OnGameOver += StopMusic;
     }
 
     private void OnDisable()
     {
+        // 自分がシングルトンの本物インスタンスでない場合は、
+        // 何もせずに即座に処理を終了する
+        if (Instance != null && Instance != this) return;
+
         SceneManager.sceneLoaded -= PlayBGMForScene;
         DetectionManager.OnGameOver -= StopMusic;
     }

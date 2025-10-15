@@ -1,97 +1,171 @@
 ﻿using UnityEngine;
+using UnityEngine.UI;
+using UnityEngine.EventSystems;
+using System.Collections.Generic;
 
 public class DragDropManager : MonoBehaviour
 {
-    // シングルトンとして実装
     public static DragDropManager Instance { get; private set; }
 
     [Header("参照")]
-    [Tooltip("座標変換を行うScreenToWorldConverter")]
     public ScreenToWorldConverter screenToWorldConverter;
+    public EventSystem eventSystem;
+    public Image dragProxyImage;
+    public Canvas parentCanvas;
 
-    // --- 内部変数 ---
-    private Draggable currentDraggedObject; // 現在ドラッグ中のオブジェクト
-    private Vector3 originalPosition;       // ドラッグ開始時の元の位置
-    private ObjectSlot originalSlot;        // ドラッグ開始時の元のスロット
+    private Draggable currentDraggedObject;
+    private ObjectSlot originalSlot;
+    private Vector3 originalPosition;
+    private Vector2 dragOffset; // マウスカーソルとUIプロキシ中心との「差分」
 
     private void Awake()
     {
-        // シングルトンの設定
-        if (Instance != null && Instance != this)
-        {
-            Destroy(this.gameObject);
-        }
-        else
-        {
-            Instance = this;
-        }
+        if (Instance != null && Instance != this) { Destroy(this.gameObject); }
+        else { Instance = this; }
     }
 
     private void Update()
     {
-        // もしオブジェクトをドラッグ中なら
-        if (currentDraggedObject != null)
+        if (dragProxyImage.gameObject.activeSelf)
         {
-            // マウスのスクリーン座標をゲーム世界の座標に変換
-            if (screenToWorldConverter.GetWorldPosition(Input.mousePosition, out Vector3 worldPos))
-            {
-                // ドラッグ中のオブジェクトをマウスに追従させる
-                currentDraggedObject.transform.position = worldPos;
-            }
+            // 現在のマウス位置をCanvasのローカル座標に変換
+            Vector2 currentMouseLocalPos;
+            RectTransformUtility.ScreenPointToLocalPointInRectangle(
+                parentCanvas.transform as RectTransform,
+                Input.mousePosition,
+                parentCanvas.worldCamera,
+                out currentMouseLocalPos);
 
-            // マウスの左ボタンを離したら、ドラッグを終了する
+            // ★★★ 修正点 ★★★
+            // 新しい位置 = (現在のマウスのローカル座標) - (最初に記憶した差分)
+            dragProxyImage.rectTransform.localPosition = currentMouseLocalPos - dragOffset;
+
             if (Input.GetMouseButtonUp(0))
             {
-                StopDrag();
+                HandleDrop();
             }
         }
     }
 
-    /// <summary>
-    /// Draggableオブジェクトから呼び出され、ドラッグを開始する
-    /// </summary>
-    public void StartDrag(Draggable draggable)
+    public void StartDragFromInputBridge(PointerEventData eventData)
     {
+        if (screenToWorldConverter.GetWorldPosition(eventData.position, out Vector3 worldPos))
+        {
+            Collider2D hit = Physics2D.OverlapPoint(worldPos);
+            if (hit != null)
+            {
+                Draggable draggable = hit.GetComponent<Draggable>();
+                if (draggable != null)
+                {
+                    StartDrag(draggable, eventData.position);
+                }
+            }
+        }
+    }
+
+    private void StartDrag(Draggable draggable, Vector2 screenPos)
+    {
+        if (GameManager.Instance != null && !GameManager.Instance.isInputEnabled) return;
+
         currentDraggedObject = draggable;
         originalPosition = draggable.transform.position;
-
-        // オブジェクトが元々どのスロットにあったかを探して記憶する
-        originalSlot = ObjectSlotManager.Instance.FindSlotForDraggable(draggable);
+        originalSlot = FindObjectOfType<ObjectSlotManager>().FindSlotForDraggable(draggable);
         if (originalSlot != null)
         {
-            // スロットから一時的にオブジェクトを取り除く
             originalSlot.currentObject = null;
         }
 
-        Debug.Log($"{draggable.name} のドラッグを開始しました。");
+        // UIプロキシを準備
+        SpriteRenderer sr = draggable.GetComponent<SpriteRenderer>();
+        if (sr != null)
+        {
+            dragProxyImage.sprite = sr.sprite;
+            dragProxyImage.rectTransform.sizeDelta = sr.bounds.size * 100f;
+        }
+        dragProxyImage.gameObject.SetActive(true);
+
+        // ★★★ 修正点：正しいオフセット計算 ★★★
+        // 1. まず、UIプロキシをクリックされた場所に一度移動させる
+        Vector2 initialMouseLocalPos;
+        RectTransformUtility.ScreenPointToLocalPointInRectangle(
+            parentCanvas.transform as RectTransform,
+            screenPos,
+            parentCanvas.worldCamera,
+            out initialMouseLocalPos);
+        dragProxyImage.rectTransform.localPosition = initialMouseLocalPos;
+
+        // 2. その上で、マウス位置とプロキシ中心との「差分」を計算して記憶する
+        dragOffset = initialMouseLocalPos - (Vector2)dragProxyImage.rectTransform.localPosition;
+
+        // 元のオブジェクトを非表示にする
+        currentDraggedObject.gameObject.SetActive(false);
     }
 
-    /// <summary>
-    /// ドラッグを終了する（現時点では元の位置に戻すだけ）
-    /// </summary>
-    private void StopDrag()
+    // HandleDrop, FindDropZoneUnderCursor, ReturnToOriginalSlot, PlaceInNewSlotメソッドは変更なし
+    private void HandleDrop()
     {
+        dragProxyImage.gameObject.SetActive(false);
         if (currentDraggedObject == null) return;
-
-        // ★★★ 将来的には、ここにドロップゾーンの判定ロジックが入る ★★★
-
-        // 現時点では、単純に元の位置に戻す
-        if (originalSlot != null)
+        DropZone targetZone = FindDropZoneUnderCursor();
+        if (targetZone != null && targetZone.zoneType == DropZone.ZoneType.TrashCan)
         {
-            // 元のスロットに戻す
-            currentDraggedObject.transform.position = originalSlot.slotTransform.position;
-            originalSlot.currentObject = currentDraggedObject;
+            Destroy(currentDraggedObject.gameObject);
         }
         else
         {
-            // もしスロットに所属していなかった場合は、元の座標に戻す
-            currentDraggedObject.transform.position = originalPosition;
+            currentDraggedObject.gameObject.SetActive(true);
+            if (targetZone != null && targetZone.zoneType == DropZone.ZoneType.GameSlot && !targetZone.associatedSlot.IsOccupied())
+            {
+                PlaceInNewSlot(targetZone.associatedSlot);
+            }
+            else
+            {
+                ReturnToOriginalSlot();
+            }
         }
-
-        Debug.Log($"{currentDraggedObject.name} のドラッグを終了しました。");
-
-        // ドラッグ状態を解除
         currentDraggedObject = null;
         originalSlot = null;
+    }
+    private DropZone FindDropZoneUnderCursor()
+    {
+        PointerEventData pointerData = new PointerEventData(eventSystem);
+        pointerData.position = Input.mousePosition;
+        List<RaycastResult> results = new List<RaycastResult>();
+        EventSystem.current.RaycastAll(pointerData, results);
+        foreach (var result in results)
+        {
+            if (result.gameObject.GetComponent<InputBridge>() != null) continue;
+            DropZone zone = result.gameObject.GetComponent<DropZone>();
+            if (zone != null) return zone;
+        }
+        if (screenToWorldConverter.GetWorldPosition(Input.mousePosition, out Vector3 worldPos))
+        {
+            Collider2D[] hits = Physics2D.OverlapPointAll(worldPos);
+            foreach (var hit in hits)
+            {
+                DropZone zone = hit.GetComponent<DropZone>();
+                if (zone != null) return zone;
+            }
+        }
+        return null;
+    }
+    private void ReturnToOriginalSlot()
+    {
+        if (currentDraggedObject != null)
+        {
+            currentDraggedObject.transform.position = originalPosition;
+            if (originalSlot != null)
+            {
+                originalSlot.currentObject = currentDraggedObject;
+            }
+        }
+    }
+    private void PlaceInNewSlot(ObjectSlot newSlot)
+    {
+        if (currentDraggedObject != null && newSlot != null)
+        {
+            currentDraggedObject.transform.position = newSlot.slotTransform.position;
+            newSlot.currentObject = currentDraggedObject;
+        }
     }
 }

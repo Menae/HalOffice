@@ -3,22 +3,29 @@ using UnityEngine;
 
 public class ObjectSlotManager : MonoBehaviour
 {
-    // シングルトンとして実装し、どこからでもアクセスできるようにする
-    public static ObjectSlotManager Instance { get; private set; }
-
-    [Tooltip("シーン内に存在するすべてのオブジェクトスロットをここに登録する")]
+    [Tooltip("このシーン内に存在するすべてのオブジェクトスロットをここに登録する")]
     public List<ObjectSlot> objectSlots;
 
     private void Awake()
     {
-        // シングルトンの設定
-        if (Instance != null && Instance != this)
+        // ゲーム開始時に、各スロットのTransformにアタッチされているDropZoneコンポーネントに、
+        // 対応するObjectSlotデータ（自分自身）を教えて関連付けを行う。
+        // これにより、DropZoneが自分がどのスロットなのかを認識できるようになる。
+        foreach (var slot in objectSlots)
         {
-            Destroy(this.gameObject);
-        }
-        else
-        {
-            Instance = this;
+            if (slot.slotTransform != null)
+            {
+                DropZone zone = slot.slotTransform.GetComponent<DropZone>();
+                if (zone != null)
+                {
+                    // DropZoneに、このObjectSlotのインスタンスを渡す
+                    zone.associatedSlot = slot;
+                }
+                else
+                {
+                    Debug.LogWarning($"スロット '{slot.slotTransform.name}' にDropZoneコンポーネントがアタッチされていません。", slot.slotTransform);
+                }
+            }
         }
     }
 

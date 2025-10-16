@@ -3,35 +3,25 @@
 
 # prefab: left
 # speaker: Boss
-やあ、新人。本日から君の上司になった者だ。よろしく。
+『人間に最も近いAI』の制作現場へようこそ
+
+私が君の教育係だ
+
+よろしく
 
 # prefab: right
 # speaker: Player
-はい、こちらこそよろしくお願いいたします！
+よろしくお願いします！
 
 # prefab: left
 # speaker: Boss
-早速だが、今日は君にやってもらう仕事がある。デスクトップにある「通知アプリ」のアイコンを見てくれ。
+それでは早速仕事を始めよう
 
-* [わかりました]
-    # prefab: right
-    # speaker: Player
-    はい、確認します。
-    -> JobExplanation
+チューニングソフトを起動させてくれ
 
-* [少し待ってください]
-    # prefab: right
-    # speaker: Player
-    すみません、PCのセットアップがまだで…。
-    -> JobExplanation
+# prefab: right
+# speaker: Player
+はい！
 
-= JobExplanation
-# prefab: left
-# speaker: Boss
-アイコンの上に赤いバッジが付いているだろう。それが、君が今日処理すべき案件の合図だ。
-
-# prefab: left
-# speaker: Boss
-まずはそのアプリを開いて、最初の案件の内容を確認してくれたまえ。健闘を祈る。
 
 -> END

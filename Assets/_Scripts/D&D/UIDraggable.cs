@@ -8,6 +8,9 @@ public class UIDraggable : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndD
     [Header("設定")]
     [Tooltip("このUIアイコンをドラッグした際に、ゲーム世界に生成されるアイテムのプレハブ")]
     public GameObject itemPrefab;
+    [Tooltip("UIからドラッグする際の代理UIの拡大率")]
+    [Range(1f, 3f)] // インスペクターでスライダーとして調整できるようにする
+    public float dragScale = 1.2f; // デフォルトを1.2倍に設定
 
     // ドラッグが開始された瞬間に呼び出される
     public void OnBeginDrag(PointerEventData eventData)

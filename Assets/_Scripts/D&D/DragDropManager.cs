@@ -85,6 +85,9 @@ public class DragDropManager : MonoBehaviour
         Vector2 objectScreenPos = mainCamera.WorldToScreenPoint(draggable.transform.position);
         SetupProxy(sr.sprite);
 
+        // ゲーム内オブジェクトのドラッグではスケールを必ず等倍に戻す
+        dragProxyImage.rectTransform.localScale = Vector3.one;
+
         // 1. スプライトのローカル空間での境界を取得
         Bounds localBounds = sr.sprite.bounds;
 
@@ -143,11 +146,14 @@ public class DragDropManager : MonoBehaviour
         currentUIDraggable = uiDraggable;
         Image sourceImage = uiDraggable.GetComponent<Image>();
 
-        // 1. 代理UIの見た目を設定（単純化されたメソッドを呼び出す）
+        // 1. 代理UIの見た目を設定（変更なし）
         SetupProxy(sourceImage.sprite);
         dragProxyImage.rectTransform.sizeDelta = sourceImage.rectTransform.sizeDelta;
 
-        // 2. マウスのクリック位置をCanvasのローカル座標に変換
+        // UIDraggableから拡大率を取得し、代理UIのスケールに適用する
+        dragProxyImage.rectTransform.localScale = Vector3.one * uiDraggable.dragScale;
+
+        // 2. マウスのクリック位置をCanvasのローカル座標に変換（変更なし）
         Vector2 mouseLocalPos;
         RectTransformUtility.ScreenPointToLocalPointInRectangle(
             parentCanvas.transform as RectTransform,
@@ -156,9 +162,15 @@ public class DragDropManager : MonoBehaviour
             out mouseLocalPos
         );
 
-        // 3. ドラッグ対象UIのローカル座標を取得し、オフセットを計算
-        //    (sourceImage.rectTransform.localPositionは親（Canvas）からの相対位置)
-        dragOffset = mouseLocalPos - (Vector2)sourceImage.rectTransform.localPosition;
+
+        // 3. ドラッグ対象UIのワールド座標を取得する
+        Vector3 iconWorldPos = sourceImage.rectTransform.position;
+
+        // 4. そのワールド座標を、親Canvasのローカル座標に変換する
+        Vector2 iconLocalPos = parentCanvas.transform.InverseTransformPoint(iconWorldPos);
+
+        // 5. 全て同じCanvasローカル座標系でオフセットを計算する
+        dragOffset = mouseLocalPos - iconLocalPos;
     }
 
     private void SetupProxy(Sprite sprite)

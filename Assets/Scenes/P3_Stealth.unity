@@ -1161,7 +1161,7 @@ MonoBehaviour:
   baseShakeMagnitude: 2
   detectionIncreaseChannel: {fileID: 11400000, guid: 7ae732247292d5a4f90a5eb1b5af9b20, type: 2}
   detectionIncreaseRate: 20
-  cursorOffset: {x: 12, y: -14}
+  cursorOffset: {x: 8, y: -10}
 --- !u!4 &218026571
 Transform:
   m_ObjectHideFlags: 0

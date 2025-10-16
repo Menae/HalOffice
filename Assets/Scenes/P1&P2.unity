@@ -4941,7 +4941,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &1123203961
 Transform:
   m_ObjectHideFlags: 0
@@ -6498,7 +6498,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &1508199739
 Transform:
   m_ObjectHideFlags: 0
@@ -8754,6 +8754,18 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 58796990243192907, guid: 0e26e8ef3b87fb34d9584990c4969569, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 383978452174378081, guid: 0e26e8ef3b87fb34d9584990c4969569, type: 3}
+      propertyPath: m_VertexColorAlwaysGammaSpace
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2135659241546084311, guid: 0e26e8ef3b87fb34d9584990c4969569, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4706447267771810106, guid: 0e26e8ef3b87fb34d9584990c4969569, type: 3}
+      propertyPath: m_SizeDelta.y
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7663400634758780024, guid: 0e26e8ef3b87fb34d9584990c4969569, type: 3}

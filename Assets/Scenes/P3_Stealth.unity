@@ -914,6 +914,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   itemPrefab: {fileID: 1395547997045428716, guid: 95e7c3fe2e999244c8a40ed1cf9b9b10, type: 3}
+  dragScale: 1.2
 --- !u!114 &131244471
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -6693,7 +6694,7 @@ Transform:
   m_GameObject: {fileID: 1257372648}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 1.97, y: -1.36, z: 0}
+  m_LocalPosition: {x: 1.45, y: -1.39, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -6726,7 +6727,7 @@ Transform:
   m_GameObject: {fileID: 1350625236}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 1.38, y: -1.09, z: 0}
+  m_LocalPosition: {x: 1.38, y: -1.24, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -6841,6 +6842,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   itemPrefab: {fileID: 7652397589208058231, guid: 2f92f913f38d9614eb4074c16f79f5f0, type: 3}
+  dragScale: 1.2
 --- !u!114 &1355887175
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -7106,8 +7108,8 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1372319067}
-  - component: {fileID: 1372319068}
   - component: {fileID: 1372319069}
+  - component: {fileID: 1372319068}
   m_Layer: 0
   m_Name: YogiboDragTrigger
   m_TagString: Untagged
@@ -7124,7 +7126,7 @@ Transform:
   m_GameObject: {fileID: 1372319066}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 2.1099997, y: -2.85, z: 0}
+  m_LocalPosition: {x: 2.1099997, y: -1.92, z: 0}
   m_LocalScale: {x: 1.87, y: 1.87, z: 1.87}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -7178,7 +7180,7 @@ BoxCollider2D:
   m_IsTrigger: 1
   m_UsedByEffector: 0
   m_UsedByComposite: 0
-  m_Offset: {x: 0, y: 0}
+  m_Offset: {x: 0.04, y: -0.39}
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0, y: 0}
@@ -7189,7 +7191,7 @@ BoxCollider2D:
     adaptiveTiling: 0
   m_AutoTiling: 0
   serializedVersion: 2
-  m_Size: {x: 1.58, y: 0.79}
+  m_Size: {x: 1.39, y: 0.64}
   m_EdgeRadius: 0
 --- !u!1 &1395054252
 GameObject:
@@ -8129,6 +8131,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   itemPrefab: {fileID: 7706209518738731401, guid: fb4e1ef299fc6964db6b8a6a060b10bf, type: 3}
+  dragScale: 1.2
 --- !u!114 &1492998305
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -8918,8 +8921,8 @@ Transform:
   m_GameObject: {fileID: 1648498515}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 2.11, y: -2.85, z: 0}
-  m_LocalScale: {x: 1.87, y: 1.87, z: 1.87}
+  m_LocalPosition: {x: 2.11, y: -2.65, z: 0}
+  m_LocalScale: {x: 1.65, y: 1.65, z: 1.65}
   m_ConstrainProportionsScale: 1
   m_Children: []
   m_Father: {fileID: 568341839}
@@ -10485,7 +10488,7 @@ BoxCollider2D:
   m_CallbackLayers:
     serializedVersion: 2
     m_Bits: 4294967295
-  m_IsTrigger: 0
+  m_IsTrigger: 1
   m_UsedByEffector: 0
   m_UsedByComposite: 0
   m_Offset: {x: -1.97, y: 0.02}
@@ -10941,6 +10944,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   itemPrefab: {fileID: 724638257267167591, guid: 1048d8402cdd4ba4984b94d49a71d38e, type: 3}
+  dragScale: 1.2
 --- !u!114 &2060632407
 MonoBehaviour:
   m_ObjectHideFlags: 0

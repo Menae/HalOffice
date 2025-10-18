@@ -1,41 +1,60 @@
 ﻿using UnityEngine;
+using UnityEngine.UI;
 using UnityEngine.EventSystems;
+using Ink.Runtime;
 
-// このスクリプトはUIのImageにアタッチすることを想定
-[RequireComponent(typeof(UnityEngine.UI.Image))]
-public class UIDraggable : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler
+[RequireComponent(typeof(Image))]
+public class UIDraggable : MonoBehaviour, IPointerDownHandler, IBeginDragHandler, IDragHandler, IEndDragHandler
 {
     [Header("設定")]
-    [Tooltip("このUIアイコンをドラッグした際に、ゲーム世界に生成されるアイテムのプレハブ")]
     public GameObject itemPrefab;
-    [Tooltip("UIからドラッグする際の代理UIの拡大率")]
-    [Range(1f, 3f)] // インスペクターでスライダーとして調整できるようにする
-    public float dragScale = 1.2f; // デフォルトを1.2倍に設定
+    [Range(1f, 3f)]
+    public float dragScale = 1.2f;
+    [Tooltip("このアイテムを選択した時に表示する会話（InkのJSONファイル）")]
+    public TextAsset descriptionInk;
 
-    // ドラッグが開始された瞬間に呼び出される
+    [Header("使用済み表現")]
+    public Color usedColor = new Color(0.5f, 0.5f, 0.5f, 0.5f);
+
+    private Image iconImage;
+    private bool isUsed = false;
+
+    private void Awake()
+    {
+        iconImage = GetComponent<Image>();
+    }
+
+    public void MarkAsUsed()
+    {
+        isUsed = true;
+        if (iconImage != null) { iconImage.color = usedColor; }
+    }
+
+    public void OnPointerDown(PointerEventData eventData)
+    {
+        if (isUsed) return;
+        // DragDropManagerにUIアイテムがクリックされたことを通知
+        DragDropManager.Instance.HandleClickOnUI(this, eventData);
+    }
+
     public void OnBeginDrag(PointerEventData eventData)
     {
-        // プレハブが設定されていなければ何もしない
-        if (itemPrefab == null)
-        {
-            Debug.LogError("UIDraggableにitemPrefabが設定されていません！", this.gameObject);
-            return;
-        }
-
-        // 司令塔に、UIからのドラッグ開始を通知する
-        DragDropManager.Instance.StartDragFromUI(this, eventData);
+        if (isUsed) return;
+        // DragDropManagerにドラッグ開始を通知
+        DragDropManager.Instance.HandleBeginDragUI(this, eventData);
     }
 
-    // ドラッグ中に毎フレーム呼び出される（現在は何もしないが、インターフェースのために必要）
     public void OnDrag(PointerEventData eventData)
     {
-        // ドラッグ中の追従はDragDropManagerが一括して行う
+        if (isUsed) return;
+        // DragDropManagerにドラッグ中のイベントを通知
+        DragDropManager.Instance.HandleDrag(eventData);
     }
 
-    // ドラッグが終了した瞬間に呼び出される（ドロップされた時、されなかった時両方）
     public void OnEndDrag(PointerEventData eventData)
     {
-        // ドラッグ終了処理もDragDropManagerが一括して行う
-        // ここでは何もしない
+        if (isUsed) return;
+        // DragDropManagerにドラッグ終了を通知
+        DragDropManager.Instance.HandleEndDrag(eventData);
     }
 }

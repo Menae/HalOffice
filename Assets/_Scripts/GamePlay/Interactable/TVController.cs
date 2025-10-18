@@ -1,77 +1,88 @@
 ﻿using UnityEngine;
-using UnityEngine.Video;
 
-[RequireComponent(typeof(Collider2D))]
 public class TVController : MonoBehaviour
 {
-    [Header("必須コンポーネント")]
-    public VideoPlayer videoPlayer;
-    public MeshRenderer screenRenderer;
+    [Header("監視対象")]
+    [Tooltip("このゲーム機が破棄されたかを監視します")]
+    public Draggable gameConsole;
 
-    [Header("マテリアル設定")]
-    public Material tvOffMaterial;
+    [Header("表示するスクリーン")]
+    [Tooltip("ゲーム画面やニュース画面を表示するSpriteRenderer")]
+    public SpriteRenderer screenRenderer;
 
-    private Material tvOnMaterial;
-    private bool isTVOn = false;
+    [Header("スプライト設定")]
+    [Tooltip("通常時に表示するゲーム画面のスプライト")]
+    public Sprite gameScreenSprite;
 
-    [Header("見つかり度設定")]
-    public FloatEventChannelSO detectionIncreaseChannel;
-    public float detectionAmount = 30f;
+    [Tooltip("ゲーム機が破棄された後に表示するニュース画面のスプライト")]
+    public Sprite newsScreenSprite;
 
-    public bool IsTVOn { get { return isTVOn; } } //外部に現在の状態を教えるための窓口
+    // --- 内部変数 ---
+    private bool isGameConsoleDestroyed = false; // ゲーム機が破棄されたかどうかのフラグ
+    private bool isPowerOn = true; // テレビの電源がONかどうかの状態を記憶
 
     void Start()
     {
-        tvOnMaterial = screenRenderer.material;
-        videoPlayer.isLooping = true;
-        videoPlayer.Play();
-        TurnOffTV();
+        // ゲーム開始時の見た目を更新
+        UpdateScreenDisplay();
     }
 
     void Update()
     {
-        if (Input.GetMouseButtonDown(0)) // 0:左クリック
+        // --- クリック判定ロジック ---
+        // 1. 左クリックされた瞬間かチェック
+        if (Input.GetMouseButtonDown(0))
         {
-            // ScreenToWorldConverterを使って、正しいワールド座標を取得
-            if (ScreenToWorldConverter.Instance != null &&
-                ScreenToWorldConverter.Instance.GetWorldPosition(Input.mousePosition, out Vector3 worldPos))
+            // 入力が無効な場合は何もしない
+            if (GameManager.Instance != null && !GameManager.Instance.isInputEnabled) return;
+
+            // 2. ScreenToWorldConverterを使って、マウス座標をゲーム世界の座標に変換
+            if (ScreenToWorldConverter.Instance.GetWorldPosition(Input.mousePosition, out Vector3 worldPos))
             {
-                // 取得した座標に何があるかチェック
+                // 3. 変換した座標に何があるかRaycastで調べる
                 RaycastHit2D hit = Physics2D.Raycast(worldPos, Vector2.zero);
+
+                // 4. もし何かがあり、それがこのTV自身だったら
                 if (hit.collider != null && hit.collider.gameObject == this.gameObject)
                 {
-                    // TVがヒットしたら、電源を切り替える
-                    if (isTVOn)
-                    {
-                        TurnOffTV();
-                    }
-                    else
-                    {
-                        TurnOnTV();
-                    }
+                    // 電源の状態を切り替える
+                    TogglePower();
                 }
             }
         }
-    }
 
-
-    void TurnOnTV()
-    {
-        screenRenderer.material = tvOnMaterial;
-        videoPlayer.SetDirectAudioMute(0, false);
-        isTVOn = true;
-
-        //見つかり度上昇イベントを発行する
-        if (detectionIncreaseChannel != null)
+        // --- ゲーム機の監視ロジック（変更なし） ---
+        if (!isGameConsoleDestroyed && gameConsole == null)
         {
-            detectionIncreaseChannel.RaiseEvent(detectionAmount);
+            isGameConsoleDestroyed = true;
+            Debug.Log("ゲーム機が破棄されたため、ニュース画面に切り替えます。");
+            UpdateScreenDisplay();
         }
     }
 
-    void TurnOffTV()
+    /// <summary>
+    /// 電源の状態を反転させ、見た目を更新する
+    /// </summary>
+    private void TogglePower()
     {
-        screenRenderer.material = tvOffMaterial;
-        videoPlayer.SetDirectAudioMute(0, true);
-        isTVOn = false;
+        isPowerOn = !isPowerOn;
+        UpdateScreenDisplay();
+    }
+
+    /// <summary>
+    /// 現在の状態に基づいて、スクリーンの表示を更新する
+    /// </summary>
+    private void UpdateScreenDisplay()
+    {
+        if (screenRenderer == null) return;
+
+        if (!isPowerOn)
+        {
+            screenRenderer.color = Color.black;
+            return;
+        }
+
+        screenRenderer.color = Color.white;
+        screenRenderer.sprite = isGameConsoleDestroyed ? newsScreenSprite : gameScreenSprite;
     }
 }

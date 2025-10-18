@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 8560975975397703331}
   - component: {fileID: 903826740612830019}
   - component: {fileID: 7835364163622071068}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: Gramophone
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -143,3 +143,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fead0d3f8a974364d81d3bfd38519430, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  itemType: 6

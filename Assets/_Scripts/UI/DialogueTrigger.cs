@@ -83,17 +83,17 @@ public class DialogueTrigger : MonoBehaviour
             return specialDialogue;
         }
 
-        // カーテンが開いているか？
-        if (curtainController != null && curtainController.IsOpen)
-        {
-            return specialDialogue;
-        }
+        //// カーテンが開いているか？
+        //if (curtainController != null && curtainController.IsOpen)
+        //{
+        //    return specialDialogue;
+        //}
 
-        // TVがオンか？
-        if (tvController != null && tvController.IsTVOn)
-        {
-            return specialDialogue;
-        }
+        //// TVがオンか？
+        //if (tvController != null && tvController.IsTVOn)
+        //{
+        //    return specialDialogue;
+        //}
 
         // もし電話コントローラーがあって録音が再生中なら
         if (telephoneController != null && telephoneController.IsPlayingRecording)

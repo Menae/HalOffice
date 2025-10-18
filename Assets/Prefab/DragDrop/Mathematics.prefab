@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 5202495372140308705}
   - component: {fileID: 8410647752137486570}
   - component: {fileID: 2449846226526610711}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: Mathematics
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -143,3 +143,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fead0d3f8a974364d81d3bfd38519430, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  itemType: 7

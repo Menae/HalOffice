@@ -1,13 +1,9 @@
 // === Day1_Introduction ===
 // このノットが会話の開始点
 
-# prefab: left
-# speaker: Boss
-『人間に最も近いAI』の制作現場へようこそ
-
-私が君の教育係だ
-
-よろしく
+# prefab: right
+# speaker: Player
+このアプリはどう使うんですか？
 
 # prefab: right
 # speaker: Player

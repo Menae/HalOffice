@@ -19,6 +19,7 @@ public class CurtainController : MonoBehaviour
     private bool isOpen = false;
     private Collider2D sceneryACollider;
     private bool isSceneryB_Placed = false;
+    private Collider2D sceneryDropZoneCollider;
 
     void Start()
     {
@@ -26,6 +27,7 @@ public class CurtainController : MonoBehaviour
         if (sceneryDropZone != null)
         {
             scenerySlot = sceneryDropZone.associatedSlot;
+            sceneryDropZoneCollider = sceneryDropZone.GetComponent<Collider2D>();
         }
         else
         {
@@ -42,17 +44,25 @@ public class CurtainController : MonoBehaviour
     void Update()
     {
         // --- クリック判定ロジック ---
-        if (Input.GetMouseButtonDown(0))
+        if (Input.GetMouseButtonDown(1))
         {
             if (GameManager.Instance != null && !GameManager.Instance.isInputEnabled) return;
 
             if (ScreenToWorldConverter.Instance.GetWorldPosition(Input.mousePosition, out Vector3 worldPos))
             {
-                RaycastHit2D hit = Physics2D.Raycast(worldPos, Vector2.zero);
-                if (hit.collider != null && hit.collider.gameObject == this.gameObject)
+                // クリック地点の全てのコライダーを取得
+                RaycastHit2D[] hits = Physics2D.RaycastAll(worldPos, Vector2.zero);
+
+                // ヒットした全ての中から、このカーテン自身を探す
+                foreach (var hit in hits)
                 {
-                    isOpen = !isOpen;
-                    UpdateCurtainState();
+                    if (hit.collider != null && hit.collider.gameObject == this.gameObject)
+                    {
+                        // カーテンが見つかったら、開閉処理をしてループを抜ける
+                        isOpen = !isOpen;
+                        UpdateCurtainState();
+                        break;
+                    }
                 }
             }
         }
@@ -61,7 +71,7 @@ public class CurtainController : MonoBehaviour
         if (!isSceneryB_Placed && scenerySlot != null && scenerySlot.IsOccupied())
         {
             // スロットにSceneryBが配置された瞬間を検知
-            if (scenerySlot.currentObject.itemType == ItemType.SceneryB)
+            if (scenerySlot.currentObject.itemData != null && scenerySlot.currentObject.itemData.itemType == ItemType.SceneryB)
             {
                 Collider2D sceneryBCollider = scenerySlot.currentObject.GetComponent<Collider2D>();
                 if (sceneryBCollider != null)
@@ -78,14 +88,19 @@ public class CurtainController : MonoBehaviour
     {
         if (curtainRenderer == null) return;
 
-        // カーテンの見た目を更新
         curtainRenderer.sprite = isOpen ? openCurtainSprite : closedCurtainSprite;
 
-        // 景色Aが存在する場合のみ、その操作可否を切り替える
+        // 既存のロジック：景色Aの操作可否を切り替える
         if (sceneryA != null && sceneryACollider != null)
         {
             sceneryA.enabled = isOpen;
             sceneryACollider.enabled = isOpen;
+        }
+
+        // 新しいロジック：景色スロット(DropZone)の操作可否を切り替える
+        if (sceneryDropZoneCollider != null)
+        {
+            sceneryDropZoneCollider.enabled = isOpen;
         }
     }
 }

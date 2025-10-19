@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using UnityEngine;
 using UnityEngine.UI;
 using System.Collections;
@@ -32,6 +32,8 @@ public class Day1Manager : MonoBehaviour
     [Range(0f, 1f)]
     [Tooltip("通知効果音の音量")]
     public float notificationVolume = 1.0f;
+
+    public EvaluationTrigger evaluationTrigger;
 
     // ▼▼▼ この行を修正 ▼▼▼
     // ゲームがアクティブかどうかを管理するフラグ。外部から読み取り可能にする。
@@ -70,6 +72,8 @@ public class Day1Manager : MonoBehaviour
 
     void Update()
     {
+        Debug.Log($"Update running. isGameActive={isGameActive}, Time.timeScale={Time.timeScale}");
+
         if (!isGameActive || isTimeUp) return;
 
         if (currentTime > 0)
@@ -100,6 +104,7 @@ public class Day1Manager : MonoBehaviour
 
     public void StartGame()
     {
+        Debug.Log("StartGame() has been called! isGameActive will be set to true."); // ← この行を追加
         isGameActive = true;
         if (instructionPanel != null)
         {
@@ -159,10 +164,11 @@ public class Day1Manager : MonoBehaviour
 
     private void TriggerTimesUp()
     {
-        Debug.Log("時間切れ！ゲームオーバー。");
-        // グローバルなGameManagerの入力フラグを操作する
-        GameManager.Instance.SetInputEnabled(false);
-        OnTimeUp?.Invoke();
+        // if (isTimeUp) return; // ← この行を削除またはコメントアウト
+        isTimeUp = true;
+        Debug.Log("時間切れ！");
+
+        evaluationTrigger.EndDayAndEvaluate();
     }
 
     /// <summary>

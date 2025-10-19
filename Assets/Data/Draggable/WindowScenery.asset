@@ -1,0 +1,19 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c6080d36db368f04aa7827256c3e1044, type: 3}
+  m_Name: WindowScenery
+  m_EditorClassIdentifier: 
+  itemName: WindowScenery
+  itemType: 0
+  itemPrefab: {fileID: 7874761534678376013, guid: a1439ed6201a7174da62c1f846754f9a, type: 3}
+  descriptionInk: {fileID: 4900000, guid: e190a12ae70a9d345b656fa581e0eb49, type: 3}
+  missingReactionInk: {fileID: 4900000, guid: 73cb4ca1c8b1c4444a421b85fa4e6152, type: 3}

@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using UnityEngine.EventSystems;
 
-public class InputBridge : MonoBehaviour, IPointerDownHandler, IBeginDragHandler, IDragHandler, IEndDragHandler
+public class InputBridge : MonoBehaviour, IPointerClickHandler, IBeginDragHandler, IDragHandler, IEndDragHandler
 {
     [Header("参照")]
     public ScreenToWorldConverter screenToWorldConverter;
@@ -19,15 +19,20 @@ public class InputBridge : MonoBehaviour, IPointerDownHandler, IBeginDragHandler
     }
 
     // ① クリックされた瞬間の処理（選択/選択解除）
-    public void OnPointerDown(PointerEventData eventData)
+    public void OnPointerClick(PointerEventData eventData)
     {
+        if (eventData.button != PointerEventData.InputButton.Left) return; // 左クリック以外は無視
+
         Draggable clickedDraggable = FindDraggable(eventData);
-        DragDropManager.Instance.HandleSelectionClick(clickedDraggable, eventData);
+        // マネージャーに「クリック」イベントを通知する（呼び出し先も変更）
+        DragDropManager.Instance.HandleItemClick(null, clickedDraggable, eventData);
     }
 
     // ② ドラッグが開始された瞬間の処理
     public void OnBeginDrag(PointerEventData eventData)
     {
+        if (eventData.button != PointerEventData.InputButton.Left) return; // 左クリック以外は無視
+
         Draggable draggedDraggable = FindDraggable(eventData);
         DragDropManager.Instance.HandleBeginDrag(draggedDraggable, eventData);
     }
@@ -35,12 +40,16 @@ public class InputBridge : MonoBehaviour, IPointerDownHandler, IBeginDragHandler
     // ③ ドラッグ中の処理
     public void OnDrag(PointerEventData eventData)
     {
+        if (eventData.button != PointerEventData.InputButton.Left) return; // 左クリック以外は無視
+
         DragDropManager.Instance.HandleDrag(eventData);
     }
 
     // ④ ドラッグが終了した瞬間の処理（ドロップ）
     public void OnEndDrag(PointerEventData eventData)
     {
+        if (eventData.button != PointerEventData.InputButton.Left) return; // 左クリック以外は無視
+
         DragDropManager.Instance.HandleEndDrag(eventData);
     }
 }

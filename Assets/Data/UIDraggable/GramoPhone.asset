@@ -1,0 +1,20 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c6080d36db368f04aa7827256c3e1044, type: 3}
+  m_Name: GramoPhone
+  m_EditorClassIdentifier: 
+  itemName: Gramophone
+  itemType: 6
+  itemPrefab: {fileID: 7706209518738731401, guid: fb4e1ef299fc6964db6b8a6a060b10bf, type: 3}
+  descriptionInk: {fileID: 4900000, guid: 2a218284728b8fb4ca89b0f395acb0a3, type: 3}
+  missingReactionInk: {fileID: 0}
+  placedReactionInk: {fileID: 4900000, guid: 26cb5753d15c5604f819c494ab8deca9, type: 3}

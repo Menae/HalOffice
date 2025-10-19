@@ -35,64 +35,74 @@ public class DragDropManager : MonoBehaviour
         else { Instance = this; }
     }
 
-    void Update()
+    public void HandleItemClick(UIDraggable uiDraggable, Draggable worldDraggable, PointerEventData eventData)
     {
-
-    }
-
-    public void HandleSelectionClick(Draggable clickedDraggable, PointerEventData eventData)
-    {
-        // アイテム保持中は選択処理を受け付けない
         if (currentState == DdState.HoldingItem) return;
 
-        // ▼▼▼ 以下のswitch文の case DdState.ItemSelected: を修正 ▼▼▼
+        bool isUIClick = uiDraggable != null;
+        bool isWorldClick = worldDraggable != null;
+
         switch (currentState)
         {
             case DdState.Idle:
-                if (clickedDraggable != null)
+                if (isUIClick)
                 {
-                    selectedObject = clickedDraggable;
-                    selectedUIDraggable = null;
+                    selectedUIDraggable = uiDraggable;
                     currentState = DdState.ItemSelected;
-                    Debug.Log($"{selectedObject.name} を選択。");
-
-                    if (selectedObject.descriptionInk != null)
-                    {
-                        InkDialogueManager.Instance.ShowStory(selectedObject.descriptionInk);
-                    }
+                    if (uiDraggable.itemData?.descriptionInk != null)
+                        InkDialogueManager.Instance.ShowStory(uiDraggable.itemData.descriptionInk);
+                }
+                else if (isWorldClick)
+                {
+                    selectedObject = worldDraggable;
+                    currentState = DdState.ItemSelected;
+                    if (worldDraggable.itemData?.descriptionInk != null)
+                        InkDialogueManager.Instance.ShowStory(worldDraggable.itemData.descriptionInk);
                 }
                 break;
 
             case DdState.ItemSelected:
-                // 別のオブジェクトをクリックしたら選択を切り替える
-                if (clickedDraggable != null && clickedDraggable != selectedObject)
+                // 既に選択中のUIアイテムを再度クリックした場合 -> 選択解除
+                if (isUIClick && uiDraggable == selectedUIDraggable)
                 {
-                    selectedObject = clickedDraggable;
+                    currentState = DdState.Idle;
                     selectedUIDraggable = null;
-                    Debug.Log($"{selectedObject.name} に選択を切り替え。");
-
-                    if (selectedObject.descriptionInk != null)
-                    {
-                        InkDialogueManager.Instance.ShowStory(selectedObject.descriptionInk);
-                    }
                 }
-                // 何もない場所をクリックしたら選択を解除する
-                else if (clickedDraggable == null)
+                // 既に選択中のWorldアイテムを再度クリックした場合 -> 選択解除
+                else if (isWorldClick && worldDraggable == selectedObject)
                 {
+                    currentState = DdState.Idle;
+                    selectedObject = null;
+                }
+                // 別のUIアイテムをクリックした場合 -> 選択切り替え
+                else if (isUIClick)
+                {
+                    selectedUIDraggable = uiDraggable;
+                    selectedObject = null;
+                    if (uiDraggable.itemData?.descriptionInk != null)
+                        InkDialogueManager.Instance.ShowStory(uiDraggable.itemData.descriptionInk);
+                }
+                // 別のWorldアイテムをクリックした場合 -> 選択切り替え
+                else if (isWorldClick)
+                {
+                    selectedObject = worldDraggable;
+                    selectedUIDraggable = null;
+                    if (worldDraggable.itemData?.descriptionInk != null)
+                        InkDialogueManager.Instance.ShowStory(worldDraggable.itemData.descriptionInk);
+                }
+                // 何もない場所をクリックした場合 -> 選択解除
+                else
+                {
+                    currentState = DdState.Idle;
                     selectedObject = null;
                     selectedUIDraggable = null;
-                    currentState = DdState.Idle;
-                    Debug.Log("選択を解除。");
                 }
-                // 選択中のオブジェクトを再度クリックした場合は何もしない
-                // （ドラッグ開始はOnBeginDragが検知してHandleBeginDragを呼び出す）
                 break;
         }
     }
 
     public void HandleBeginDrag(Draggable draggedObject, PointerEventData eventData)
     {
-        // 「選択中」の状態で、かつ「選択されているオブジェクト」上でドラッグが開始された場合のみ処理
         if (currentState == DdState.ItemSelected && draggedObject == selectedObject)
         {
             StartHolding(draggedObject, eventData.position);
@@ -101,7 +111,6 @@ public class DragDropManager : MonoBehaviour
 
     public void HandleBeginDragUI(UIDraggable draggedObject, PointerEventData eventData)
     {
-        // 「選択中」の状態で、かつ「選択されているUIオブジェクト」上でドラッグが開始された場合のみ処理
         if (currentState == DdState.ItemSelected && draggedObject == selectedUIDraggable)
         {
             StartHoldingUI(draggedObject, eventData);
@@ -122,59 +131,6 @@ public class DragDropManager : MonoBehaviour
         if (currentState == DdState.HoldingItem)
         {
             HandleDrop(eventData); // 引数 eventData を渡す
-        }
-    }
-
-    public void HandleClickOnUI(UIDraggable clickedUIDraggable, PointerEventData eventData)
-    {
-        if (currentState == DdState.HoldingItem)
-        {
-            HandleDrop(eventData);
-            return;
-        }
-
-        switch (currentState)
-        {
-            case DdState.Idle:
-                if (clickedUIDraggable != null)
-                {
-                    selectedUIDraggable = clickedUIDraggable;
-                    selectedObject = null; // 他方の選択を解除
-                    currentState = DdState.ItemSelected;
-                    Debug.Log($"{selectedUIDraggable.name} を選択しました。");
-
-                    if (selectedUIDraggable.descriptionInk != null)
-                    {
-                        InkDialogueManager.Instance.ShowStory(selectedUIDraggable.descriptionInk);
-                    }
-                }
-                break;
-
-            case DdState.ItemSelected:
-                if (clickedUIDraggable == selectedUIDraggable)
-                {
-                    StartHoldingUI(selectedUIDraggable, eventData);
-                    UpdateProxyPosition(eventData.position);
-                }
-                else if (clickedUIDraggable != null)
-                {
-                    selectedUIDraggable = clickedUIDraggable;
-                    selectedObject = null; // 他方の選択を解除
-                    Debug.Log($"{selectedUIDraggable.name} に選択を切り替えました。");
-
-                    if (selectedUIDraggable.descriptionInk != null)
-                    {
-                        InkDialogueManager.Instance.ShowStory(selectedUIDraggable.descriptionInk);
-                    }
-                }
-                else
-                {
-                    selectedObject = null;
-                    selectedUIDraggable = null; // 他方の選択を解除
-                    currentState = DdState.Idle;
-                    Debug.Log("選択を解除しました。");
-                }
-                break;
         }
     }
 
@@ -294,7 +250,14 @@ public class DragDropManager : MonoBehaviour
     {
         if (targetZone != null && targetZone.zoneType == DropZone.ZoneType.TrashCan)
         {
+            // 変更前は originalSlot を保持している
+            ObjectSlot removedFromSlot = originalSlot;
+
             Destroy(currentDraggedObject.gameObject);
+
+            // どのスロットからオブジェクトが削除されたかを通知する
+            Debug.Log($"<color=orange>Step 1: Item trashed. Firing event for slot '{removedFromSlot.slotTransform.name}'.</color>");
+            GameEventManager.InvokeObjectRemoved(removedFromSlot);
         }
         else
         {
@@ -304,7 +267,7 @@ public class DragDropManager : MonoBehaviour
             if (targetZone != null &&
                 targetZone.zoneType == DropZone.ZoneType.GameSlot &&
                 !targetZone.associatedSlot.IsOccupied() &&
-                targetZone.associatedSlot.CanAccept(currentDraggedObject.itemType)) // ← このチェックを追加
+                targetZone.associatedSlot.CanAccept(currentDraggedObject.itemData.itemType))
             {
                 PlaceInNewSlot(targetZone.associatedSlot);
             }
@@ -317,42 +280,45 @@ public class DragDropManager : MonoBehaviour
 
     private void HandleUIDrop(DropZone targetZone)
     {
-        // --- ガード節1: ドロップ先が無効な場所なら、何もせずに終了 ---
+        // 1. ドロップ先が見つからない、またはゲーム内スロットではない場合は、何もせず処理を終了します。
         if (targetZone == null || targetZone.zoneType != DropZone.ZoneType.GameSlot)
         {
-            // オプション：もしUIアイテムを元の場所に戻すなどの演出が必要ならここに追加
             return;
         }
 
-        // --- ガード節2: ドロップ先のスロットが既に埋まっているなら、何もせずに終了 ---
-        if (targetZone.associatedSlot.IsOccupied())
+        // 2. (この時点でtargetZoneは有効) スロットのデータが正常か、かつ空いているかを確認します。
+        ObjectSlot slot = targetZone.associatedSlot;
+        if (slot == null || slot.IsOccupied())
         {
             return;
         }
 
-        // --- ガード節3: UIアイテムのプレハブが正しく設定されていないなら、エラーを出して終了 ---
-        Draggable prefabDraggable = currentUIDraggable.itemPrefab.GetComponent<Draggable>();
-        if (prefabDraggable == null)
+        Draggable prefabDraggable = currentUIDraggable.itemData.itemPrefab.GetComponent<Draggable>();
+        // 3. (この時点でslotは有効) ドロップするアイテムのプレハブが有効かを確認します。
+        if (currentUIDraggable.itemData == null || currentUIDraggable.itemData.itemPrefab == null) // itemData経由でチェック
         {
-            Debug.LogError($"UIアイテム '{currentUIDraggable.name}' のプレハブにDraggableコンポーネントがありません。", currentUIDraggable);
+            Debug.LogError($"UIアイテム '{currentUIDraggable.name}' のItemDataまたはPrefabが正しく設定されていません。", currentUIDraggable);
             return;
         }
 
-        // 全てのチェックを通過した場合のみ、アイテムを生成して配置する
+        // 全てのチェックを通過した場合のみ、アイテムを生成して配置します。
         GameObject newItem = Instantiate(
-            currentUIDraggable.itemPrefab,
-            targetZone.associatedSlot.slotTransform.position,
+            currentUIDraggable.itemData.itemPrefab, // itemData経由で参照
+            slot.slotTransform.position,
             Quaternion.identity
         );
 
         Draggable newDraggable = newItem.GetComponent<Draggable>();
         if (newDraggable != null)
         {
-            targetZone.associatedSlot.currentObject = newDraggable;
-            newDraggable.currentSlot = targetZone.associatedSlot;
+            newDraggable.itemData = currentUIDraggable.itemData; // ◀◀◀ 【重要】この行を追加！
+            slot.currentObject = newDraggable;
+            newDraggable.currentSlot = slot;
 
-            // ドロップに成功したので、元のUIアイテムに使用済みになったことを通知する
             currentUIDraggable.MarkAsUsed();
+
+            // ObjectSlotManagerに、このスロットが更新されたことを通知する
+            FindObjectOfType<ObjectSlotManager>().MarkSlotAsNewlyPlaced(slot);
         }
     }
 

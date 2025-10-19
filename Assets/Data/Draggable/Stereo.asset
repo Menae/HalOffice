@@ -1,0 +1,19 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c6080d36db368f04aa7827256c3e1044, type: 3}
+  m_Name: Stereo
+  m_EditorClassIdentifier: 
+  itemName: Stereo
+  itemType: 0
+  itemPrefab: {fileID: 682737125239244604, guid: c7a17c67ec2fbb54b9698d446b7dc1ac, type: 3}
+  descriptionInk: {fileID: 4900000, guid: cf45e3df3a8fdd641ad8ce0f1143c702, type: 3}
+  missingReactionInk: {fileID: 4900000, guid: 22592570173c25042829b971a937b7c8, type: 3}

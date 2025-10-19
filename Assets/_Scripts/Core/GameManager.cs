@@ -15,6 +15,16 @@ public class GameManager : MonoBehaviour
 
     // --- Inspectorに表示される変数の宣言 ---
 
+    [Header("評価システム (Evaluation System)")]
+    [Tooltip("正しく配置されたアイテムの数")]
+    public int correctPlacementCount = 0;
+
+    [Tooltip("現在の日付 (Day 1, Day 2...)")]
+    public int currentDay = 1;
+
+    [Tooltip("リザルトシーンを再生すべきかどうかのフラグ")]
+    public bool shouldShowResults = false;
+
     [Header("永続データ (Persistent Data)")]
     [Tooltip("ゲームに登場する全ての証拠リスト")]
     public List<Clue> allCluesInGame;

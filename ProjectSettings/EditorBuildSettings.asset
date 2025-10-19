@@ -17,7 +17,10 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/P3_Stealth.unity
     guid: 51564be30f71fb54ba82f65e327e7169
-  - enabled: 1
+  - enabled: 0
     path: Assets/Scenes/P4_InvestigationRecord.unity
     guid: 942d286cd97d4264984165bde65f7d26
+  - enabled: 1
+    path: Assets/Scenes/P4_Result.unity
+    guid: a7488ce1473eef3488dab9dcf1a5327a
   m_configObjects: {}

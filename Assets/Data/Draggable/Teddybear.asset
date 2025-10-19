@@ -1,0 +1,19 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c6080d36db368f04aa7827256c3e1044, type: 3}
+  m_Name: Teddybear
+  m_EditorClassIdentifier: 
+  itemName: Teddybear
+  itemType: 0
+  itemPrefab: {fileID: 5973849704179221348, guid: 9b713be31a9fa0044aaf0e3b2e5ca21e, type: 3}
+  descriptionInk: {fileID: 4900000, guid: 31bab048aac72d44ba7befd0b721b400, type: 3}
+  missingReactionInk: {fileID: 4900000, guid: 77bf1b3e5af764e4eb20dea279f6352e, type: 3}

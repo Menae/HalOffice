@@ -1,0 +1,19 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c6080d36db368f04aa7827256c3e1044, type: 3}
+  m_Name: GameConsole
+  m_EditorClassIdentifier: 
+  itemName: GameConsole
+  itemType: 0
+  itemPrefab: {fileID: 2085415803132056864, guid: d4bda2a3cef4d1b4a95c5edff7d6c2d1, type: 3}
+  descriptionInk: {fileID: 4900000, guid: a87d97e64c9b7e748b344534c58a2010, type: 3}
+  missingReactionInk: {fileID: 4900000, guid: ebc351e62afbc6b42bc95a09bb60ce1d, type: 3}

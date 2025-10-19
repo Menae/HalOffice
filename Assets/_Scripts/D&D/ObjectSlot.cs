@@ -12,6 +12,8 @@ public class ObjectSlot
     [Header("スロット設定")]
     [Tooltip("このスロットに配置可能なアイテムの種類のリスト。空の場合は何でも配置できる。")]
     public List<ItemType> allowedItemTypes = new List<ItemType>();
+    [Tooltip("このスロットに対する正解のアイテム種類")]
+    public ItemType correctItemType;
 
     /// <summary>
     /// 指定されたアイテムの種類をこのスロットが受け入れ可能か判定する

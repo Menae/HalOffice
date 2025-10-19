@@ -2,8 +2,8 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine.EventSystems;
+using Ink.Runtime;
 
-[RequireComponent(typeof(Animator))]
 [RequireComponent(typeof(Rigidbody2D), typeof(Collider2D))]
 public class NPCController : MonoBehaviour
 {
@@ -27,13 +27,18 @@ public class NPCController : MonoBehaviour
 
     [Header("関連オブジェクト")]
     public GameObject fovObject;
+    public ObjectSlotManager objectSlotManager; // ObjectSlotManagerへの参照
+    public GameObject speechBubblePrefab; // 吹き出しのプレハブ
+    public Transform bubbleAnchor;
+    public Transform visualsTransform;
+    public Animator animator;
 
     [Header("通常ルーティーン設定 (Patrol)")]
     public List<Transform> pointsOfInterest;
     public float inspectDuration = 3.0f;
-    [Range(0, 100)] // ← この行を追加
-    [Tooltip("目的地到着後、フィジェットモーションを行う確率(%)")] // ← この行を追加
-    public float fidgetProbability = 20f; // ← この行を追加
+    [Range(0, 100)] 
+    [Tooltip("目的地到着後、フィジェットモーションを行う確率(%)")]
+    public float fidgetProbability = 20f;
 
     [Header("家具への移動設定 (HeadToFurniture)")]
     [Tooltip("奥の家具の位置リスト")]
@@ -53,7 +58,6 @@ public class NPCController : MonoBehaviour
     // --- 内部変数 ---
     public bool isCursorInView { get; private set; }
     private bool isFacingRight = true;
-    private Animator animator;
     private Rigidbody2D rb;
     private Coroutine behaviorCoroutine;
     private Vector3 investigationTarget;
@@ -65,7 +69,6 @@ public class NPCController : MonoBehaviour
 
     void Start()
     {
-        animator = GetComponent<Animator>();
         rb = GetComponent<Rigidbody2D>();
         rb.gravityScale = 0;
         rb.freezeRotation = true;
@@ -184,6 +187,25 @@ public class NPCController : MonoBehaviour
             // 到着したので停止する
             animator.SetFloat("moveX", 0f);
 
+            // 現在の目的地（POI）に対応するスロットを探す
+            ObjectSlot currentSlot = objectSlotManager.objectSlots.Find(s => s.slotTransform == lastVisitedPOI);
+            if (currentSlot != null)
+            {
+                // 【優先度1】アイテム消失チェック
+                if (objectSlotManager.InitialSlotContents.ContainsKey(currentSlot) && !currentSlot.IsOccupied())
+                {
+                    yield return StartCoroutine(ReactToMissingObjectRoutine(currentSlot));
+                    objectSlotManager.InitialSlotContents.Remove(currentSlot);
+                }
+                // 【優先度2】新規配置アイテム発見チェック
+                else if (objectSlotManager.IsNewlyPlaced(currentSlot))
+                {
+                    yield return StartCoroutine(ReactToNewObjectRoutine(currentSlot));
+                    // 発見済みにする
+                    objectSlotManager.MarkSlotAsSeen(currentSlot);
+                }
+            }
+
             // 0から100までの乱数を1回だけ生成し、設定した確率より小さいかチェック
             if (Random.Range(0f, 100f) < fidgetProbability)
             {
@@ -247,6 +269,86 @@ public class NPCController : MonoBehaviour
 
         // 4. パトロールに戻る
         SwitchState(NPCState.Patrol);
+    }
+
+    private IEnumerator ReactToNewObjectRoutine(ObjectSlot noticedSlot)
+    {
+        // スロットに現在あるオブジェクトとそのItemDataを取得
+        Draggable currentObject = noticedSlot.currentObject;
+        if (currentObject == null || currentObject.itemData == null)
+        {
+            yield break; // データが不正な場合は何もしない
+        }
+
+        ItemData newItemData = currentObject.itemData;
+        float waitDuration = 3.0f; // 吹き出しのデフォルト表示時間
+
+        // ItemDataにリアクション用Inkファイルと吹き出しプレハブが設定されているか確認
+        if (newItemData.placedReactionInk != null && speechBubblePrefab != null)
+        {
+            // Inkファイルからストーリーを生成
+            var story = new Story(newItemData.placedReactionInk.text);
+            string reactionText = "！"; // デフォルトのセリフ
+
+            // ストーリーから最初の行を読み込む
+            if (story.canContinue)
+            {
+                reactionText = story.Continue().Trim();
+            }
+
+            // 吹き出しを生成し、読み込んだセリフを表示
+            Vector3 spawnPos = bubbleAnchor != null ? bubbleAnchor.position : transform.position + Vector3.up * 1.5f;
+            GameObject bubbleInstance = Instantiate(speechBubblePrefab, spawnPos, Quaternion.identity, transform);
+            var bubbleController = bubbleInstance.GetComponent<WorldSpaceBubbleController>();
+
+            if (bubbleController != null)
+            {
+                bubbleController.ShowMessage(reactionText, waitDuration);
+            }
+        }
+        else
+        {
+            Debug.LogWarning($"No 'placedReactionInk' or bubble prefab set for item: '{newItemData.itemName}'");
+        }
+
+        // 吹き出しが表示されている間、待機する
+        yield return new WaitForSeconds(waitDuration);
+    }
+
+    private IEnumerator ReactToMissingObjectRoutine(ObjectSlot noticedSlot)
+    {
+        ItemData missingItemData = objectSlotManager.InitialSlotContents[noticedSlot];
+        float waitDuration = 3.0f; // 吹き出しのデフォルト表示時間
+
+        if (missingItemData != null && missingItemData.missingReactionInk != null && speechBubblePrefab != null)
+        {
+            // Inkファイルからストーリーを生成
+            var story = new Story(missingItemData.missingReactionInk.text);
+            string reactionText = "……？"; // デフォルトのセリフ
+
+            // ストーリーから最初の行を読み込む
+            if (story.canContinue)
+            {
+                reactionText = story.Continue().Trim();
+            }
+
+            // 吹き出しを生成し、読み込んだセリフを表示
+            Vector3 spawnPos = bubbleAnchor != null ? bubbleAnchor.position : transform.position + Vector3.up * 1.5f;
+            GameObject bubbleInstance = Instantiate(speechBubblePrefab, spawnPos, Quaternion.identity, transform);
+            var bubbleController = bubbleInstance.GetComponent<WorldSpaceBubbleController>();
+
+            if (bubbleController != null)
+            {
+                bubbleController.ShowMessage(reactionText, waitDuration);
+            }
+        }
+        else
+        {
+            Debug.LogWarning($"Missing reaction ink or bubble prefab for item: '{missingItemData?.itemName}'");
+        }
+
+        // 吹き出しが表示されている間、待機する
+        yield return new WaitForSeconds(waitDuration);
     }
 
     /// <summary>
@@ -354,7 +456,12 @@ public class NPCController : MonoBehaviour
     private void Flip()
     {
         isFacingRight = !isFacingRight;
-        transform.localScale = new Vector3(Mathf.Abs(transform.localScale.x) * (isFacingRight ? 1 : -1), transform.localScale.y, transform.localScale.z);
+        
+        visualsTransform.localScale = new Vector3(
+            Mathf.Abs(visualsTransform.localScale.x) * (isFacingRight ? 1 : -1),
+            visualsTransform.localScale.y,
+            visualsTransform.localScale.z
+        );
     }
 
     private void FaceTowards(Vector3 targetPosition)

@@ -1,0 +1,20 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c6080d36db368f04aa7827256c3e1044, type: 3}
+  m_Name: OfficeChair
+  m_EditorClassIdentifier: 
+  itemName: OfficeChair
+  itemType: 5
+  itemPrefab: {fileID: 5226260021507015456, guid: 5caba9153ee3cf443abc74fc8450b1e8, type: 3}
+  descriptionInk: {fileID: 4900000, guid: 8eb090200a5ac8f4080321b95574326c, type: 3}
+  missingReactionInk: {fileID: 0}
+  placedReactionInk: {fileID: 4900000, guid: c23498e565c0b55408f04ccc198f75b0, type: 3}

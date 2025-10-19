@@ -9,16 +9,15 @@ public class DetectionManager : MonoBehaviour
 
     [Header("イベントチャンネル")]
     public FloatEventChannelSO detectionChannel;
+
     [Header("参照")]
     public ScreenEffectsController screenEffects;
-    
-    // ▼▼▼ 以下を追加 ▼▼▼
     [Tooltip("シーンのタイマーを管理するDay1Manager")]
     public Day1Manager day1Manager;
+    public EvaluationTrigger evaluationTrigger;
 
     [Header("ゲージ設定")]
     public float maxDetection = 100f;
-    // (Tooltipなどは変更なし)
 
     [Header("シーン遷移設定")]
     public string gameOverSceneName = "GameOverScene";
@@ -29,18 +28,15 @@ public class DetectionManager : MonoBehaviour
     private void OnEnable()
     {
         if (detectionChannel != null) { detectionChannel.OnEventRaised += IncreaseDetection; }
-        // ▼▼▼ 参照先をDay1Managerに変更 ▼▼▼
         Day1Manager.OnTimeUp += HandleTimeUp;
     }
     private void OnDisable()
     {
         if (detectionChannel != null) { detectionChannel.OnEventRaised -= IncreaseDetection; }
-        // ▼▼▼ 参照先をDay1Managerに変更 ▼▼▼
         Day1Manager.OnTimeUp -= HandleTimeUp;
     }
     void IncreaseDetection(float amount)
     {
-        // ▼▼▼ 参照先をDay1Managerに変更 ▼▼▼
         if (isGameOver || (day1Manager != null && !day1Manager.isGameActive)) return;
         currentDetection += amount;
     }
@@ -69,12 +65,11 @@ public class DetectionManager : MonoBehaviour
     {
         yield return new WaitForSeconds(delay);
         // Day1Managerに、gameOverSceneNameに遷移するように命令
-        day1Manager.EndInvestigation(gameOverSceneName);
+        evaluationTrigger.EndDayAndEvaluate();
     }
 
     void Update()
     {
-        // ▼▼▼ 参照先をDay1Managerに変更 ▼▼▼
         if (isGameOver || (day1Manager != null && !day1Manager.isGameActive)) return;
 
         if (currentDetection > 0)

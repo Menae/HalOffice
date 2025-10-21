@@ -72,8 +72,6 @@ public class Day1Manager : MonoBehaviour
 
     void Update()
     {
-        Debug.Log($"Update running. isGameActive={isGameActive}, Time.timeScale={Time.timeScale}");
-
         if (!isGameActive || isTimeUp) return;
 
         if (currentTime > 0)

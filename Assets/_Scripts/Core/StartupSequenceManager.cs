@@ -60,7 +60,6 @@ public class StartupSequenceManager : MonoBehaviour
         titlePhase.SetActive(false);
 
         // --- 2. オープニングフェーズ ---
-        // ▼▼▼ この部分を修正 ▼▼▼
         // openingChatInkがInspectorで設定されている場合のみ、オープニングを実行
         if (openingDialogueManager != null && openingChatInk != null)
         {
@@ -79,10 +78,8 @@ public class StartupSequenceManager : MonoBehaviour
             // 設定されていない場合は、警告をログに出してスキップする
             Debug.LogWarning("オープニングの会話ファイルが設定されていないため、オープニングフェーズをスキップします。");
         }
-        // ▲▲▲ ここまで ▲▲▲
 
         // --- 3. ログイン画面フェーズ ---
-        // (この部分は変更なし)
         loginPhase.SetActive(true);
         if (desktopManager != null)
         {

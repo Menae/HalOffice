@@ -5,6 +5,31 @@ using System.Collections.Generic;
 
 public class DragDropManager : MonoBehaviour
 {
+    /// <summary>
+    /// 現在アクティブなCursorControllerを保持する静的プロパティ
+    /// </summary>
+    public static CursorController ActiveCursor { get; private set; }
+
+    /// <summary>
+    /// CursorControllerが自分自身を登録するためのメソッド
+    /// </summary>
+    public static void RegisterCursor(CursorController cursor)
+    {
+        ActiveCursor = cursor;
+    }
+
+    /// <summary>
+    /// CursorControllerが自分自身を登録解除するためのメソッド
+    /// </summary>
+    public static void UnregisterCursor(CursorController cursor)
+    {
+        // 念のため、現在登録されているのが自分自身である場合のみ解除
+        if (ActiveCursor == cursor)
+        {
+            ActiveCursor = null;
+        }
+    }
+
     private enum DdState { Idle, ItemSelected, HoldingItem }
     private DdState currentState = DdState.Idle;
 
@@ -24,7 +49,6 @@ public class DragDropManager : MonoBehaviour
     private UIDraggable currentUIDraggable;
     private UIDraggable selectedUIDraggable;
     private ObjectSlot originalSlot;
-    private Vector2 dragOffset;
     private bool canDrop = false;
 
     public static DragDropManager Instance { get; private set; }
@@ -119,11 +143,6 @@ public class DragDropManager : MonoBehaviour
 
     public void HandleDrag(PointerEventData eventData)
     {
-        // アイテム保持中なら、代理UIの座標を更新
-        if (currentState == DdState.HoldingItem)
-        {
-            UpdateProxyPosition(eventData.position);
-        }
     }
 
     public void HandleEndDrag(PointerEventData eventData)
@@ -137,7 +156,6 @@ public class DragDropManager : MonoBehaviour
     private void StartHolding(Draggable draggable, Vector2 screenPos)
     {
         currentState = DdState.HoldingItem;
-        canDrop = false;
         currentDraggedObject = draggable;
         originalSlot = draggable.currentSlot;
         if (originalSlot != null)
@@ -146,32 +164,49 @@ public class DragDropManager : MonoBehaviour
             draggable.currentSlot = null;
         }
 
-        // 代理UIの準備
         SpriteRenderer sr = draggable.GetComponent<SpriteRenderer>();
         SetupProxy(sr.sprite);
+
+
+        // SpriteRendererのワールド空間での境界を取得
+        Bounds worldBounds = sr.bounds;
+
+        // 境界の最小と最大の角をスクリーン座標に変換
+        Vector2 minScreenPoint = mainCamera.WorldToScreenPoint(worldBounds.min);
+        Vector2 maxScreenPoint = mainCamera.WorldToScreenPoint(worldBounds.max);
+
+        // スクリーン座標での差分から、ピクセル単位での大きさを計算
+        Vector2 pixelSize = maxScreenPoint - minScreenPoint;
+
+        // 計算した大きさを代理UIのsizeDeltaに設定
+        dragProxyImage.rectTransform.sizeDelta = new Vector2(Mathf.Abs(pixelSize.x), Mathf.Abs(pixelSize.y));
         dragProxyImage.rectTransform.localScale = Vector3.one;
-        CalculateProxySizeAndOffset(sr, draggable.transform, screenPos);
+
+
+        if (ActiveCursor != null)
+        {
+            dragProxyImage.transform.SetParent(ActiveCursor.cursorImage.transform, true);
+            dragProxyImage.rectTransform.anchoredPosition = Vector2.zero;
+        }
+
         currentDraggedObject.gameObject.SetActive(false);
     }
 
     private void StartHoldingUI(UIDraggable uiDraggable, PointerEventData eventData)
     {
         currentState = DdState.HoldingItem;
-        canDrop = false;
         currentUIDraggable = uiDraggable;
 
-        // 代理UIの準備
         Image sourceImage = uiDraggable.GetComponent<Image>();
         SetupProxy(sourceImage.sprite);
         dragProxyImage.rectTransform.sizeDelta = sourceImage.rectTransform.sizeDelta;
         dragProxyImage.rectTransform.localScale = Vector3.one * uiDraggable.dragScale;
 
-        // オフセット計算
-        Vector2 mouseLocalPos;
-        RectTransformUtility.ScreenPointToLocalPointInRectangle(parentCanvas.transform as RectTransform, eventData.position, parentCanvas.worldCamera, out mouseLocalPos);
-        Vector3 iconWorldPos = sourceImage.rectTransform.position;
-        Vector2 iconLocalPos = parentCanvas.transform.InverseTransformPoint(iconWorldPos);
-        dragOffset = mouseLocalPos - iconLocalPos;
+        if (ActiveCursor != null)
+        {
+            dragProxyImage.transform.SetParent(ActiveCursor.cursorImage.transform, true);
+            dragProxyImage.rectTransform.anchoredPosition = Vector2.zero;
+        }
     }
 
     private void SetupProxy(Sprite sprite)
@@ -184,8 +219,10 @@ public class DragDropManager : MonoBehaviour
         dragProxyImage.raycastTarget = false;
     }
 
-    private void HandleDrop(PointerEventData eventData) // 引数に eventData を追加
+    private void HandleDrop(PointerEventData eventData)
     {
+        dragProxyImage.transform.SetParent(parentCanvas.transform, true);
+
         dragProxyImage.gameObject.SetActive(false);
         if (InkDialogueManager.Instance != null) { InkDialogueManager.Instance.CloseDialogue(); }
 
@@ -202,48 +239,6 @@ public class DragDropManager : MonoBehaviour
         currentDraggedObject = null;
         currentUIDraggable = null;
         originalSlot = null;
-    }
-
-    private Draggable FindDraggableAt(Vector2 screenPos)
-    {
-        if (screenToWorldConverter.GetWorldPosition(screenPos, out Vector3 worldPos))
-        {
-            // OverlapPointにレイヤーマスクを渡し、"Draggable"レイヤーのみを対象にする
-            Collider2D hit = Physics2D.OverlapPoint(worldPos, draggableLayer);
-
-            if (hit != null)
-            {
-                return hit.GetComponent<Draggable>();
-            }
-        }
-        return null;
-    }
-
-    private void CalculateProxySizeAndOffset(SpriteRenderer sr, Transform draggableTransform, Vector2 screenPos)
-    {
-        Bounds localBounds = sr.sprite.bounds;
-        Vector3[] worldCorners = new Vector3[4];
-        worldCorners[0] = draggableTransform.TransformPoint(new Vector3(localBounds.min.x, localBounds.min.y, 0));
-        worldCorners[1] = draggableTransform.TransformPoint(new Vector3(localBounds.min.x, localBounds.max.y, 0));
-        worldCorners[2] = draggableTransform.TransformPoint(new Vector3(localBounds.max.x, localBounds.max.y, 0));
-        worldCorners[3] = draggableTransform.TransformPoint(new Vector3(localBounds.max.x, localBounds.min.y, 0));
-
-        Rect rawImageRect = screenToWorldConverter.gameScreen.rectTransform.rect;
-        Vector2 localMin = new Vector2(float.MaxValue, float.MaxValue);
-        Vector2 localMax = new Vector2(float.MinValue, float.MinValue);
-        foreach (Vector3 worldPos in worldCorners)
-        {
-            Vector2 viewportPoint = mainCamera.WorldToViewportPoint(worldPos);
-            Vector2 localPoint = new Vector2(Mathf.Lerp(rawImageRect.xMin, rawImageRect.xMax, viewportPoint.x), Mathf.Lerp(rawImageRect.yMin, rawImageRect.yMax, viewportPoint.y));
-            localMin = Vector2.Min(localMin, localPoint);
-            localMax = Vector2.Max(localMax, localPoint);
-        }
-        dragProxyImage.rectTransform.sizeDelta = localMax - localMin;
-
-        Vector2 proxyCenterLocalPos = (localMin + localMax) / 2f;
-        Vector2 mouseLocalPos;
-        RectTransformUtility.ScreenPointToLocalPointInRectangle(screenToWorldConverter.gameScreen.rectTransform, screenPos, uiCamera, out mouseLocalPos);
-        dragOffset = mouseLocalPos - proxyCenterLocalPos;
     }
 
     private void HandleGameWorldDrop(DropZone targetZone)
@@ -322,7 +317,6 @@ public class DragDropManager : MonoBehaviour
         }
     }
 
-    private bool IsDraggable() { return (GameManager.Instance == null || GameManager.Instance.isInputEnabled); }
     private DropZone FindDropZoneUnderCursor()
     {
         PointerEventData pointerData = new PointerEventData(eventSystem);
@@ -346,6 +340,7 @@ public class DragDropManager : MonoBehaviour
         }
         return null;
     }
+
     private void ReturnToOriginalSlot()
     {
         if (currentDraggedObject != null)
@@ -371,12 +366,5 @@ public class DragDropManager : MonoBehaviour
 
             currentDraggedObject.currentSlot = newSlot;
         }
-    }
-
-    private void UpdateProxyPosition(Vector2 screenPos)
-    {
-        Vector2 localPoint;
-        RectTransformUtility.ScreenPointToLocalPointInRectangle(parentCanvas.transform as RectTransform, screenPos, parentCanvas.worldCamera, out localPoint);
-        dragProxyImage.rectTransform.localPosition = localPoint - dragOffset;
     }
 }

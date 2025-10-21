@@ -288,7 +288,6 @@ public class DesktopManager : MonoBehaviour
             audioSource.PlayOneShot(notificationSound, notificationVolume);
         }
 
-        // ▼▼▼ 以下を追加 ▼▼▼
         // 通知が表示されたので、アイコンをクリック可能にする
         if (desktopApps.Count > 0 && desktopApps[0].appIconButton != null)
         {

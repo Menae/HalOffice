@@ -12,6 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3b42febb3a66d504a96d27d269fd6241, type: 3}
   m_Name: P3_Stealth
   m_EditorClassIdentifier: 
-  sceneName: P3_Stealth
+  sceneName: P3_Day1
   bgmClip: {fileID: 8300000, guid: 2a92d1affad17c549880baba62ca7a57, type: 3}
   volume: 0.3
+  playOnLoad: 1

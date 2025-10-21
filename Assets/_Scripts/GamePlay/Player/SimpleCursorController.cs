@@ -50,20 +50,8 @@ public class SimpleCursorController : MonoBehaviour
         if (cursorImage == null) return;
 
         // --- カーソルの位置更新処理 ---
-        if (parentCanvas.renderMode == RenderMode.ScreenSpaceOverlay)
-        {
-            cursorImage.rectTransform.position = (Vector2)Input.mousePosition + cursorOffset;
-        }
-        else
-        {
-            RectTransformUtility.ScreenPointToLocalPointInRectangle(
-                parentCanvas.transform as RectTransform,
-                Input.mousePosition,
-                parentCanvas.worldCamera,
-                out Vector2 localPoint
-            );
-            cursorImage.rectTransform.anchoredPosition = localPoint + cursorOffset;
-        }
+        // Overlayモードでは、マウスのスクリーン座標を直接positionに設定するだけでよくなります。
+        cursorImage.rectTransform.position = (Vector2)Input.mousePosition + cursorOffset;
 
         // --- 左クリック効果音の再生 ---
         if (Input.GetMouseButtonDown(0)) // 0は左クリック

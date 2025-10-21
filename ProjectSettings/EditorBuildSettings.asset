@@ -15,7 +15,7 @@ EditorBuildSettings:
     path: Assets/Scenes/P1&P2.unity
     guid: b66bed27c762dbd41b2bacae908fd214
   - enabled: 1
-    path: Assets/Scenes/P3_Stealth.unity
+    path: Assets/Scenes/P3_Day1.unity
     guid: 51564be30f71fb54ba82f65e327e7169
   - enabled: 0
     path: Assets/Scenes/P4_InvestigationRecord.unity

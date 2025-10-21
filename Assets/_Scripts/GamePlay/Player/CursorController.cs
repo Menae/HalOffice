@@ -1,12 +1,11 @@
-﻿using UnityEngine;
+﻿using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
+[RequireComponent(typeof(AudioSource))]
 public class CursorController : MonoBehaviour
 {
-    [Header("UI参照")]
-    public Canvas parentCanvas;
-    public Camera uiCamera;
-
     [Header("カーソルの設定")]
     public Image cursorImage;
 
@@ -53,58 +52,128 @@ public class CursorController : MonoBehaviour
     [Tooltip("カーソルの表示位置を微調整します (X:左右, Y:上下)")]
     public Vector2 cursorOffset;
 
+    [Header("効果音設定")]
+    [Tooltip("左クリックした時に鳴らす効果音")]
+    public AudioClip leftClickSound;
+    [Range(0f, 1f)]
+    [Tooltip("左クリック効果音の音量")]
+    public float leftClickVolume = 1.0f;
+
+    [Tooltip("右クリックした時に鳴らす効果音")]
+    public AudioClip rightClickSound;
+    [Range(0f, 1f)]
+    [Tooltip("右クリック効果音の音量")]
+    public float rightClickVolume = 1.0f;
+
+    public Vector3 currentCursorPosition; // ゲーム内カーソルの現在位置
+
     // --- 内部変数 ---
-    private Vector3 currentCursorPosition; // ゲーム内カーソルの現在位置
     private Vector3 cursorVelocity = Vector3.zero; // SmoothDampで使う速度変数
+    private AudioSource audioSource;
+    private bool wasOverGameWorldLastFrame = false;
+
+    private void OnEnable()
+    {
+        // 自分が有効になったことをDragDropManagerに登録する
+        DragDropManager.RegisterCursor(this);
+    }
+
+    private void OnDisable()
+    {
+        // 自分が無効になることをDragDropManagerに登録解除する
+        DragDropManager.UnregisterCursor(this);
+    }
 
     void Start()
     {
+        audioSource = GetComponent<AudioSource>(); // ▼▼▼ この行を追加
+
         Cursor.visible = false;
         if (cursorImage == null) { Debug.LogError("Cursor Imageがセットされていません！"); return; }
         cursorImage.raycastTarget = false;
         SetCursorStateNormal();
 
-        // 起動時のカーソル位置を、現在のマウス位置で初期化
         currentCursorPosition = Input.mousePosition;
     }
 
     void Update()
     {
-        if (cursorImage == null || uiCamera == null || parentCanvas == null || targetNpc == null) return;
+        if (cursorImage == null || targetNpc == null) return;
 
+        bool isOverGameWorld = IsPointerOverGameWorld();
+        Vector3 targetPosition = (Vector2)Input.mousePosition + cursorOffset;
         cursorImage.enabled = true;
 
-        // 1. 「目標となる位置」を計算する (実際のOSマウスカーソルの位置)
-        Vector3 targetPosition = (Vector2)Input.mousePosition + cursorOffset;
-
-        // 2. 視界内に入っているかチェックし、見た目とイベント発行を処理
-        if (targetNpc.isCursorInView)
+        if (targetNpc.isCursorInView && isOverGameWorld)
         {
-            // 見つかり度を上昇させる
             if (detectionIncreaseChannel != null)
             {
                 float finalDetectionRate = GetCurrentDetectionMultiplier();
                 detectionIncreaseChannel.RaiseEvent(finalDetectionRate * Time.deltaTime);
             }
-
-            // 震えの演出を「目標位置」に加える
             float currentShakeMagnitude = GetCurrentShakeMagnitude();
             Vector2 shakeOffset = Random.insideUnitCircle * currentShakeMagnitude;
             targetPosition += (Vector3)shakeOffset;
         }
         else
         {
-            // 視界外なら通常状態に戻す
             SetCursorStateNormal();
         }
 
-        // 3. ゲーム内カーソルの現在位置を、目標位置に向かって滑らかに移動させる
-        currentCursorPosition = Vector3.SmoothDamp(currentCursorPosition, targetPosition, ref cursorVelocity, smoothTime);
+        // 状態に応じてカーソルの移動方法を決定する
+        if (isOverGameWorld)
+        {
+            // 1. ゲーム世界の上にいる場合：常に慣性をかける
+            currentCursorPosition = Vector3.SmoothDamp(currentCursorPosition, targetPosition, ref cursorVelocity, smoothTime);
+        }
+        else // 2. UI要素の上にいる場合
+        {
+            // 2a. 前のフレームではゲーム世界にいた場合（＝UIに侵入した瞬間）
+            if (wasOverGameWorldLastFrame)
+            {
+                // 視覚カーソルが実カーソルに追いつくまで、スムーズに着地させる
+                if (Vector3.Distance(currentCursorPosition, targetPosition) > 1.0f)
+                {
+                    currentCursorPosition = Vector3.SmoothDamp(currentCursorPosition, targetPosition, ref cursorVelocity, smoothTime);
+                }
+                else // 追いついたら即座に追従
+                {
+                    currentCursorPosition = targetPosition;
+                    cursorVelocity = Vector3.zero;
+                }
+            }
+            // 2b. 前のフレームからずっとUIの上にいる場合
+            else
+            {
+                // 慣性を完全に切り、即座に追従させる
+                currentCursorPosition = targetPosition;
+                cursorVelocity = Vector3.zero;
+            }
+        }
 
-        // 4. 最終的なカーソル位置を、滑らかに移動した後の位置を使って適用する
-        Vector3 screenPosWithZ = currentCursorPosition;
-        screenPosWithZ.z = parentCanvas.planeDistance;
-        cursorImage.rectTransform.position = uiCamera.ScreenToWorldPoint(screenPosWithZ);
+        // 最後に、現在の状態を「前のフレームの状態」として記憶する
+        wasOverGameWorldLastFrame = isOverGameWorld;
+
+        // クリック効果音の再生
+        if (Input.GetMouseButtonDown(0))
+        {
+            if (audioSource != null && leftClickSound != null)
+                audioSource.PlayOneShot(leftClickSound, leftClickVolume);
+        }
+        if (Input.GetMouseButtonDown(1))
+        {
+            if (audioSource != null && rightClickSound != null)
+                audioSource.PlayOneShot(rightClickSound, rightClickVolume);
+        }
+    }
+
+    private void LateUpdate()
+    {
+        // 最終的なカーソル位置の適用は、全ての計算が終わったLateUpdateで行う
+        if (cursorImage != null)
+        {
+            cursorImage.rectTransform.position = currentCursorPosition;
+        }
     }
 
     // 視界内にいる時の見た目の変化を適用し、震えの強さを返すメソッド
@@ -158,6 +227,30 @@ public class CursorController : MonoBehaviour
     {
         cursorImage.color = normalColor;
         cursorImage.rectTransform.localScale = Vector3.one * normalScale;
+    }
+
+    /// <summary>
+    /// マウスカーソルが現在「ゲーム世界（InputBridge）」の上にあるかどうかを判定する
+    /// </summary>
+    /// <returns>ゲーム世界の上にあればtrue、それ以外のUI要素の上ならfalse</returns>
+    private bool IsPointerOverGameWorld()
+    {
+        // マウス下のUI要素を全て取得
+        var pointerData = new PointerEventData(EventSystem.current) { position = Input.mousePosition };
+        var results = new List<RaycastResult>();
+        EventSystem.current.RaycastAll(pointerData, results);
+
+        // ヒットしたUI要素の中にInputBridgeがあれば「ゲーム世界の上」と判断
+        foreach (var result in results)
+        {
+            if (result.gameObject.GetComponent<InputBridge>() != null)
+            {
+                return true;
+            }
+        }
+
+        // InputBridgeが見つからなければ、それはタスクバーなどの「ゲーム世界以外のUI」の上と判断
+        return false;
     }
 
     private Vector3 GetMouseWorldPosition()

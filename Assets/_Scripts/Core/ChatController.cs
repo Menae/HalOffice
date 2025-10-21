@@ -1,9 +1,10 @@
-﻿using UnityEngine;
-using UnityEngine.UI;
-using TMPro;
+﻿using Ink.Runtime;
 using System.Collections;
 using System.Collections.Generic;
-using Ink.Runtime;
+using TMPro;
+using UnityEngine;
+using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 
 /// <summary>
 /// Inkストーリーを再生し、会話UI(吹き出し、選択肢など)の生成と管理を行うシングルトンクラス。
@@ -82,10 +83,29 @@ public class ChatController : MonoBehaviour
     /// <param name="inkJsonAsset">再生するInkストーリーのJSONアセット</param>
     public void StartConversation(TextAsset inkJsonAsset)
     {
-        if (chatPanel != null) chatPanel.SetActive(true);
+        // GlobalUIManagerに必要な参照が揃っているか確認
+        GlobalUIManager manager = GlobalUIManager.Instance;
+        if (manager == null || chatPanel == null || manager.layoutDefault == null || manager.layoutSpecial == null)
+        {
+            Debug.LogError("ChatControllerの起動に必要な参照がGlobalUIManagerに設定されていません。");
+            return;
+        }
 
-        if (speakerIconDatabase == null) InitializeDatabase();
+        // ウィンドウを開き、適切なレイアウトを選択する
+        chatPanel.SetActive(true);
+        string currentSceneName = SceneManager.GetActiveScene().name;
+        if (manager.specialLayoutScenes.Contains(currentSceneName))
+        {
+            manager.layoutDefault.SetActive(false);
+            manager.layoutSpecial.SetActive(true);
+        }
+        else
+        {
+            manager.layoutDefault.SetActive(true);
+            manager.layoutSpecial.SetActive(false);
+        }
 
+        // ログなどを初期化して会話を開始
         if (GameManager.Instance != null) GameManager.Instance.conversationLog.Clear();
         foreach (Transform child in contentContainer) Destroy(child.gameObject);
 
@@ -103,7 +123,7 @@ public class ChatController : MonoBehaviour
         if (currentStory != null && !currentStory.canContinue)
         {
             OnConversationFinished?.Invoke();
-            chatPanel.SetActive(false);
+            if (chatPanel != null) chatPanel.SetActive(false); // 修正点：nullチェックを追加
             currentStory = null;
             return;
         }
@@ -135,10 +155,33 @@ public class ChatController : MonoBehaviour
     /// </summary>
     public void ToggleChatWindow()
     {
-        if (chatPanel == null) return;
+        // GlobalUIManagerに必要な参照が揃っているか確認
+        GlobalUIManager manager = GlobalUIManager.Instance;
+        if (manager == null || chatPanel == null || manager.layoutDefault == null || manager.layoutSpecial == null) return;
+
+        // ウィンドウの表示/非表示を切り替える
         bool willBeActive = !chatPanel.activeSelf;
         chatPanel.SetActive(willBeActive);
-        if (willBeActive) RebuildLog();
+
+        // もしウィンドウを表示状態にしたなら
+        if (willBeActive)
+        {
+            // 適切なレイアウトを選択
+            string currentSceneName = SceneManager.GetActiveScene().name;
+            if (manager.specialLayoutScenes.Contains(currentSceneName))
+            {
+                manager.layoutDefault.SetActive(false);
+                manager.layoutSpecial.SetActive(true);
+            }
+            else
+            {
+                manager.layoutDefault.SetActive(true);
+                manager.layoutSpecial.SetActive(false);
+            }
+
+            // ログを再構築
+            RebuildLog();
+        }
     }
 
     #endregion

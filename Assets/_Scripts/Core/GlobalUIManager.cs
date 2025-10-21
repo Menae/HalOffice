@@ -20,6 +20,7 @@ public class GlobalUIManager : MonoBehaviour
     public GameObject taskbarObject;
     [Tooltip("デスクトップアイコンの親オブジェクト")]
     public GameObject desktopIconsObject;
+    public GameObject chatAppPanel;
 
     [Header("タスクバーアイコン設定")]
     [Tooltip("管理したいウィンドウと選択フレームのペアをここに登録する")]
@@ -29,6 +30,14 @@ public class GlobalUIManager : MonoBehaviour
     [Header("表示設定")]
     [Tooltip("タスクバーを非表示にしたいシーンの名前をリストに追加")]
     public List<string> scenesToHideTaskbar;
+
+    [Header("チャットアプリのレイアウト設定")]
+    [Tooltip("デフォルトのレイアウトの親オブジェクト")]
+    public GameObject layoutDefault; // Inspectorで「Chat-Layout1」をセット
+    [Tooltip("特別シーン用のレイアウトの親オブジェクト")]
+    public GameObject layoutSpecial; // Inspectorで「Chat-Layout2」をセット
+    [Tooltip("特別レイアウトを適用したいシーンの名前リスト")]
+    public List<string> specialLayoutScenes;
 
     private void OnEnable() { SceneManager.sceneLoaded += OnSceneLoaded; }
     private void OnDisable() { SceneManager.sceneLoaded -= OnSceneLoaded; }
@@ -46,10 +55,20 @@ public class GlobalUIManager : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// 新しいシーンがロードされるたびに自動的に呼ばれるメソッド
+    /// </summary>
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
-        if (scenesToHideTaskbar.Contains(scene.name)) { taskbarObject.SetActive(false); }
-        else { taskbarObject.SetActive(true); }
+        // --- 1. タスクバーの表示/非表示を決定（この処理は残す）---
+        if (scenesToHideTaskbar.Contains(scene.name))
+        {
+            taskbarObject.SetActive(false);
+        }
+        else
+        {
+            taskbarObject.SetActive(true);
+        }
     }
 
     private void Update()

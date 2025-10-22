@@ -7,8 +7,8 @@ using System.Collections;
 public class Day1Manager : MonoBehaviour
 {
     [Header("ゲーム開始設定")]
-    [Tooltip("操作説明などを表示するパネル")]
-    public GameObject instructionPanel;
+    //[Tooltip("操作説明などを表示するパネル")]
+    //public GameObject instructionPanel;
     [Tooltip("画面をフェードインさせるための黒い画像")]
     public Image screenFadeImage;
     [Tooltip("フェードインにかかる時間（秒）")]
@@ -34,8 +34,8 @@ public class Day1Manager : MonoBehaviour
     public float notificationVolume = 1.0f;
 
     public EvaluationTrigger evaluationTrigger;
+    public TutorialManager tutorialManager;
 
-    // ▼▼▼ この行を修正 ▼▼▼
     // ゲームがアクティブかどうかを管理するフラグ。外部から読み取り可能にする。
     public bool isGameActive { get; private set; } = false;
 
@@ -55,9 +55,10 @@ public class Day1Manager : MonoBehaviour
         currentTime = totalTimeInSeconds;
         if (imageObjectA != null) imageObjectA.SetActive(false);
         if (imageObjectB != null) imageObjectB.SetActive(false);
-        
+
         isGameActive = false;
-        if (instructionPanel != null) instructionPanel.SetActive(true);
+        // if (instructionPanel != null) instructionPanel.SetActive(true);
+
         if (screenFadeImage != null)
         {
             screenFadeImage.gameObject.SetActive(true);
@@ -66,7 +67,8 @@ public class Day1Manager : MonoBehaviour
         }
         else
         {
-            StartGame();
+            // フェードがない場合は、直接チュートリアルを開始
+            tutorialManager.StartTutorial();
         }
     }
 
@@ -89,6 +91,7 @@ public class Day1Manager : MonoBehaviour
 
     private IEnumerator SceneStartSequence()
     {
+        // フェードイン処理
         float timer = 0f;
         while (timer < fadeInDuration)
         {
@@ -98,16 +101,27 @@ public class Day1Manager : MonoBehaviour
         }
         screenFadeImage.color = Color.clear;
         screenFadeImage.gameObject.SetActive(false);
+
+        // フェードイン完了後、TutorialManagerにチュートリアル開始を命令
+        if (tutorialManager != null)
+        {
+            tutorialManager.StartTutorial();
+        }
+        else
+        {
+            Debug.LogError("TutorialManagerが設定されていません！");
+        }
     }
 
     public void StartGame()
     {
-        Debug.Log("StartGame() has been called! isGameActive will be set to true."); // ← この行を追加
+        Debug.Log("StartGame() has been called! isGameActive will be set to true.");
         isGameActive = true;
-        if (instructionPanel != null)
-        {
-            instructionPanel.SetActive(false);
-        }
+
+        //if (instructionPanel != null)
+        //{
+        //    instructionPanel.SetActive(false);
+        //}
     }
 
     private void CheckTimedEvents()

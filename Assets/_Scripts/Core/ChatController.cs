@@ -6,65 +6,57 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
-/// <summary>
-/// Inkストーリーを再生し、会話UI(吹き出し、選択肢など)の生成と管理を行うシングルトンクラス。
-/// ゲーム内の様々なトリガーから呼び出され、指定された会話劇を演出します。
-/// </summary>
+[System.Serializable]
+public class BubblePrefabSet
+{
+    [Tooltip("発言者アイコンが左にある吹き出しのプレハブ")]
+    public GameObject bubblePrefabLeft;
+    [Tooltip("発言者アイコンが右にある吹き出しのプレハブ")]
+    public GameObject bubblePrefabRight;
+    [Tooltip("アイコンがないナレーション用の吹き出しプレハブ")]
+    public GameObject bubblePrefabSystem;
+}
+
 public class ChatController : MonoBehaviour
 {
-    // --- シングルトンインスタンス ---
     public static ChatController Instance { get; private set; }
 
-    /// <summary>
-    /// 会話が完全に終了したことを外部のシステムに通知するための静的イベント。
-    /// </summary>
     public static event System.Action OnConversationFinished;
-
-
-    // --- Inspectorで設定する項目 ---
+    public static event System.Action<List<string>> OnTagsProcessed;
 
     [Header("UI参照 (UI References)")]
-    [Tooltip("表示/非表示を切り替えたいチャットパネル本体")]
     [SerializeField] private GameObject chatPanel;
-    [Tooltip("会話ログをスクロールさせるためのScroll Rectコンポーネント")]
     [SerializeField] private ScrollRect scrollRect;
-    [Tooltip("吹き出しが生成される親オブジェクト(ScrollViewのContent)")]
-    [SerializeField] private RectTransform contentContainer;
-    [Tooltip("選択肢のボタンが生成される親オブジェクト")]
-    [SerializeField] private GameObject choicesContainer;
+    [SerializeField] private RectTransform contentContainerDefault;
+    [SerializeField] private RectTransform contentContainerSpecial;
+    [SerializeField] private GameObject choicesContainerDefault;
+    [SerializeField] private GameObject choicesContainerSpecial;
 
     [Header("吹き出しプレハブ (Bubble Prefabs)")]
-    [Tooltip("発言者アイコンが左にある吹き出しのプレハブ")]
-    [SerializeField] private GameObject bubblePrefabLeft;
-    [Tooltip("発言者アイコンが右にある吹き出しのプレハブ")]
-    [SerializeField] private GameObject bubblePrefabRight;
-    [Tooltip("アイコンがないナレーション用の吹き出しプレハブ")]
-    [SerializeField] private GameObject bubblePrefabSystem;
-    [Tooltip("選択肢ボタンのプレハブ")]
-    [SerializeField] private GameObject choiceButtonPrefab;
+    [SerializeField] private BubblePrefabSet defaultPrefabs;
+    [SerializeField] private BubblePrefabSet specialPrefabs;
+
+    [Header("選択肢ボタン (Choice Buttons)")]
+    [SerializeField] private GameObject choiceButtonPrefabDefault;
+    [SerializeField] private GameObject choiceButtonPrefabSpecial;
 
     [Header("発言者プロフィール (Speaker Profiles)")]
-    [Tooltip("Inkのタグと、それに対応するアイコン画像を登録するリスト")]
     [SerializeField] private List<SpeakerProfile> speakerProfiles;
 
-
-    // --- 内部処理用の変数 ---
     private Dictionary<string, Sprite> speakerIconDatabase;
     private Story currentStory;
 
-    /// <summary>
-    /// Inspector上で発言者のタグとアイコン画像をセットで管理するためのクラス。
-    /// </summary>
     [System.Serializable]
     public class SpeakerProfile
     {
-        [Tooltip("Inkファイルで使うタグ名(例: Boss, Player_Happy)")]
         public string tag;
-        [Tooltip("上記タグに対応するキャラクターのアイコン画像")]
         public Sprite icon;
     }
 
-    #region Unity Lifecycle Methods
+    public bool IsConversationFinished()
+    {
+        return currentStory == null || !currentStory.canContinue && currentStory.currentChoices.Count == 0;
+    }
 
     private void Awake()
     {
@@ -73,17 +65,8 @@ public class ChatController : MonoBehaviour
         InitializeDatabase();
     }
 
-    #endregion
-
-    #region Public Methods
-
-    /// <summary>
-    /// 新しい会話を開始する。DesktopManagerなど外部のトリガーから呼び出す。
-    /// </summary>
-    /// <param name="inkJsonAsset">再生するInkストーリーのJSONアセット</param>
     public void StartConversation(TextAsset inkJsonAsset)
     {
-        // GlobalUIManagerに必要な参照が揃っているか確認
         GlobalUIManager manager = GlobalUIManager.Instance;
         if (manager == null || chatPanel == null || manager.layoutDefault == null || manager.layoutSpecial == null)
         {
@@ -91,7 +74,6 @@ public class ChatController : MonoBehaviour
             return;
         }
 
-        // ウィンドウを開き、適切なレイアウトを選択する
         chatPanel.SetActive(true);
         string currentSceneName = SceneManager.GetActiveScene().name;
         if (manager.specialLayoutScenes.Contains(currentSceneName))
@@ -105,68 +87,81 @@ public class ChatController : MonoBehaviour
             manager.layoutSpecial.SetActive(false);
         }
 
-        // ログなどを初期化して会話を開始
         if (GameManager.Instance != null) GameManager.Instance.conversationLog.Clear();
-        foreach (Transform child in contentContainer) Destroy(child.gameObject);
+        foreach (Transform child in contentContainerDefault) Destroy(child.gameObject);
+        foreach (Transform child in contentContainerSpecial) Destroy(child.gameObject);
 
         currentStory = new Story(inkJsonAsset.text);
         AdvanceConversation();
     }
 
-    /// <summary>
-    /// 会話を一行進める。UIのクリックイベント(EventTrigger)から呼び出す。
-    /// </summary>
     public void AdvanceConversation()
     {
-        if (choicesContainer.activeInHierarchy) return;
-
-        if (currentStory != null && !currentStory.canContinue)
+        // --- プレイヤーの入力待ちや、選択肢が表示されている場合は処理を中断 ---
+        if (TutorialManager.Instance != null && TutorialManager.Instance.IsPlayingEffect)
         {
-            OnConversationFinished?.Invoke();
-            if (chatPanel != null) chatPanel.SetActive(false); // 修正点：nullチェックを追加
-            currentStory = null;
+            return;
+        }
+        GameObject activeChoicesContainer = GlobalUIManager.Instance.layoutDefault.activeSelf
+                                            ? choicesContainerDefault
+                                            : choicesContainerSpecial;
+        if (activeChoicesContainer != null && activeChoicesContainer.activeInHierarchy) return;
+
+        // --- ストーリーが既に終了している場合は、パネルを閉じて終了 ---
+        if (currentStory == null)
+        {
+            if (chatPanel != null) chatPanel.SetActive(false);
             return;
         }
 
-        if (currentStory == null)
+        // --- 会話を進めるメインの処理 ---
+        if (currentStory.canContinue)
         {
-            chatPanel.SetActive(false); // パネルを閉じる
-            return;                     // 処理を終了する
+            string currentLine = currentStory.Continue();
+            List<string> currentTags = new List<string>(currentStory.currentTags);
+
+            if (currentTags.Count > 0)
+            {
+                OnTagsProcessed?.Invoke(currentTags);
+            }
+
+            if (GameManager.Instance != null)
+            {
+                GameManager.Instance.conversationLog.Add(new DialogueLineData { text = currentLine, tags = currentTags });
+            }
+
+            if (!string.IsNullOrWhiteSpace(currentLine))
+            {
+                DisplayLine(currentLine, currentTags);
+            }
         }
 
-        string currentLine = currentStory.Continue();
-        List<string> currentTags = new List<string>(currentStory.currentTags);
-
-        if (GameManager.Instance != null)
-        {
-            GameManager.Instance.conversationLog.Add(new DialogueLineData { text = currentLine, tags = currentTags });
-        }
-
-        DisplayLine(currentLine, currentTags);
-
+        // --- 物語を進めた後の状態をチェック ---
         if (currentStory.currentChoices.Count > 0)
         {
+            // 状態: 選択肢がある -> 選択肢を表示して待機
             DisplayChoices();
         }
+        else if (!currentStory.canContinue)
+        {
+            // 状態: 選択肢がなく、これ以上続きもない -> 会話終了
+            OnConversationFinished?.Invoke();
+            if (chatPanel != null) chatPanel.SetActive(false);
+            currentStory = null;
+        }
+        // (上記以外の場合: 選択肢はないが、まだ続きの行がある -> 次のクリックを待つ)
     }
 
-    /// <summary>
-    /// チャットウィンドウの表示/非表示を切り替える
-    /// </summary>
     public void ToggleChatWindow()
     {
-        // GlobalUIManagerに必要な参照が揃っているか確認
         GlobalUIManager manager = GlobalUIManager.Instance;
         if (manager == null || chatPanel == null || manager.layoutDefault == null || manager.layoutSpecial == null) return;
 
-        // ウィンドウの表示/非表示を切り替える
         bool willBeActive = !chatPanel.activeSelf;
         chatPanel.SetActive(willBeActive);
 
-        // もしウィンドウを表示状態にしたなら
         if (willBeActive)
         {
-            // 適切なレイアウトを選択
             string currentSceneName = SceneManager.GetActiveScene().name;
             if (manager.specialLayoutScenes.Contains(currentSceneName))
             {
@@ -178,19 +173,10 @@ public class ChatController : MonoBehaviour
                 manager.layoutDefault.SetActive(true);
                 manager.layoutSpecial.SetActive(false);
             }
-
-            // ログを再構築
             RebuildLog();
         }
     }
 
-    #endregion
-
-    #region Private Methods
-
-    /// <summary>
-    /// InspectorのSpeakerProfilesリストを元に、アイコン検索用のデータベースを構築する。
-    /// </summary>
     private void InitializeDatabase()
     {
         if (speakerIconDatabase != null) return;
@@ -205,15 +191,14 @@ public class ChatController : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// 受け取った情報から、適切な吹き出しを生成して表示する。
-    /// </summary>
     private void DisplayLine(string text, List<string> tags)
     {
         GameObject prefabToUse = GetPrefabFromTags(tags);
         Sprite iconToUse = GetSpeakerIconFromTags(tags);
 
-        GameObject newBubbleObject = Instantiate(prefabToUse, contentContainer);
+        RectTransform activeContainer = GlobalUIManager.Instance.layoutDefault.activeSelf ? contentContainerDefault : contentContainerSpecial;
+
+        GameObject newBubbleObject = Instantiate(prefabToUse, activeContainer);
 
         DialogueBubble bubble = newBubbleObject.GetComponent<DialogueBubble>();
         if (bubble == null)
@@ -236,57 +221,60 @@ public class ChatController : MonoBehaviour
                 bubble.iconImage.gameObject.SetActive(false);
             }
         }
-
         ScrollToBottom();
     }
 
-    /// <summary>
-    /// Inkストーリーに選択肢がある場合に、UIボタンを生成して表示する。
-    /// </summary>
     private void DisplayChoices()
     {
-        // 以前の選択肢が残っていれば削除
-        foreach (Transform child in choicesContainer.transform)
+        foreach (Transform child in choicesContainerDefault.transform) Destroy(child.gameObject);
+        foreach (Transform child in choicesContainerSpecial.transform) Destroy(child.gameObject);
+        choicesContainerDefault.SetActive(false);
+        choicesContainerSpecial.SetActive(false);
+
+        GameObject activeContainer = GlobalUIManager.Instance.layoutDefault.activeSelf
+                                     ? choicesContainerDefault
+                                     : choicesContainerSpecial;
+        GameObject prefabToUse = GlobalUIManager.Instance.layoutDefault.activeSelf
+                                 ? choiceButtonPrefabDefault
+                                 : choiceButtonPrefabSpecial;
+
+        if (prefabToUse == null)
         {
-            Destroy(child.gameObject);
+            Debug.LogError("使用する選択肢ボタンのプレハブが設定されていません！");
+            return;
         }
 
-        // 選択肢の数だけボタンを生成
         foreach (Choice choice in currentStory.currentChoices)
         {
-            GameObject choiceButtonObject = Instantiate(choiceButtonPrefab, choicesContainer.transform);
-
+            GameObject choiceButtonObject = Instantiate(prefabToUse, activeContainer.transform);
             TextMeshProUGUI buttonText = choiceButtonObject.GetComponentInChildren<TextMeshProUGUI>();
             if (buttonText != null)
             {
                 buttonText.text = choice.text;
             }
-
             Button button = choiceButtonObject.GetComponent<Button>();
             if (button != null)
             {
                 button.onClick.AddListener(() => MakeChoice(choice.index));
             }
         }
-
-        choicesContainer.SetActive(true);
+        activeContainer.SetActive(true);
     }
 
-    /// <summary>
-    /// プレイヤーが選択肢ボタンをクリックした時の処理。
-    /// </summary>
     private void MakeChoice(int choiceIndex)
     {
+        if (choicesContainerDefault != null) choicesContainerDefault.SetActive(false);
+        if (choicesContainerSpecial != null) choicesContainerSpecial.SetActive(false);
+
         currentStory.ChooseChoiceIndex(choiceIndex);
-        choicesContainer.SetActive(false);
-        AdvanceConversation(); // 選択後の会話に進む
+        AdvanceConversation();
     }
 
-    /// <summary>
-    /// Inkタグを解析し、使用すべきプレハブを返す。
-    /// </summary>
     private GameObject GetPrefabFromTags(List<string> tags)
     {
+        BubblePrefabSet activePrefabSet = GlobalUIManager.Instance.layoutDefault.activeSelf
+                                          ? defaultPrefabs
+                                          : specialPrefabs;
         if (tags != null)
         {
             foreach (string tag in tags)
@@ -296,19 +284,16 @@ public class ChatController : MonoBehaviour
                     string prefabType = tag.Substring("prefab:".Length).Trim().ToLower();
                     switch (prefabType)
                     {
-                        case "left": return bubblePrefabLeft;
-                        case "right": return bubblePrefabRight;
-                        case "system": return bubblePrefabSystem;
+                        case "left": return activePrefabSet.bubblePrefabLeft;
+                        case "right": return activePrefabSet.bubblePrefabRight;
+                        case "system": return activePrefabSet.bubblePrefabSystem;
                     }
                 }
             }
         }
-        return bubblePrefabLeft; // タグが見つからない場合のデフォルト
+        return activePrefabSet.bubblePrefabLeft;
     }
 
-    /// <summary>
-    /// Inkタグを解析し、使用すべきアイコン画像を返す。
-    /// </summary>
     private Sprite GetSpeakerIconFromTags(List<string> tags)
     {
         if (tags == null) return null;
@@ -323,38 +308,35 @@ public class ChatController : MonoBehaviour
                     return speakerIconDatabase[speakerKey];
                 }
             }
-            // "speaker:"接頭辞なしの短いタグにも対応
             if (speakerIconDatabase.ContainsKey(tag))
             {
                 return speakerIconDatabase[tag];
             }
         }
-        return null; // 対応するアイコンが見つからなければnull
+        return null;
     }
 
-    /// <summary>
-    /// GameManagerに保存されたログを元に会話を再生成する
-    /// </summary>
     private void RebuildLog()
     {
-        foreach (Transform child in contentContainer) Destroy(child.gameObject);
+        foreach (Transform child in contentContainerDefault) Destroy(child.gameObject);
+        foreach (Transform child in contentContainerSpecial) Destroy(child.gameObject);
+
         if (GameManager.Instance == null) return;
-        
+
         foreach (var logEntry in GameManager.Instance.conversationLog)
         {
-            DisplayLine(logEntry.text, logEntry.tags);
+            DisplayLineWithoutScroll(logEntry.text, logEntry.tags);
         }
     }
 
-    /// <summary>
-    /// RebuildLog専用。スクロール処理を伴わないDisplayLine。
-    /// </summary>
     private void DisplayLineWithoutScroll(string text, List<string> tags)
     {
         GameObject prefabToUse = GetPrefabFromTags(tags);
         Sprite iconToUse = GetSpeakerIconFromTags(tags);
 
-        GameObject newBubbleObject = Instantiate(prefabToUse, contentContainer);
+        RectTransform activeContainer = GlobalUIManager.Instance.layoutDefault.activeSelf ? contentContainerDefault : contentContainerSpecial;
+
+        GameObject newBubbleObject = Instantiate(prefabToUse, activeContainer);
         DialogueBubble bubble = newBubbleObject.GetComponent<DialogueBubble>();
         if (bubble == null) return;
 
@@ -373,10 +355,6 @@ public class ChatController : MonoBehaviour
         }
     }
 
-    #endregion
-
-    #region Coroutines
-
     private void ScrollToBottom()
     {
         StartCoroutine(ForceScrollDown());
@@ -384,13 +362,10 @@ public class ChatController : MonoBehaviour
 
     private IEnumerator ForceScrollDown()
     {
-        // レイアウトグループの計算が完了するのを待つため、フレームの終わりに実行
         yield return new WaitForEndOfFrame();
         if (scrollRect != null)
         {
             scrollRect.verticalNormalizedPosition = 0f;
         }
     }
-
-    #endregion
 }

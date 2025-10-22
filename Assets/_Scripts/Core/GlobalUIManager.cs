@@ -4,7 +4,29 @@ using System.Collections.Generic;
 
 public class GlobalUIManager : MonoBehaviour
 {
-    public static GlobalUIManager Instance { get; private set; }
+    private static GlobalUIManager _instance;
+    public static GlobalUIManager Instance
+    {
+        get
+        {
+            // インスタンスがまだ存在しない場合
+            if (_instance == null)
+            {
+                // まずシーン内から探す
+                _instance = FindObjectOfType<GlobalUIManager>();
+
+                // それでも見つからなければ、Resourcesフォルダからプレハブをロードして生成
+                if (_instance == null)
+                {
+                    // プレハブのパス
+                    var prefab = Resources.Load<GameObject>("Prefabs/GlobalUIManager");
+                    var go = Instantiate(prefab);
+                    _instance = go.GetComponent<GlobalUIManager>();
+                }
+            }
+            return _instance;
+        }
+    }
 
     [System.Serializable]
     public class TaskbarIconEntry
@@ -14,6 +36,10 @@ public class GlobalUIManager : MonoBehaviour
         [Tooltip("上記ウィンドウがアクティブな時に表示する選択フレーム")]
         public GameObject selectionFrame;
     }
+
+    [Header("コンポーネント参照")]
+    [Tooltip("同じオブジェクトにアタッチされているChatController")]
+    public ChatController chatController;
 
     [Header("UI要素")]
     [Tooltip("シーン間で永続させたいタスクバーの親オブジェクト")]
@@ -44,15 +70,16 @@ public class GlobalUIManager : MonoBehaviour
 
     private void Awake()
     {
-        if (Instance == null)
+        if (Instance != null && Instance != this)
         {
-            Instance = this;
-            DontDestroyOnLoad(gameObject);
+            Destroy(this.gameObject);
+            return;
         }
-        else
-        {
-            Destroy(gameObject);
-        }
+        _instance = this;
+        DontDestroyOnLoad(this.gameObject);
+
+        // 自分と同じGameObjectにアタッチされているChatControllerを自動で取得
+        chatController = GetComponent<ChatController>();
     }
 
     /// <summary>

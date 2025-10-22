@@ -9,7 +9,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1288966934358511446}
-  m_Layer: 0
+  m_Layer: 5
   m_Name: Chat-Icon
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -46,7 +46,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 502190403936383295}
-  m_Layer: 0
+  m_Layer: 5
   m_Name: Apps
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -86,7 +86,7 @@ GameObject:
   - component: {fileID: 5259822268640812592}
   - component: {fileID: 2567889065825817338}
   - component: {fileID: 4235858819388663184}
-  m_Layer: 0
+  m_Layer: 5
   m_Name: Scroll View
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -110,8 +110,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: -2.5}
-  m_SizeDelta: {x: -10, y: -155}
+  m_AnchoredPosition: {x: -1.4949341, y: -0.60009766}
+  m_SizeDelta: {x: 186.15012, y: -118.99983}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &8827383792087234831
 CanvasRenderer:
@@ -220,7 +220,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2458876847561415835}
   - component: {fileID: 7321905948203333264}
-  m_Layer: 0
+  m_Layer: 5
   m_Name: Chat-Layout2
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -246,8 +246,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: -600, y: -200}
+  m_AnchoredPosition: {x: -506.49994, y: -161.94997}
+  m_SizeDelta: {x: -1247.0001, y: -377.09995}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &7321905948203333264
 CanvasRenderer:
@@ -267,7 +267,7 @@ GameObject:
   m_Component:
   - component: {fileID: 454109773349227009}
   - component: {fileID: 6318655317364858494}
-  m_Layer: 0
+  m_Layer: 5
   m_Name: Chat-Layout1
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -315,7 +315,7 @@ GameObject:
   - component: {fileID: 2216654137803115712}
   - component: {fileID: 1103900259267923867}
   - component: {fileID: 7132895478897275830}
-  m_Layer: 0
+  m_Layer: 5
   m_Name: OnEnable
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -391,7 +391,7 @@ GameObject:
   - component: {fileID: 5689856387834421002}
   - component: {fileID: 770103128854387235}
   - component: {fileID: 6247159954002585842}
-  m_Layer: 0
+  m_Layer: 5
   m_Name: Viewport
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -480,7 +480,7 @@ GameObject:
   - component: {fileID: 2261318766220736656}
   - component: {fileID: 2563388559260967065}
   - component: {fileID: 2411577950487875480}
-  m_Layer: 0
+  m_Layer: 5
   m_Name: Taskbar
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -556,7 +556,7 @@ GameObject:
   - component: {fileID: 993695334495133755}
   - component: {fileID: 7216172801133311433}
   - component: {fileID: 6841753099228816300}
-  m_Layer: 0
+  m_Layer: 5
   m_Name: ChoicesContainer
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -579,8 +579,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0}
   m_AnchorMax: {x: 0.5, y: 0}
-  m_AnchoredPosition: {x: 0, y: 30}
-  m_SizeDelta: {x: 1920, y: 60}
+  m_AnchoredPosition: {x: 0, y: -2}
+  m_SizeDelta: {x: 700, y: 66.88}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &993695334495133755
 CanvasRenderer:
@@ -657,7 +657,7 @@ GameObject:
   - component: {fileID: 7161765783987318465}
   - component: {fileID: 8657776429008809795}
   - component: {fileID: 7884891229614953414}
-  m_Layer: 0
+  m_Layer: 5
   m_Name: Content
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -681,7 +681,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 200}
+  m_SizeDelta: {x: 0, y: 100}
   m_Pivot: {x: 0, y: 0}
 --- !u!114 &8657776429008809795
 MonoBehaviour:
@@ -698,10 +698,10 @@ MonoBehaviour:
   m_Padding:
     m_Left: 10
     m_Right: 10
-    m_Top: 100
-    m_Bottom: 100
+    m_Top: 50
+    m_Bottom: 50
   m_ChildAlignment: 7
-  m_Spacing: 50
+  m_Spacing: 30
   m_ChildForceExpandWidth: 0
   m_ChildForceExpandHeight: 0
   m_ChildControlWidth: 0
@@ -736,7 +736,7 @@ GameObject:
   - component: {fileID: 120847206409932374}
   - component: {fileID: 8771490519888413809}
   - component: {fileID: 5971821032910547447}
-  m_Layer: 0
+  m_Layer: 5
   m_Name: Button
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -880,7 +880,7 @@ GameObject:
   - component: {fileID: 383978452174378081}
   - component: {fileID: 4384884974129042416}
   - component: {fileID: 8919964593826100877}
-  m_Layer: 0
+  m_Layer: 5
   m_Name: Canvas-Global
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -982,7 +982,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1235301563102950345}
-  m_Layer: 0
+  m_Layer: 5
   m_Name: Icons
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1020,7 +1020,7 @@ GameObject:
   - component: {fileID: 5332774643118340748}
   - component: {fileID: 7261035204136554185}
   - component: {fileID: 7529256161435704847}
-  m_Layer: 0
+  m_Layer: 5
   m_Name: Background
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1097,7 +1097,7 @@ GameObject:
   - component: {fileID: 4445584147844935179}
   - component: {fileID: 8571784006407022616}
   - component: {fileID: 5465536211231478975}
-  m_Layer: 0
+  m_Layer: 5
   m_Name: Scroll View
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1232,7 +1232,7 @@ GameObject:
   - component: {fileID: 7464000473933243936}
   - component: {fileID: 1696397810115167292}
   - component: {fileID: 5319896918791909235}
-  m_Layer: 0
+  m_Layer: 5
   m_Name: DayCount
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1366,7 +1366,7 @@ GameObject:
   - component: {fileID: 58796990243192907}
   - component: {fileID: 3549266735550327310}
   - component: {fileID: 1071078508034451762}
-  m_Layer: 0
+  m_Layer: 5
   m_Name: GlobalUIManager
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1401,13 +1401,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 63c180908925c2443b526bf386eb9d98, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  chatController: {fileID: 1071078508034451762}
   taskbarObject: {fileID: 3263654131950478638}
   desktopIconsObject: {fileID: 6501665604647630237}
   chatAppPanel: {fileID: 0}
   taskbarIconEntries:
   - appWindow: {fileID: 395170060954663292}
     selectionFrame: {fileID: 2549237522044547724}
-  scenesToHideTaskbar: []
+  scenesToHideTaskbar:
+  - P4_Result
   layoutDefault: {fileID: 2135659241546084311}
   layoutSpecial: {fileID: 1719526918881223219}
   specialLayoutScenes:
@@ -1424,14 +1426,22 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a418b1538a78cfe428b624b435cdf99b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  chatPanel: {fileID: 2135659241546084311}
+  chatPanel: {fileID: 8024397667996916883}
   scrollRect: {fileID: 8571784006407022616}
-  contentContainer: {fileID: 4706447267771810106}
-  choicesContainer: {fileID: 4345289751485333080}
-  bubblePrefabLeft: {fileID: 3856868909031700743, guid: c7a99a24b2ee36b4b90297396802833b, type: 3}
-  bubblePrefabRight: {fileID: 5403124207269933326, guid: 4466c8e189616df4ca305472f3a38b70, type: 3}
-  bubblePrefabSystem: {fileID: 7102678229824722164, guid: 5fa182b75e69f9f438fcafd6fb6420fb, type: 3}
-  choiceButtonPrefab: {fileID: 8741885597613308964, guid: e3634c9bba0caf942a1a08c1f695cd92, type: 3}
+  contentContainerDefault: {fileID: 4706447267771810106}
+  contentContainerSpecial: {fileID: 7161765783987318465}
+  choicesContainerDefault: {fileID: 4345289751485333080}
+  choicesContainerSpecial: {fileID: 7921540360832661493}
+  defaultPrefabs:
+    bubblePrefabLeft: {fileID: 3856868909031700743, guid: c7a99a24b2ee36b4b90297396802833b, type: 3}
+    bubblePrefabRight: {fileID: 5403124207269933326, guid: 4466c8e189616df4ca305472f3a38b70, type: 3}
+    bubblePrefabSystem: {fileID: 7102678229824722164, guid: b9a8b6e2dc521644197241a753785432, type: 3}
+  specialPrefabs:
+    bubblePrefabLeft: {fileID: 3856868909031700743, guid: b8e46ce953056054281c0e2614ea7161, type: 3}
+    bubblePrefabRight: {fileID: 5403124207269933326, guid: 1ba4f29f9f6e5b4488baeb12eec06b61, type: 3}
+    bubblePrefabSystem: {fileID: 7102678229824722164, guid: b0d338faf6a50cc42a37555bbbe1e9e5, type: 3}
+  choiceButtonPrefabDefault: {fileID: 8741885597613308964, guid: e3634c9bba0caf942a1a08c1f695cd92, type: 3}
+  choiceButtonPrefabSpecial: {fileID: 8741885597613308964, guid: e3634c9bba0caf942a1a08c1f695cd92, type: 3}
   speakerProfiles:
   - tag: Player
     icon: {fileID: 21300000, guid: b36683e0c4ae06e4587206d188646587, type: 3}
@@ -1449,7 +1459,7 @@ GameObject:
   - component: {fileID: 3839755701534570333}
   - component: {fileID: 2489497519945170746}
   - component: {fileID: 601008764641471809}
-  m_Layer: 0
+  m_Layer: 5
   m_Name: Viewport
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1538,7 +1548,7 @@ GameObject:
   - component: {fileID: 4706447267771810106}
   - component: {fileID: 5660498414610756804}
   - component: {fileID: 169820356947132311}
-  m_Layer: 0
+  m_Layer: 5
   m_Name: Content
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1616,7 +1626,7 @@ GameObject:
   - component: {fileID: 1677739963863690392}
   - component: {fileID: 1337197092566250483}
   - component: {fileID: 1350939237334243447}
-  m_Layer: 0
+  m_Layer: 5
   m_Name: ChoicesContainer
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1639,8 +1649,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0}
   m_AnchorMax: {x: 0.5, y: 0}
-  m_AnchoredPosition: {x: 0, y: 30}
-  m_SizeDelta: {x: 1920, y: 60}
+  m_AnchoredPosition: {x: 708, y: 60}
+  m_SizeDelta: {x: 500, y: 60}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &1677739963863690392
 CanvasRenderer:
@@ -1697,7 +1707,7 @@ MonoBehaviour:
     m_Right: 0
     m_Top: 0
     m_Bottom: 0
-  m_ChildAlignment: 7
+  m_ChildAlignment: 3
   m_Spacing: 0
   m_ChildForceExpandWidth: 0
   m_ChildForceExpandHeight: 0
@@ -1717,7 +1727,7 @@ GameObject:
   - component: {fileID: 6866100989311822135}
   - component: {fileID: 6619388474108980726}
   - component: {fileID: 1160589181778891923}
-  m_Layer: 0
+  m_Layer: 5
   m_Name: Background
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1741,7 +1751,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: 0, y: 15}
-  m_SizeDelta: {x: 400, y: 90}
+  m_SizeDelta: {x: 400.00003, y: 90}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &6619388474108980726
 CanvasRenderer:
@@ -1764,7 +1774,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 0, b: 0, a: 1}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -1791,7 +1801,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3786860591038347419}
   - component: {fileID: 4695597586592509432}
-  m_Layer: 0
+  m_Layer: 5
   m_Name: ChatApp
   m_TagString: Untagged
   m_Icon: {fileID: 0}

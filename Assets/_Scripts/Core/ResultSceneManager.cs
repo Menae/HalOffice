@@ -1,12 +1,10 @@
-﻿// ファイル名: ResultSceneManager.cs
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.SceneManagement;
 using System.Collections;
-using System.Collections.Generic; // Listを使用するために必要
+using System.Collections.Generic;
 
 public class ResultSceneManager : MonoBehaviour
 {
-    // Inspectorで結果ごとの演出を設定するためのデータ構造
     [System.Serializable]
     public class ResultEntry
     {
@@ -27,32 +25,34 @@ public class ResultSceneManager : MonoBehaviour
     [Header("参照")]
     public Animator scaleAnimator;
     public Animator tvOffAnimator;
-    public string loginSceneName; // 仮のシーン名
+    public string loginSceneName;
+
+    [Header("サウンド設定")]
+    [Tooltip("TVオフ演出時に再生する効果音")]
+    public AudioClip tvOffSound;
+    [Range(0f, 1f)]
+    [Tooltip("TVオフ効果音の音量")]
+    public float tvOffVolume = 1.0f;
+    [Tooltip("効果音を再生するためのAudioSource")]
+    public AudioSource audioSource;
 
     void Start()
     {
-        // GameManagerにリザルト表示フラグが立っている場合のみ実行
         if (GameManager.Instance != null && GameManager.Instance.shouldShowResults)
         {
-            // フラグを消費して、再読み込み時に実行されないようにする
             GameManager.Instance.shouldShowResults = false;
-
-            // GameManagerからスコアを取得して演出を開始
             int score = GameManager.Instance.correctPlacementCount;
             StartCoroutine(ResultSequence(score));
         }
         else
         {
-            // 直接このシーンを再生した場合などは、何もしない（またはデバッグ用の処理）
             Debug.LogWarning("GameManager経由ではないため、リザルトをスキップします。");
         }
     }
 
     private IEnumerator ResultSequence(int score)
     {
-        // 1. スコアに応じた演出データを決定する
         ResultEntry entryToPlay = null;
-        // スコアが低い順にリストを並べている前提で、適切なものを探す
         foreach (var entry in resultEntries)
         {
             if (score >= entry.minScore)
@@ -69,36 +69,34 @@ public class ResultSceneManager : MonoBehaviour
 
         yield return new WaitForSeconds(delayBetweenAnimations);
 
-        // 2. 天秤のアニメーションを再生
         if (scaleAnimator != null && !string.IsNullOrEmpty(entryToPlay.scaleAnimationTrigger))
         {
             scaleAnimator.SetTrigger(entryToPlay.scaleAnimationTrigger);
-            // アニメーションの長さに応じて待機（ここでは仮に3秒待つ）
             yield return new WaitForSeconds(3.0f);
         }
 
         yield return new WaitForSeconds(delayBetweenAnimations);
 
-        // 3. 評価ダイアログを再生
         if (entryToPlay.resultInkFile != null)
         {
             DialogueManager.GetInstance().EnterDialogueMode(entryToPlay.resultInkFile);
-            // 会話が終わるまで待機
             yield return new WaitUntil(() => DialogueManager.GetInstance().dialogueIsPlaying == false);
         }
 
-        // 4. Dayを更新し、TVオフアニメを再生
         GameManager.Instance.currentDay++;
         Debug.Log($"Day {GameManager.Instance.currentDay} に進みます。");
 
         if (tvOffAnimator != null)
         {
+            if (audioSource != null && tvOffSound != null)
+            {
+                audioSource.PlayOneShot(tvOffSound, tvOffVolume);
+            }
+
             tvOffAnimator.SetTrigger("TVOFF");
-            // アニメーションが終わるまで待機（仮に2秒）
             yield return new WaitForSeconds(2.0f);
         }
 
-        // 5. ログイン画面に遷移
         SceneManager.LoadScene(loginSceneName);
     }
 }

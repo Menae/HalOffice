@@ -235,21 +235,19 @@ public class CursorController : MonoBehaviour
     /// <returns>ゲーム世界の上にあればtrue、それ以外のUI要素の上ならfalse</returns>
     private bool IsPointerOverGameWorld()
     {
-        // マウス下のUI要素を全て取得
         var pointerData = new PointerEventData(EventSystem.current) { position = Input.mousePosition };
         var results = new List<RaycastResult>();
         EventSystem.current.RaycastAll(pointerData, results);
 
-        // ヒットしたUI要素の中にInputBridgeがあれば「ゲーム世界の上」と判断
-        foreach (var result in results)
+        // もし何かUI要素にヒットしていて、かつその一番手前のものがInputBridgeなら
+        // 「ゲーム世界の上にいる」と判断する
+        if (results.Count > 0 && results[0].gameObject.GetComponent<InputBridge>() != null)
         {
-            if (result.gameObject.GetComponent<InputBridge>() != null)
-            {
-                return true;
-            }
+            return true;
         }
 
-        // InputBridgeが見つからなければ、それはタスクバーなどの「ゲーム世界以外のUI」の上と判断
+        // それ以外（何もヒットしない、または一番手前がInputBridgeではない）は
+        // 全て「ゲーム世界以外のUI」の上と判断
         return false;
     }
 

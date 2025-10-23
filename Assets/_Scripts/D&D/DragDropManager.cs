@@ -59,71 +59,50 @@ public class DragDropManager : MonoBehaviour
         else { Instance = this; }
     }
 
-    public void HandleItemClick(UIDraggable uiDraggable, Draggable worldDraggable, PointerEventData eventData)
+public void HandleItemClick(UIDraggable uiDraggable, Draggable worldDraggable, PointerEventData eventData)
+{
+    // ドラッグ中はクリック処理を無視
+    if (currentState == DdState.HoldingItem) return;
+
+    // クリックされたオブジェクトを特定（UIかワールドオブジェクトか、あるいは何もなしか）
+    object clickedItem = uiDraggable != null ? (object)uiDraggable : (object)worldDraggable;
+    
+    // 現在選択中のオブジェクトを特定
+    object previouslySelectedItem = selectedUIDraggable != null ? (object)selectedUIDraggable : (object)selectedObject;
+
+    // --- 以前の選択を解除する ---
+    if (previouslySelectedItem != null)
     {
-        if (currentState == DdState.HoldingItem) return;
-
-        bool isUIClick = uiDraggable != null;
-        bool isWorldClick = worldDraggable != null;
-
-        switch (currentState)
-        {
-            case DdState.Idle:
-                if (isUIClick)
-                {
-                    selectedUIDraggable = uiDraggable;
-                    currentState = DdState.ItemSelected;
-                    if (uiDraggable.itemData?.descriptionInk != null)
-                        InkDialogueManager.Instance.ShowStory(uiDraggable.itemData.descriptionInk);
-                }
-                else if (isWorldClick)
-                {
-                    selectedObject = worldDraggable;
-                    currentState = DdState.ItemSelected;
-                    if (worldDraggable.itemData?.descriptionInk != null)
-                        InkDialogueManager.Instance.ShowStory(worldDraggable.itemData.descriptionInk);
-                }
-                break;
-
-            case DdState.ItemSelected:
-                // 既に選択中のUIアイテムを再度クリックした場合 -> 選択解除
-                if (isUIClick && uiDraggable == selectedUIDraggable)
-                {
-                    currentState = DdState.Idle;
-                    selectedUIDraggable = null;
-                }
-                // 既に選択中のWorldアイテムを再度クリックした場合 -> 選択解除
-                else if (isWorldClick && worldDraggable == selectedObject)
-                {
-                    currentState = DdState.Idle;
-                    selectedObject = null;
-                }
-                // 別のUIアイテムをクリックした場合 -> 選択切り替え
-                else if (isUIClick)
-                {
-                    selectedUIDraggable = uiDraggable;
-                    selectedObject = null;
-                    if (uiDraggable.itemData?.descriptionInk != null)
-                        InkDialogueManager.Instance.ShowStory(uiDraggable.itemData.descriptionInk);
-                }
-                // 別のWorldアイテムをクリックした場合 -> 選択切り替え
-                else if (isWorldClick)
-                {
-                    selectedObject = worldDraggable;
-                    selectedUIDraggable = null;
-                    if (worldDraggable.itemData?.descriptionInk != null)
-                        InkDialogueManager.Instance.ShowStory(worldDraggable.itemData.descriptionInk);
-                }
-                // 何もない場所をクリックした場合 -> 選択解除
-                else
-                {
-                    currentState = DdState.Idle;
-                    selectedObject = null;
-                    selectedUIDraggable = null;
-                }
-                break;
-        }
+        if (selectedUIDraggable != null) selectedUIDraggable.SetHighlight(false);
+        if (selectedObject != null) selectedObject.SetHighlight(false);
     }
+    selectedUIDraggable = null;
+    selectedObject = null;
+    currentState = DdState.Idle;
+
+
+    // --- 新しい選択を処理する ---
+    // もし何かオブジェクトがクリックされ、それが以前選択されていたものと違う場合は、新しいものを選択状態にする
+    if (clickedItem != null && clickedItem != previouslySelectedItem)
+    {
+        if (uiDraggable != null)
+        {
+            selectedUIDraggable = uiDraggable;
+            selectedUIDraggable.SetHighlight(true);
+            if (selectedUIDraggable.itemData?.descriptionInk != null)
+                InkDialogueManager.Instance.ShowStory(selectedUIDraggable.itemData.descriptionInk);
+        }
+        else if (worldDraggable != null)
+        {
+            selectedObject = worldDraggable;
+            selectedObject.SetHighlight(true);
+            if (selectedObject.itemData?.descriptionInk != null)
+                InkDialogueManager.Instance.ShowStory(selectedObject.itemData.descriptionInk);
+        }
+        currentState = DdState.ItemSelected;
+    }
+    // (クリックされたものが以前選択されていたものと同じか、何もクリックされなかった場合はIdle状態のまま)
+}
 
     public void HandleBeginDrag(Draggable draggedObject, PointerEventData eventData)
     {
@@ -219,27 +198,36 @@ public class DragDropManager : MonoBehaviour
         dragProxyImage.raycastTarget = false;
     }
 
-    private void HandleDrop(PointerEventData eventData)
+private void HandleDrop(PointerEventData eventData)
+{
+    // --- 代理イメージの後処理 ---
+    dragProxyImage.transform.SetParent(parentCanvas.transform, true);
+    dragProxyImage.gameObject.SetActive(false);
+    if (InkDialogueManager.Instance != null) { InkDialogueManager.Instance.CloseDialogue(); }
+
+    // --- ドロップ先の判定 ---
+    DropZone targetZone = FindDropZoneUnderCursor();
+
+    // --- オブジェクトごとのドロップ処理 ---
+    if (currentDraggedObject != null)
     {
-        dragProxyImage.transform.SetParent(parentCanvas.transform, true);
-
-        dragProxyImage.gameObject.SetActive(false);
-        if (InkDialogueManager.Instance != null) { InkDialogueManager.Instance.CloseDialogue(); }
-
-        // マウスを離した座標でドロップ先を探す
-        DropZone targetZone = FindDropZoneUnderCursor();
-
-        if (currentDraggedObject != null) { HandleGameWorldDrop(targetZone); }
-        else if (currentUIDraggable != null) { HandleUIDrop(targetZone); }
-
-        // 状態と変数をリセット
-        currentState = DdState.Idle;
-        selectedObject = null;
-        selectedUIDraggable = null;
-        currentDraggedObject = null;
-        currentUIDraggable = null;
-        originalSlot = null;
+        HandleGameWorldDrop(targetZone);
+        currentDraggedObject.SetHighlight(false); // ★ハイライトを消す
     }
+    else if (currentUIDraggable != null)
+    {
+        HandleUIDrop(targetZone);
+        currentUIDraggable.SetHighlight(false); // ★ハイライトを消す
+    }
+
+    // --- 状態のリセット ---
+    currentState = DdState.Idle;
+    selectedObject = null;
+    selectedUIDraggable = null;
+    currentDraggedObject = null;
+    currentUIDraggable = null;
+    originalSlot = null;
+}
 
     private void HandleGameWorldDrop(DropZone targetZone)
     {

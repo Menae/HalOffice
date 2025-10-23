@@ -1,67 +1,50 @@
 ﻿using UnityEngine;
-using UnityEngine.UI;
 using UnityEngine.EventSystems;
-using Ink.Runtime;
+using UnityEngine.UI;
 
 [RequireComponent(typeof(Image))]
-public class UIDraggable : MonoBehaviour, IPointerClickHandler, IBeginDragHandler, IDragHandler, IEndDragHandler
+public class UIDraggable : MonoBehaviour, IPointerClickHandler, IBeginDragHandler
 {
-    [Header("設定")]
-    [Range(1f, 3f)]
-    public float dragScale = 1.2f;
-    [Tooltip("このUIがどのアイテムデータに対応するかを設定")]
+    [Header("アイテム設定")]
     public ItemData itemData;
+    public float dragScale = 1.5f;
 
-    [Header("使用済み表現")]
-    public Color usedColor = new Color(0.5f, 0.5f, 0.5f, 0.5f);
+    [Header("ハイライト設定")]
+    [Tooltip("選択時に表示する縁取りなどのハイライト用オブジェクト")]
+    public GameObject highlightGraphic;
 
-    private Image iconImage;
-    private bool isUsed = false;
-
-    private void Awake()
+    private void Start()
     {
-        iconImage = GetComponent<Image>();
-    }
-
-    public void MarkAsUsed()
-    {
-        isUsed = true;
-        if (iconImage != null) { iconImage.color = usedColor; }
+        // ゲーム開始時は、必ずハイライトを非表示にしておく
+        SetHighlight(false);
     }
 
     public void OnPointerClick(PointerEventData eventData)
     {
-        if (eventData.button != PointerEventData.InputButton.Left) return; // 左クリック以外は無視
-
-        if (isUsed) return;
-        // マネージャーに「クリック」イベントを通知する（呼び出し先も変更）
+        if (eventData.button != PointerEventData.InputButton.Left) return;
         DragDropManager.Instance.HandleItemClick(this, null, eventData);
     }
 
     public void OnBeginDrag(PointerEventData eventData)
     {
-        if (eventData.button != PointerEventData.InputButton.Left) return; // 左クリック以外は無視
-
-        if (isUsed) return;
-        // DragDropManagerにドラッグ開始を通知
+        if (eventData.button != PointerEventData.InputButton.Left) return;
         DragDropManager.Instance.HandleBeginDragUI(this, eventData);
     }
 
-    public void OnDrag(PointerEventData eventData)
+    public void MarkAsUsed()
     {
-        if (eventData.button != PointerEventData.InputButton.Left) return; // 左クリック以外は無視
-
-        if (isUsed) return;
-        // DragDropManagerにドラッグ中のイベントを通知
-        DragDropManager.Instance.HandleDrag(eventData);
+        GetComponent<Image>().color = new Color(0.5f, 0.5f, 0.5f, 0.5f);
+        GetComponent<Button>().interactable = false;
     }
 
-    public void OnEndDrag(PointerEventData eventData)
+    /// <summary>
+    /// ハイライトの表示/非表示を切り替える
+    /// </summary>
+    public void SetHighlight(bool isActive)
     {
-        if (eventData.button != PointerEventData.InputButton.Left) return; // 左クリック以外は無視
-
-        if (isUsed) return;
-        // DragDropManagerにドラッグ終了を通知
-        DragDropManager.Instance.HandleEndDrag(eventData);
+        if (highlightGraphic != null)
+        {
+            highlightGraphic.SetActive(isActive);
+        }
     }
 }

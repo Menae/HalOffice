@@ -14,4 +14,7 @@ public enum ItemType
     Chair,          // 椅子
     Gramophone,    // 蓄音機
     Mathematic,      // 数学道具
+    WorldMap,       //世界地図
+    Documents,      //散乱した書類
+
 }

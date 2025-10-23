@@ -59,64 +59,97 @@ public class DragDropManager : MonoBehaviour
         else { Instance = this; }
     }
 
-public void HandleItemClick(UIDraggable uiDraggable, Draggable worldDraggable, PointerEventData eventData)
-{
-    // ドラッグ中はクリック処理を無視
-    if (currentState == DdState.HoldingItem) return;
-
-    // クリックされたオブジェクトを特定（UIかワールドオブジェクトか、あるいは何もなしか）
-    object clickedItem = uiDraggable != null ? (object)uiDraggable : (object)worldDraggable;
-    
-    // 現在選択中のオブジェクトを特定
-    object previouslySelectedItem = selectedUIDraggable != null ? (object)selectedUIDraggable : (object)selectedObject;
-
-    // --- 以前の選択を解除する ---
-    if (previouslySelectedItem != null)
+    public void HandleItemClick(UIDraggable uiDraggable, Draggable worldDraggable, PointerEventData eventData)
     {
-        if (selectedUIDraggable != null) selectedUIDraggable.SetHighlight(false);
-        if (selectedObject != null) selectedObject.SetHighlight(false);
-    }
-    selectedUIDraggable = null;
-    selectedObject = null;
-    currentState = DdState.Idle;
+        if (currentState == DdState.HoldingItem) return;
 
+        object clickedItem = uiDraggable != null ? (object)uiDraggable : (object)worldDraggable;
+        object previouslySelectedItem = selectedUIDraggable != null ? (object)selectedUIDraggable : (object)selectedObject;
 
-    // --- 新しい選択を処理する ---
-    // もし何かオブジェクトがクリックされ、それが以前選択されていたものと違う場合は、新しいものを選択状態にする
-    if (clickedItem != null && clickedItem != previouslySelectedItem)
-    {
-        if (uiDraggable != null)
+        // --- 選択解除 ---
+        // 以前に選択されていたものがあれば、ハイライトを消す
+        if (previouslySelectedItem != null)
         {
-            selectedUIDraggable = uiDraggable;
-            selectedUIDraggable.SetHighlight(true);
-            if (selectedUIDraggable.itemData?.descriptionInk != null)
-                InkDialogueManager.Instance.ShowStory(selectedUIDraggable.itemData.descriptionInk);
+            if (selectedUIDraggable != null) selectedUIDraggable.SetHighlight(false);
+            if (selectedObject != null) selectedObject.SetHighlight(false);
         }
-        else if (worldDraggable != null)
+
+        // --- 選択処理 ---
+        // 何もクリックされなかったか、同じアイテムを再度クリックした場合は、選択解除してIdle状態にする
+        if (clickedItem == null || clickedItem == previouslySelectedItem)
         {
-            selectedObject = worldDraggable;
-            selectedObject.SetHighlight(true);
-            if (selectedObject.itemData?.descriptionInk != null)
-                InkDialogueManager.Instance.ShowStory(selectedObject.itemData.descriptionInk);
+            selectedUIDraggable = null;
+            selectedObject = null;
+            currentState = DdState.Idle;
         }
-        currentState = DdState.ItemSelected;
+        // 違うアイテムがクリックされた場合は、選択を切り替える
+        else
+        {
+            if (uiDraggable != null)
+            {
+                selectedUIDraggable = uiDraggable;
+                selectedObject = null; // ワールドオブジェクトの選択は解除
+                selectedUIDraggable.SetHighlight(true);
+                // 既存のダイアログ表示ロジックを維持
+                if (selectedUIDraggable.itemData?.descriptionInk != null)
+                    InkDialogueManager.Instance.ShowStory(selectedUIDraggable.itemData.descriptionInk);
+            }
+            else // worldDraggable != null
+            {
+                selectedObject = worldDraggable;
+                selectedUIDraggable = null; // UIオブジェクトの選択は解除
+                selectedObject.SetHighlight(true);
+                // 既存のダイアログ表示ロジックを維持
+                if (selectedObject.itemData?.descriptionInk != null)
+                    InkDialogueManager.Instance.ShowStory(selectedObject.itemData.descriptionInk);
+            }
+            currentState = DdState.ItemSelected;
+        }
     }
-    // (クリックされたものが以前選択されていたものと同じか、何もクリックされなかった場合はIdle状態のまま)
-}
 
     public void HandleBeginDrag(Draggable draggedObject, PointerEventData eventData)
     {
+        // ケース1: アイテムが既に選択されている状態で、ドラッグが開始された場合
         if (currentState == DdState.ItemSelected && draggedObject == selectedObject)
         {
+            StartHolding(draggedObject, eventData.position);
+        }
+        // ケース2: 未選択状態(Idle)から、いきなりドラッグが開始された場合
+        else if (currentState == DdState.Idle && draggedObject != null)
+        {
+            // その場でアイテムを選択状態にしてから、即座にドラッグを開始する
+            selectedObject = draggedObject;
+            selectedObject.SetHighlight(true);
+            currentState = DdState.ItemSelected;
             StartHolding(draggedObject, eventData.position);
         }
     }
 
     public void HandleBeginDragUI(UIDraggable draggedObject, PointerEventData eventData)
     {
+        Debug.Log($"--- DragDropManager.HandleBeginDragUI ---: 呼び出されました。");
+        Debug.Log($"現在の状態(currentState): {currentState}");
+        Debug.Log($"選択中のUIオブジェクト(selectedUIDraggable): {(selectedUIDraggable != null ? selectedUIDraggable.name : "null")}");
+        Debug.Log($"ドラッグされたオブジェクト(draggedObject): {(draggedObject != null ? draggedObject.name : "null")}");
+
+        // ケース1：アイテムが既に選択されている状態で、ドラッグが開始された場合
         if (currentState == DdState.ItemSelected && draggedObject == selectedUIDraggable)
         {
+            Debug.Log("条件成功：ドラッグを開始します。");
             StartHoldingUI(draggedObject, eventData);
+        }
+        // ケース2：未選択状態(Idle)から、いきなりドラッグが開始された場合
+        else if (currentState == DdState.Idle && draggedObject != null)
+        {
+            Debug.Log("条件成功（Idleから）：選択してドラッグを開始します。");
+            selectedUIDraggable = draggedObject;
+            selectedUIDraggable.SetHighlight(true);
+            currentState = DdState.ItemSelected;
+            StartHoldingUI(draggedObject, eventData);
+        }
+        else
+        {
+            Debug.LogError("条件失敗：ドラッグを開始できませんでした。");
         }
     }
 

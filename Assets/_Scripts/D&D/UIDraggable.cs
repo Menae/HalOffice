@@ -3,7 +3,7 @@ using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 [RequireComponent(typeof(Image))]
-public class UIDraggable : MonoBehaviour, IPointerClickHandler, IBeginDragHandler
+public class UIDraggable : MonoBehaviour, IPointerClickHandler, IBeginDragHandler, IDragHandler, IEndDragHandler
 {
     [Header("アイテム設定")]
     public ItemData itemData;
@@ -15,7 +15,6 @@ public class UIDraggable : MonoBehaviour, IPointerClickHandler, IBeginDragHandle
 
     private void Start()
     {
-        // ゲーム開始時は、必ずハイライトを非表示にしておく
         SetHighlight(false);
     }
 
@@ -27,19 +26,39 @@ public class UIDraggable : MonoBehaviour, IPointerClickHandler, IBeginDragHandle
 
     public void OnBeginDrag(PointerEventData eventData)
     {
+        Debug.Log($"--- UIDraggable.OnBeginDrag ---: {gameObject.name} のドラッグが検知されました。", this.gameObject);
         if (eventData.button != PointerEventData.InputButton.Left) return;
         DragDropManager.Instance.HandleBeginDragUI(this, eventData);
+    }
+
+
+    /// <summary>
+    /// ドラッグ中に毎フレーム呼び出される
+    /// </summary>
+    public void OnDrag(PointerEventData eventData)
+    {
+        // DragDropManagerにイベントを転送する
+        DragDropManager.Instance.HandleDrag(eventData);
+    }
+
+    /// <summary>
+    /// ドラッグが終了した時に呼び出される
+    /// </summary>
+    public void OnEndDrag(PointerEventData eventData)
+    {
+        // DragDropManagerにイベントを転送する
+        DragDropManager.Instance.HandleEndDrag(eventData);
     }
 
     public void MarkAsUsed()
     {
         GetComponent<Image>().color = new Color(0.5f, 0.5f, 0.5f, 0.5f);
-        GetComponent<Button>().interactable = false;
+        if (GetComponent<Button>() != null)
+        {
+            GetComponent<Button>().interactable = false;
+        }
     }
 
-    /// <summary>
-    /// ハイライトの表示/非表示を切り替える
-    /// </summary>
     public void SetHighlight(bool isActive)
     {
         if (highlightGraphic != null)

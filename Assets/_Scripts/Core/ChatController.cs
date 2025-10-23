@@ -13,7 +13,7 @@ public class BubblePrefabSet
     public GameObject bubblePrefabLeft;
     [Tooltip("発言者アイコンが右にある吹き出しのプレハブ")]
     public GameObject bubblePrefabRight;
-    [Tooltip("アイコンがないナレーション用の吹き出しプレハブ")]
+    [Tooltip("アイコンがないナレーション用の吹き出しのプレハブ")]
     public GameObject bubblePrefabSystem;
 }
 
@@ -26,7 +26,8 @@ public class ChatController : MonoBehaviour
 
     [Header("UI参照 (UI References)")]
     [SerializeField] private GameObject chatPanel;
-    [SerializeField] private ScrollRect scrollRect;
+    [SerializeField] private ScrollRect scrollRectDefault;
+    [SerializeField] private ScrollRect scrollRectSpecial;
     [SerializeField] private RectTransform contentContainerDefault;
     [SerializeField] private RectTransform contentContainerSpecial;
     [SerializeField] private GameObject choicesContainerDefault;
@@ -53,6 +54,27 @@ public class ChatController : MonoBehaviour
         public Sprite icon;
     }
 
+    // IsConversationFinished, Awake, StartConversation, AdvanceConversation, ToggleChatWindow, InitializeDatabase, DisplayLine は変更なし
+
+    // DisplayChoices, MakeChoice, GetPrefabFromTags, GetSpeakerIconFromTags, RebuildLog, DisplayLineWithoutScroll, ScrollToBottom は変更なし
+
+    // ▼▼▼【修正】ForceScrollDownメソッドを修正 ▼▼▼
+    private IEnumerator ForceScrollDown()
+    {
+        yield return new WaitForEndOfFrame();
+
+        // 現在アクティブなレイアウトに応じて、適切なScrollRectを選択する
+        ScrollRect activeScrollRect = GlobalUIManager.Instance.layoutDefault.activeSelf
+                                      ? scrollRectDefault
+                                      : scrollRectSpecial;
+
+        if (activeScrollRect != null)
+        {
+            activeScrollRect.verticalNormalizedPosition = 0f;
+        }
+    }
+
+    // (変更のないメソッドは省略)
     public bool IsConversationFinished()
     {
         return currentStory == null || !currentStory.canContinue && currentStory.currentChoices.Count == 0;
@@ -97,7 +119,6 @@ public class ChatController : MonoBehaviour
 
     public void AdvanceConversation()
     {
-        // --- プレイヤーの入力待ちや、選択肢が表示されている場合は処理を中断 ---
         if (TutorialManager.Instance != null && TutorialManager.Instance.IsPlayingEffect)
         {
             return;
@@ -107,14 +128,12 @@ public class ChatController : MonoBehaviour
                                             : choicesContainerSpecial;
         if (activeChoicesContainer != null && activeChoicesContainer.activeInHierarchy) return;
 
-        // --- ストーリーが既に終了している場合は、パネルを閉じて終了 ---
         if (currentStory == null)
         {
             if (chatPanel != null) chatPanel.SetActive(false);
             return;
         }
 
-        // --- 会話を進めるメインの処理 ---
         if (currentStory.canContinue)
         {
             string currentLine = currentStory.Continue();
@@ -136,20 +155,16 @@ public class ChatController : MonoBehaviour
             }
         }
 
-        // --- 物語を進めた後の状態をチェック ---
         if (currentStory.currentChoices.Count > 0)
         {
-            // 状態: 選択肢がある -> 選択肢を表示して待機
             DisplayChoices();
         }
         else if (!currentStory.canContinue)
         {
-            // 状態: 選択肢がなく、これ以上続きもない -> 会話終了
             OnConversationFinished?.Invoke();
             if (chatPanel != null) chatPanel.SetActive(false);
             currentStory = null;
         }
-        // (上記以外の場合: 選択肢はないが、まだ続きの行がある -> 次のクリックを待つ)
     }
 
     public void ToggleChatWindow()
@@ -358,14 +373,5 @@ public class ChatController : MonoBehaviour
     private void ScrollToBottom()
     {
         StartCoroutine(ForceScrollDown());
-    }
-
-    private IEnumerator ForceScrollDown()
-    {
-        yield return new WaitForEndOfFrame();
-        if (scrollRect != null)
-        {
-            scrollRect.verticalNormalizedPosition = 0f;
-        }
     }
 }

@@ -23,24 +23,32 @@ public class EvaluationTrigger : MonoBehaviour
             return;
         }
 
-        // 1. スコアを計算する
         int score = 0;
         foreach (var slot in objectSlotManager.objectSlots)
         {
-            // スロットに物があり、かつそのアイテムが正解のタイプと一致しているか？
-            if (slot.IsOccupied() && slot.currentObject.itemData.itemType == slot.correctItemType)
+            // ケース1：このスロットは「空であること」が正解か？
+            if (slot.isCorrectWhenEmpty)
             {
-                score++;
+                if (!slot.IsOccupied()) // そして、実際に空か？
+                {
+                    score++; // 正解！
+                }
+            }
+            // ケース2：このスロットは「特定のアイテムがあること」が正解か？
+            else
+            {
+                if (slot.IsOccupied() && slot.currentObject.itemData.itemType == slot.correctItemType)
+                {
+                    score++; // 正解！
+                }
             }
         }
 
-        // 2. 結果をGameManagerに保存する
         GameManager.Instance.correctPlacementCount = score;
-        GameManager.Instance.shouldShowResults = true; // 「合言葉」をtrueにする
+        GameManager.Instance.shouldShowResults = true;
 
         Debug.Log($"評価が完了。スコア: {score}。リザルトシーンへ遷移します。");
 
-        // 3. リザルトシーンへ遷移する
         SceneManager.LoadScene(resultSceneName);
     }
 }

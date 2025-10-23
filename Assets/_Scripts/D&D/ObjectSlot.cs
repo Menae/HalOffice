@@ -15,6 +15,9 @@ public class ObjectSlot
     [Tooltip("このスロットに対する正解のアイテム種類")]
     public ItemType correctItemType;
 
+    [Tooltip("このスロットが空の時に「正解」と判定する場合はチェック")]
+    public bool isCorrectWhenEmpty = false;
+
     /// <summary>
     /// 指定されたアイテムの種類をこのスロットが受け入れ可能か判定する
     /// </summary>

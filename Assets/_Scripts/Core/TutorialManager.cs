@@ -11,6 +11,17 @@ public class HighlightTarget
     public GameObject panel;
 }
 
+[System.Serializable]
+public class TutorialVideo
+{
+    [Tooltip("Inkファイルで指定する際の名前（例: DetectionMeter, HowToMove）")]
+    public string name;
+    [Tooltip("再生するVideoPlayerコンポーネント")]
+    public UnityEngine.Video.VideoPlayer player;
+    [Tooltip("対応する動画パネル")]
+    public GameObject panel;
+}
+
 public class TutorialManager : MonoBehaviour
 {
     public static TutorialManager Instance { get; private set; }
@@ -23,39 +34,28 @@ public class TutorialManager : MonoBehaviour
 
     [Header("演出用オブジェクト")]
     public List<HighlightTarget> highlightTargets;
-    public UnityEngine.Video.VideoPlayer videoPlayer;
-    public GameObject videoPanel;
+    [Tooltip("Inkタグから呼び出せる動画リスト")]
+    public List<TutorialVideo> tutorialVideos;
 
     public bool IsPlayingEffect { get; private set; } = false;
     private bool isTutorialFinished = false;
+    private bool cancelVideoLoops = false;
 
     private void Awake()
     {
-        if (Instance == null) { Instance = this; }
-        else { Destroy(gameObject); }
+        if (Instance == null) Instance = this;
+        else Destroy(gameObject);
     }
 
-    private void OnEnable()
-    {
-        ChatController.OnTagsProcessed += HandleTags;
-    }
+    private void OnEnable() => ChatController.OnTagsProcessed += HandleTags;
+    private void OnDisable() => ChatController.OnTagsProcessed -= HandleTags;
 
-    private void OnDisable()
-    {
-        ChatController.OnTagsProcessed -= HandleTags;
-    }
-
-    private void Start()
-    {
-        ResetEffects();
-    }
+    private void Start() => ResetEffects();
 
     public void StartTutorial()
     {
         if (gameObject.activeInHierarchy)
-        {
             StartCoroutine(TutorialSequence());
-        }
     }
 
     private IEnumerator TutorialSequence()
@@ -66,11 +66,8 @@ public class TutorialManager : MonoBehaviour
         ResetEffects();
 
         ChatController chat = GlobalUIManager.Instance.chatController;
-
         if (chat != null && tutorialInk != null)
-        {
             chat.StartConversation(tutorialInk);
-        }
         else
         {
             Debug.LogError("ChatControllerまたはTutorialInkが見つかりません！");
@@ -78,6 +75,7 @@ public class TutorialManager : MonoBehaviour
             if (day1Manager != null) day1Manager.StartGame();
             gameObject.SetActive(false);
         }
+
         yield return null;
     }
 
@@ -102,7 +100,7 @@ public class TutorialManager : MonoBehaviour
                     DeactivateAllHighlights();
                     break;
                 case "show_gif":
-                    StartCoroutine(ShowGif(value));
+                    StartCoroutine(ShowTutorialVideo(value)); // ←新しいメソッドに変更
                     break;
                 case "tutorial_end":
                     StartCoroutine(FinishTutorialSequence());
@@ -114,47 +112,53 @@ public class TutorialManager : MonoBehaviour
         }
     }
 
-    private IEnumerator FinishTutorialSequence()
-    {
-        isTutorialFinished = true;
-        ResetEffects();
-
-        Debug.Log("チュートリアルが完全に終了しました。");
-        if (GameManager.Instance != null) GameManager.Instance.SetInputEnabled(true);
-        if (day1Manager != null) day1Manager.StartGame();
-
-        Debug.Log("ゲームを開始します。");
-        yield return null;
-        gameObject.SetActive(false);
-    }
-
-    private IEnumerator ShowGif(string gifName)
+    private IEnumerator ShowTutorialVideo(string videoName)
     {
         IsPlayingEffect = true;
-        Debug.Log($"{gifName} の動画を再生します。");
+        cancelVideoLoops = false;
 
-        if (videoPlayer != null && videoPanel != null)
+        TutorialVideo video = tutorialVideos.Find(v => v.name == videoName);
+        if (video == null || video.player == null || video.panel == null)
         {
-            videoPanel.SetActive(true);
-            videoPlayer.Play();
-            StartCoroutine(HideVideoWhenFinished());
+            Debug.LogWarning($"チュートリアル動画 '{videoName}' が見つかりません。");
+            IsPlayingEffect = false;
+            yield break;
         }
 
-        yield return new WaitForSeconds(1.0f);
+        video.panel.SetActive(true);
+        video.player.isLooping = true;
+
+        bool firstLoopEnded = false;
+        UnityEngine.Video.VideoPlayer.EventHandler handler = (vp) => { firstLoopEnded = true; };
+        video.player.loopPointReached += handler;
+
+        video.player.Prepare();
+        yield return new WaitUntil(() => video.player.isPrepared);
+        video.player.Play();
+        yield return new WaitUntil(() => video.player.isPlaying);
+
+        // 1周目の終了を待機
+        yield return new WaitUntil(() => firstLoopEnded);
+
+        // 会話はまだ進めないが、入力受付だけを再開する
         IsPlayingEffect = false;
-    }
+        if (GameManager.Instance != null)
+            GameManager.Instance.SetInputEnabled(true);
 
-    private IEnumerator HideVideoWhenFinished()
-    {
-        // isPlayingがfalseになる（＝再生が終わる）まで待機
-        yield return new WaitForSeconds(0.1f);
-        yield return new WaitUntil(() => videoPlayer != null && !videoPlayer.isPlaying);
+        // 自動進行はさせない
+        video.player.loopPointReached -= handler;
 
-        if (videoPanel != null)
+        // reset_effects が呼ばれるまでループ再生を継続
+        while (!cancelVideoLoops && video.player != null && video.player.isLooping)
         {
-            videoPanel.SetActive(false);
+            yield return null;
         }
+
+        if (video.player != null) video.player.Stop();
+        video.panel.SetActive(false);
     }
+
+
 
     private IEnumerator ProcessHighlightTag(string highlightData)
     {
@@ -169,17 +173,39 @@ public class TutorialManager : MonoBehaviour
         IsPlayingEffect = false;
     }
 
-    /// <summary>
-    /// 全ての演出用オブジェクトを非表示にするリセット処理
-    /// </summary>
+    private IEnumerator FinishTutorialSequence()
+    {
+        isTutorialFinished = true;
+        ResetEffects();
+        Debug.Log("チュートリアルが完全に終了しました。");
+
+        if (GameManager.Instance != null) GameManager.Instance.SetInputEnabled(true);
+        if (day1Manager != null) day1Manager.StartGame();
+
+        yield return null;
+        gameObject.SetActive(false);
+    }
+
     private void ResetEffects()
     {
+        cancelVideoLoops = true;
+
         DeactivateAllHighlights();
-        if (videoPanel != null)
+
+        if (tutorialVideos != null)
         {
-            videoPanel.SetActive(false);
+            foreach (var v in tutorialVideos)
+            {
+                if (v.player != null)
+                {
+                    v.player.isLooping = false;
+                    v.player.Stop();
+                }
+                if (v.panel != null) v.panel.SetActive(false);
+            }
         }
     }
+
 
     private void ActivateHighlight(string name)
     {
@@ -201,9 +227,7 @@ public class TutorialManager : MonoBehaviour
         foreach (var target in highlightTargets)
         {
             if (target.panel != null)
-            {
                 target.panel.SetActive(false);
-            }
         }
     }
 }

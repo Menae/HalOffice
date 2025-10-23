@@ -53,6 +53,14 @@ public class DragDropManager : MonoBehaviour
 
     public static DragDropManager Instance { get; private set; }
 
+    public bool InteractionEnabled { get; private set; } = true;
+
+    public void SetInteractionEnabled(bool enabled)
+    {
+        InteractionEnabled = enabled;
+    }
+
+
     private void Awake()
     {
         if (Instance != null && Instance != this) { Destroy(this.gameObject); }
@@ -61,6 +69,7 @@ public class DragDropManager : MonoBehaviour
 
     public void HandleItemClick(UIDraggable uiDraggable, Draggable worldDraggable, PointerEventData eventData)
     {
+        if (!InteractionEnabled) return;
         if (currentState == DdState.HoldingItem) return;
 
         object clickedItem = uiDraggable != null ? (object)uiDraggable : (object)worldDraggable;
@@ -109,6 +118,8 @@ public class DragDropManager : MonoBehaviour
 
     public void HandleBeginDrag(Draggable draggedObject, PointerEventData eventData)
     {
+        if (!InteractionEnabled) return;
+
         // ケース1: アイテムが既に選択されている状態で、ドラッグが開始された場合
         if (currentState == DdState.ItemSelected && draggedObject == selectedObject)
         {
@@ -131,6 +142,8 @@ public class DragDropManager : MonoBehaviour
         Debug.Log($"現在の状態(currentState): {currentState}");
         Debug.Log($"選択中のUIオブジェクト(selectedUIDraggable): {(selectedUIDraggable != null ? selectedUIDraggable.name : "null")}");
         Debug.Log($"ドラッグされたオブジェクト(draggedObject): {(draggedObject != null ? draggedObject.name : "null")}");
+
+        if (!InteractionEnabled) return;
 
         // ケース1：アイテムが既に選択されている状態で、ドラッグが開始された場合
         if (currentState == DdState.ItemSelected && draggedObject == selectedUIDraggable)

@@ -663,7 +663,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 295, y: -136}
-  m_SizeDelta: {x: 40, y: 30}
+  m_SizeDelta: {x: 78.66, y: 60}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &278743074
 MonoBehaviour:
@@ -1378,19 +1378,19 @@ MonoBehaviour:
     scaleAnimationTrigger: 0
     resultInkFile: {fileID: 4900000, guid: 15d2a883376ce7d47b79d92ad3c39511, type: 3}
   - minScore: 1
-    scaleAnimationTrigger: 0
+    scaleAnimationTrigger: 1
     resultInkFile: {fileID: 4900000, guid: e5a02c2ef36315449a9a52945a5b2f74, type: 3}
   - minScore: 5
-    scaleAnimationTrigger: 0
+    scaleAnimationTrigger: 5
     resultInkFile: {fileID: 4900000, guid: fea2b6850f55ab448bf0ec78b8fe68e3, type: 3}
   - minScore: 8
-    scaleAnimationTrigger: 0
+    scaleAnimationTrigger: 8
     resultInkFile: {fileID: 4900000, guid: 77ee23903bf92c64aa611d9233347ac8, type: 3}
   delayBetweenAnimations: 1
   scaleAnimator: {fileID: 1902772251}
   tvOffAnimator: {fileID: 1248692536}
   loginSceneName: P1&P2
-  tvOffSound: {fileID: 8300000, guid: 1de49f19802ded4478d319d71b45f56d, type: 3}
+  tvOffSound: {fileID: 8300000, guid: eefe9b8cb3258654db9b961bc2e7927d, type: 3}
   tvOffVolume: 0.5
   audioSource: {fileID: 1278142751}
 --- !u!4 &1278142750

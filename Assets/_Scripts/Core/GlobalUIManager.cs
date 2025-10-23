@@ -1,6 +1,7 @@
-﻿using UnityEngine;
+﻿using System.Collections.Generic;
+using TMPro;
+using UnityEngine;
 using UnityEngine.SceneManagement;
-using System.Collections.Generic;
 
 public class GlobalUIManager : MonoBehaviour
 {
@@ -47,6 +48,10 @@ public class GlobalUIManager : MonoBehaviour
     [Tooltip("デスクトップアイコンの親オブジェクト")]
     public GameObject desktopIconsObject;
     public GameObject chatAppPanel;
+
+    [Header("日付表示設定")]
+    [Tooltip("現在の日数を表示するTextMeshPro（例：Day 1）")]
+    public TextMeshProUGUI dayText;
 
     [Header("タスクバーアイコン設定")]
     [Tooltip("管理したいウィンドウと選択フレームのペアをここに登録する")]
@@ -101,6 +106,27 @@ public class GlobalUIManager : MonoBehaviour
     private void Update()
     {
         UpdateTaskbarIcons();
+        UpdateDayDisplay();
+    }
+
+    /// <summary>
+    /// GameManagerのcurrentDayをUIに反映する
+    /// </summary>
+    private void UpdateDayDisplay()
+    {
+        if (dayText == null) return;
+        if (GameManager.Instance == null) return;
+
+        int day = GameManager.Instance.currentDay;
+        dayText.text = $"{day}";
+    }
+
+    /// <summary>
+    /// GameManagerなど他クラスから手動で更新を呼び出したい場合
+    /// </summary>
+    public void RefreshDayDisplay()
+    {
+        UpdateDayDisplay();
     }
 
     /// <summary>

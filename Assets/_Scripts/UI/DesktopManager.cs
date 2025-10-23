@@ -265,13 +265,13 @@ public class DesktopManager : MonoBehaviour
         }
         else
         {
-            StartCoroutine(ShowNotificationRoutine());
+            //StartCoroutine(ShowNotificationRoutine());
         }
     }
 
     private void HandleTutorialFinished()
     {
-        StartCoroutine(ShowNotificationRoutine());
+        //StartCoroutine(ShowNotificationRoutine());
     }
 
     private IEnumerator ShowNotificationRoutine()

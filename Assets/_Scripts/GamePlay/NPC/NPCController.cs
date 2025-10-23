@@ -228,13 +228,13 @@ public class NPCController : MonoBehaviour
         // 2. 警戒アニメーションの長さに合わせて待機（searchDurationで調整）
         yield return new WaitForSeconds(searchDuration);
 
-        // 3. 警戒中にカーソルが近ければ見つかり度を上昇（既存機能）
-        float distanceToCursor = Vector3.Distance(transform.position, GetMouseWorldPosition());
-        if (distanceToCursor < detectionCheckRadius)
-        {
-            Debug.Log("警戒中にカーソルが近すぎたため、見つかり度が上昇！");
-            if (detectionIncreaseChannel != null) detectionIncreaseChannel.RaiseEvent(40f);
-        }
+        //// 3. 警戒中にカーソルが近ければ見つかり度を上昇（既存機能）
+        //float distanceToCursor = Vector3.Distance(transform.position, GetMouseWorldPosition());
+        //if (distanceToCursor < detectionCheckRadius)
+        //{
+        //    Debug.Log("警戒中にカーソルが近すぎたため、見つかり度が上昇！");
+        //    if (detectionIncreaseChannel != null) detectionIncreaseChannel.RaiseEvent(40f);
+        //}
 
         // 4. 通常ステートに戻る
         SwitchState(NPCState.Patrol);
@@ -242,7 +242,6 @@ public class NPCController : MonoBehaviour
 
     private IEnumerator HeadToFurnitureRoutine()
     {
-        // ★リストが空かどうかのチェックに変更
         if (furnitureTargets == null || furnitureTargets.Count == 0)
         {
             Debug.LogWarning("家具の目標地点リスト(furnitureTargets)が設定されていません。", this.gameObject);
@@ -250,26 +249,44 @@ public class NPCController : MonoBehaviour
             yield break;
         }
 
-        // ★リストからランダムに目的地を一つ選ぶ
-        Transform targetFurniture = furnitureTargets[Random.Range(0, furnitureTargets.Count)];
+        // 最も近い家具を探す
+        Transform nearestFurniture = null;
+        float nearestDistance = float.MaxValue;
 
-        // 1. 奥向きに歩く
+        foreach (Transform furniture in furnitureTargets)
+        {
+            float distance = Vector3.Distance(transform.position, furniture.position);
+            if (distance < nearestDistance)
+            {
+                nearestDistance = distance;
+                nearestFurniture = furniture;
+            }
+        }
+
+        if (nearestFurniture == null)
+        {
+            SwitchState(NPCState.Patrol);
+            yield break;
+        }
+
+        // 目的地へ移動
         animator.SetFloat("moveY", 1f);
-        // ★選んだ目的地に向かうように修正
-        yield return new WaitUntil(() => Vector3.Distance(transform.position, targetFurniture.position) < 0.5f);
+        yield return new WaitUntil(() => Vector3.Distance(transform.position, nearestFurniture.position) < 0.5f);
         animator.SetFloat("moveY", 0f);
 
-        // 2. 家具の前で待機
-        yield return new WaitForSeconds(furnitureWaitDuration);
+        // 2〜6秒の間でランダムに待機
+        float randomWait = Random.Range(2f, 6f);
+        yield return new WaitForSeconds(randomWait);
 
-        // 3. 手前に歩いて元のY座標に戻る
+        // 元の位置に戻る
         animator.SetFloat("moveY", -1f);
         yield return new WaitUntil(() => Mathf.Abs(transform.position.y - initialPosition.y) < 0.1f);
         animator.SetFloat("moveY", 0f);
 
-        // 4. パトロールに戻る
         SwitchState(NPCState.Patrol);
     }
+
+
 
     private IEnumerator ReactToNewObjectRoutine(ObjectSlot noticedSlot)
     {

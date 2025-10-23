@@ -83,4 +83,17 @@ public class GameManager : MonoBehaviour
     {
         isInputEnabled = enabled;
     }
+
+    public void AdvanceDay()
+    {
+        currentDay++;
+        Debug.Log($"現在は Day {currentDay} です。");
+
+        // UI更新（存在すれば）
+        if (GlobalUIManager.Instance != null)
+        {
+            GlobalUIManager.Instance.RefreshDayDisplay();
+        }
+    }
+
 }

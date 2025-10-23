@@ -22,11 +22,17 @@ AIにも好みがあるらしい。人間らしさを追求した結果、こう
 # speaker: Boss
 我々が調整を⾏う AIはこちらの存在を知らない。⾃⾝が普通に”⽣きている”と思っているんだ。
 
+# prefab: left
+# speaker: Boss
 だから、もしこちら側の存在に気づいてしまうと、彼女は正気を失い、このソフト⾃体がクラッシュしてしまう。
 
+# prefab: left
+# speaker: Boss
 ここは評価にも⼤きく関わってくるからな。
 
 # highlight: DetectionMeter
+# prefab: left
+# speaker: Boss
 AI の違和感は可視化されている、よく⾒ておくように 。
 
 
@@ -39,13 +45,21 @@ AI の違和感は可視化されている、よく⾒ておくように 。
 では、画⾯の説明をする。
 
 # highlight: Right
+# prefab: left
+# speaker: Boss
 右にあるのが君に課せられたAIの調整内容だ。これに沿うように作業してくれ。
 
 # highlight: Left
+# prefab: left
+# speaker: Boss
 左は AI を調整するためのオブジェクトだ。
 
+# prefab: left
+# speaker: Boss
 これを部屋に配置したり、逆に不適切な物を削除したりする。
 
+# prefab: left
+# speaker: Boss
 環境は人格を形作る。部屋を変えることで、AI を依頼に沿うように調整するんだ。
 
 # prefab: right
@@ -58,21 +72,42 @@ AI の違和感は可視化されている、よく⾒ておくように 。
 では具体的な操作方法についても説明する。
 
 #show_gif:DD
+# prefab: left
+# speaker: Boss
 オブジェクトを選んで、左クリックで設置場所までドラッグ。これで設置する。
 
  
 #show_gif:trash
+# prefab: left
+# speaker: Boss
 部屋ものを削除する時も、同じように左クリックでゴミ箱まで持っていけばいい。
 
 
 #highlight:Log
+# prefab: left
+# speaker: Boss
 オブジェクトをクリックすれば、下に説明も出る。
+
+#reset_effects
+# prefab: left
+# speaker: Boss
+それともう分かってるかもしれないが、画面中央にカーソルを持ってくと操作しにくくなるぞ。
+
+# prefab: left
+# speaker: Boss
+極めて複雑なアプリだからな。それだけマシンにも負荷がかかるんだ。
+
+# prefab: left
+# speaker: Boss
+カーソルは急には止まれない。AIの違和感を溜めないよう十分用心するように。
 
 
 -> check_understanding
 
 === check_understanding ===
 #reset_effects
+# prefab: left
+# speaker: Boss
 ここまでは理解できたか？
 * [はい]
     -> final_conversation
@@ -80,6 +115,8 @@ AI の違和感は可視化されている、よく⾒ておくように 。
     -> confirm_repeat
 
 == confirm_repeat ==
+# prefab: left
+# speaker: Boss
 もう一度説明してほしいか？
 * [はい]
     # prefab: left
@@ -94,6 +131,8 @@ AI の違和感は可視化されている、よく⾒ておくように 。
 # prefab: left
 # speaker: Boss
 よし、では今回は教育⽤ AI の開発だ。早速取り掛かってくれ！
+
+ちなみにこのチャットは画面下部の「チャット」を押せばいつでも見返せるぞ、健闘を祈る！
 
 #tutorial_end
 -> END

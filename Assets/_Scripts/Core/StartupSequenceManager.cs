@@ -89,6 +89,13 @@ public class StartupSequenceManager : MonoBehaviour
 
         yield return StartCoroutine(Fade(Color.clear));
 
+        // --- BGM再生をトリガー ---
+        if (BGMManager.Instance != null)
+        {
+            BGMManager.Instance.TriggerBGMPlayback();
+        }
+
+
         if (desktopManager != null)
         {
             desktopManager.TakeOverControl();

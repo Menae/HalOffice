@@ -63,6 +63,10 @@ public class TutorialManager : MonoBehaviour
         Debug.Log("チュートリアルシーケンス開始。");
         if (GameManager.Instance != null) GameManager.Instance.SetInputEnabled(false);
 
+        // チュートリアル中はドラッグ＆クリック無効化
+        if (DragDropManager.Instance != null)
+            DragDropManager.Instance.SetInteractionEnabled(false);
+
         ResetEffects();
 
         ChatController chat = GlobalUIManager.Instance.chatController;
@@ -178,6 +182,9 @@ public class TutorialManager : MonoBehaviour
         isTutorialFinished = true;
         ResetEffects();
         Debug.Log("チュートリアルが完全に終了しました。");
+
+        if (DragDropManager.Instance != null)
+            DragDropManager.Instance.SetInteractionEnabled(true); // 再び有効化
 
         if (GameManager.Instance != null) GameManager.Instance.SetInputEnabled(true);
         if (day1Manager != null) day1Manager.StartGame();

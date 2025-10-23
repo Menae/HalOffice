@@ -47,6 +47,13 @@ public class StartupSequenceManager : MonoBehaviour
 
     private IEnumerator MainSequence()
     {
+        // ---Day2で起動停止チェック---
+        if (GameManager.Instance != null && GameManager.Instance.currentDay >= 2)
+        {
+            Debug.Log("<color=red>デモ版のため、Day2以降は起動シーケンスを停止します。</color>");
+            yield break; // これ以降の処理を実行せず終了
+        }
+
         // --- 1. タイトル画面フェーズ ---
         fadeImage.color = Color.black;
         titlePhase.SetActive(true);

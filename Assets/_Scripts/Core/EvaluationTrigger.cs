@@ -1,6 +1,6 @@
-﻿// ファイル名: EvaluationTrigger.cs
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.SceneManagement;
+using System.Collections;
 
 public class EvaluationTrigger : MonoBehaviour
 {
@@ -8,9 +8,15 @@ public class EvaluationTrigger : MonoBehaviour
     [Tooltip("シーン内のObjectSlotManager")]
     public ObjectSlotManager objectSlotManager;
 
+    [Tooltip("スクリーンエフェクトを制御するコントローラ")]
+    public ScreenEffectsController screenEffectsController;
+
     [Header("設定")]
     [Tooltip("遷移先のリザルトシーン名")]
     public string resultSceneName;
+
+    [Tooltip("TVオフ演出の再生時間（秒）")]
+    public float tvOffDelay = 2.0f;
 
     /// <summary>
     /// ボタンのOnClickイベントなどから呼び出すための公開メソッド
@@ -26,29 +32,42 @@ public class EvaluationTrigger : MonoBehaviour
         int score = 0;
         foreach (var slot in objectSlotManager.objectSlots)
         {
-            // ケース1：このスロットは「空であること」が正解か？
             if (slot.isCorrectWhenEmpty)
             {
-                if (!slot.IsOccupied()) // そして、実際に空か？
-                {
-                    score++; // 正解！
-                }
+                if (!slot.IsOccupied())
+                    score++;
             }
-            // ケース2：このスロットは「特定のアイテムがあること」が正解か？
             else
             {
                 if (slot.IsOccupied() && slot.currentObject.itemData.itemType == slot.correctItemType)
-                {
-                    score++; // 正解！
-                }
+                    score++;
             }
         }
 
         GameManager.Instance.correctPlacementCount = score;
         GameManager.Instance.shouldShowResults = true;
 
-        Debug.Log($"評価が完了。スコア: {score}。リザルトシーンへ遷移します。");
+        Debug.Log($"評価が完了。スコア: {score}。TVオフ演出を再生してリザルトシーンへ遷移します。");
 
+        // --- ▼ TVオフ演出トリガーを発動 ▼ ---
+        if (screenEffectsController != null)
+        {
+            screenEffectsController.TriggerTvOff();
+            StartCoroutine(DelayedSceneTransition()); // 遅延でシーン遷移
+        }
+        else
+        {
+            // 参照が無ければ即座に遷移
+            SceneManager.LoadScene(resultSceneName);
+        }
+    }
+
+    /// <summary>
+    /// TVオフ演出が終わるのを待ってからシーンを切り替える
+    /// </summary>
+    private IEnumerator DelayedSceneTransition()
+    {
+        yield return new WaitForSeconds(tvOffDelay);
         SceneManager.LoadScene(resultSceneName);
     }
 }

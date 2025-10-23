@@ -2,6 +2,7 @@
 using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 
 public class GlobalUIManager : MonoBehaviour
 {
@@ -70,6 +71,14 @@ public class GlobalUIManager : MonoBehaviour
     [Tooltip("特別レイアウトを適用したいシーンの名前リスト")]
     public List<string> specialLayoutScenes;
 
+    [Header("デモ版用設定")]
+    [Tooltip("デモ版の最終日に表示するImage（例：デモ終了画面）")]
+    public Image demoEndImage;
+    [Tooltip("デモ終了を表示する日数（例：2日目で終了）")]
+    public int demoEndDay = 2;
+    [Tooltip("デモ終了画面を出すシーン名（例：LoginScene）")]
+    public string demoEndSceneName = "LoginScene";
+
     private void OnEnable() { SceneManager.sceneLoaded += OnSceneLoaded; }
     private void OnDisable() { SceneManager.sceneLoaded -= OnSceneLoaded; }
 
@@ -100,6 +109,28 @@ public class GlobalUIManager : MonoBehaviour
         else
         {
             taskbarObject.SetActive(true);
+        }
+
+        if (scenesToHideTaskbar.Contains(scene.name))
+        {
+            taskbarObject.SetActive(false);
+        }
+        else
+        {
+            taskbarObject.SetActive(true);
+        }
+
+        // デモ終了処理
+        if (demoEndImage != null &&
+            scene.name == demoEndSceneName &&
+            GameManager.Instance != null &&
+            GameManager.Instance.currentDay >= demoEndDay)
+        {
+            demoEndImage.gameObject.SetActive(true);
+        }
+        else if (demoEndImage != null)
+        {
+            demoEndImage.gameObject.SetActive(false);
         }
     }
 

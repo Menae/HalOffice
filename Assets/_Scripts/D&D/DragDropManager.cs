@@ -43,6 +43,27 @@ public class DragDropManager : MonoBehaviour
     public Camera mainCamera;
     public Camera uiCamera;
 
+    [Header("サウンド設定")]
+    [Tooltip("効果音を再生するためのAudioSource")]
+    public AudioSource audioSource;
+    [Tooltip("アイテムをゴミ箱に捨てた時の効果音")]
+    public AudioClip trashSound;
+    [Range(0f, 1f)]
+    [Tooltip("ゴミ箱の効果音の音量")]
+    public float trashVolume = 1.0f;
+
+    [Header("配置SE設定")]
+    [Tooltip("アイテムを正解のスロットに配置した時の効果音")]
+    public AudioClip correctPlacementSound;
+    [Range(0f, 1f)]
+    [Tooltip("正解の効果音の音量")]
+    public float correctPlacementVolume = 1.0f;
+    [Tooltip("アイテムを不正解のスロットに配置した時の効果音")]
+    public AudioClip incorrectPlacementSound;
+    [Range(0f, 1f)]
+    [Tooltip("不正解の効果音の音量")]
+    public float incorrectPlacementVolume = 1.0f;
+
     // --- 内部変数 (一部変更) ---
     private Draggable currentDraggedObject;
     private Draggable selectedObject;
@@ -279,13 +300,13 @@ private void HandleDrop(PointerEventData eventData)
     {
         if (targetZone != null && targetZone.zoneType == DropZone.ZoneType.TrashCan)
         {
-            // 変更前は originalSlot を保持している
+            if (audioSource != null && trashSound != null)
+            {
+                audioSource.PlayOneShot(trashSound, trashVolume);
+            }
+
             ObjectSlot removedFromSlot = originalSlot;
-
             Destroy(currentDraggedObject.gameObject);
-
-            // どのスロットからオブジェクトが削除されたかを通知する
-            Debug.Log($"<color=orange>Step 1: Item trashed. Firing event for slot '{removedFromSlot.slotTransform.name}'.</color>");
             GameEventManager.InvokeObjectRemoved(removedFromSlot);
         }
         else
@@ -298,7 +319,27 @@ private void HandleDrop(PointerEventData eventData)
                 !targetZone.associatedSlot.IsOccupied() &&
                 targetZone.associatedSlot.CanAccept(currentDraggedObject.itemData.itemType))
             {
-                PlaceInNewSlot(targetZone.associatedSlot);
+                // 正解・不正解を判定してSEを再生
+                ObjectSlot slot = targetZone.associatedSlot;
+                // このスロットの正解タイプと、置いたアイテムのタイプが一致するか？
+                if (slot.correctItemType == currentDraggedObject.itemData.itemType)
+                {
+                    // 正解のSEを再生
+                    if (audioSource != null && correctPlacementSound != null)
+                    {
+                        audioSource.PlayOneShot(correctPlacementSound, correctPlacementVolume);
+                    }
+                }
+                else
+                {
+                    // 不正解のSEを再生
+                    if (audioSource != null && incorrectPlacementSound != null)
+                    {
+                        audioSource.PlayOneShot(incorrectPlacementSound, incorrectPlacementVolume);
+                    }
+                }
+
+                PlaceInNewSlot(slot);
             }
             else
             {
@@ -309,30 +350,45 @@ private void HandleDrop(PointerEventData eventData)
 
     private void HandleUIDrop(DropZone targetZone)
     {
-        // 1. ドロップ先が見つからない、またはゲーム内スロットではない場合は、何もせず処理を終了します。
         if (targetZone == null || targetZone.zoneType != DropZone.ZoneType.GameSlot)
         {
             return;
         }
 
-        // 2. (この時点でtargetZoneは有効) スロットのデータが正常か、かつ空いているかを確認します。
         ObjectSlot slot = targetZone.associatedSlot;
         if (slot == null || slot.IsOccupied())
         {
             return;
         }
 
-        Draggable prefabDraggable = currentUIDraggable.itemData.itemPrefab.GetComponent<Draggable>();
-        // 3. (この時点でslotは有効) ドロップするアイテムのプレハブが有効かを確認します。
-        if (currentUIDraggable.itemData == null || currentUIDraggable.itemData.itemPrefab == null) // itemData経由でチェック
+        if (currentUIDraggable.itemData == null || currentUIDraggable.itemData.itemPrefab == null)
         {
             Debug.LogError($"UIアイテム '{currentUIDraggable.name}' のItemDataまたはPrefabが正しく設定されていません。", currentUIDraggable);
             return;
         }
 
-        // 全てのチェックを通過した場合のみ、アイテムを生成して配置します。
+        // 正解・不正解を判定してSEを再生
+        // このスロットの正解タイプと、置いたアイテムのタイプが一致するか？
+        if (slot.correctItemType == currentUIDraggable.itemData.itemType)
+        {
+            // 正解のSEを再生
+            if (audioSource != null && correctPlacementSound != null)
+            {
+                audioSource.PlayOneShot(correctPlacementSound, correctPlacementVolume);
+            }
+        }
+        else
+        {
+            // 不正解のSEを再生
+            if (audioSource != null && incorrectPlacementSound != null)
+            {
+                audioSource.PlayOneShot(incorrectPlacementSound, incorrectPlacementVolume);
+            }
+        }
+
+        // 全てのチェックを通過した場合のみ、アイテムを生成して配置
         GameObject newItem = Instantiate(
-            currentUIDraggable.itemData.itemPrefab, // itemData経由で参照
+            currentUIDraggable.itemData.itemPrefab,
             slot.slotTransform.position,
             Quaternion.identity
         );
@@ -340,13 +396,10 @@ private void HandleDrop(PointerEventData eventData)
         Draggable newDraggable = newItem.GetComponent<Draggable>();
         if (newDraggable != null)
         {
-            newDraggable.itemData = currentUIDraggable.itemData; // ◀◀◀ 【重要】この行を追加！
+            newDraggable.itemData = currentUIDraggable.itemData;
             slot.currentObject = newDraggable;
             newDraggable.currentSlot = slot;
-
             currentUIDraggable.MarkAsUsed();
-
-            // ObjectSlotManagerに、このスロットが更新されたことを通知する
             FindObjectOfType<ObjectSlotManager>().MarkSlotAsNewlyPlaced(slot);
         }
     }

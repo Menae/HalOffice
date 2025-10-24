@@ -25,13 +25,30 @@ public class StartupSequenceManager : MonoBehaviour
     [Tooltip("オープニングで再生する会話のInkファイル(任意)")]
     public TextAsset openingChatInk;
 
+    [Header("サウンド設定")]
+    [Tooltip("効果音を再生するためのAudioSource")]
+    public AudioSource audioSource;
+    [Tooltip("タイトルロゴ表示時に再生する効果音")]
+    public AudioClip titleLogoSound;
+    [Range(0f, 1f)]
+    [Tooltip("タイトルロゴ効果音の音量")]
+    public float titleLogoVolume = 1.0f;
+
     // DialogueManagerの会話終了イベントを購読するための処理
     private void OnEnable() { DialogueManager.OnDialogueFinished += OnOpeningChatFinished; }
     private void OnDisable() { DialogueManager.OnDialogueFinished -= OnOpeningChatFinished; }
 
     void Start()
     {
-        // ゲーム開始時に、まずタスクバーを非表示にする
+        // Day2以降はシーケンスを再生しないようにするブロック節
+        if (GameManager.Instance != null && GameManager.Instance.currentDay >= 2)
+        {
+            Debug.Log($"Day {GameManager.Instance.currentDay}のため、スタートアップシーケンスをスキップします。");
+            // このオブジェクト自体を非表示にして、後続の処理（MainSequenceコルーチン）をすべて中断する
+            gameObject.SetActive(false);
+            return;
+        }
+
         if (GlobalUIManager.Instance != null)
         {
             GlobalUIManager.Instance.SetDesktopUIVisibility(false);
@@ -47,17 +64,17 @@ public class StartupSequenceManager : MonoBehaviour
 
     private IEnumerator MainSequence()
     {
-        // ---Day2で起動停止チェック---
-        if (GameManager.Instance != null && GameManager.Instance.currentDay >= 2)
-        {
-            Debug.Log("<color=red>デモ版のため、Day2以降は起動シーケンスを停止します。</color>");
-            yield break; // これ以降の処理を実行せず終了
-        }
-
         // --- 1. タイトル画面フェーズ ---
         fadeImage.color = Color.black;
         titlePhase.SetActive(true);
         yield return StartCoroutine(Fade(Color.clear));
+
+        // ▼▼▼【ここから追加】SE再生処理を追加 ▼▼▼
+        if (audioSource != null && titleLogoSound != null)
+        {
+            audioSource.PlayOneShot(titleLogoSound, titleLogoVolume);
+        }
+        // ▲▲▲【ここまで追加】▲▲▲
 
         if (titleLogoAnimator != null) titleLogoAnimator.SetBool("TitleBoot", true);
         yield return new WaitForSeconds(titleAnimDuration);
@@ -67,14 +84,12 @@ public class StartupSequenceManager : MonoBehaviour
         titlePhase.SetActive(false);
 
         // --- 2. オープニングフェーズ ---
-        // openingChatInkがInspectorで設定されている場合のみ、オープニングを実行
         if (openingDialogueManager != null && openingChatInk != null)
         {
             openingPhase.SetActive(true);
             yield return StartCoroutine(Fade(Color.clear));
 
             openingDialogueManager.EnterDialogueMode(openingChatInk);
-            // "dialogueIsPlaying"がfalseになる(=会話が終わる)まで待機
             yield return new WaitUntil(() => openingDialogueManager.dialogueIsPlaying == false);
 
             yield return StartCoroutine(Fade(Color.black));
@@ -82,7 +97,6 @@ public class StartupSequenceManager : MonoBehaviour
         }
         else
         {
-            // 設定されていない場合は、警告をログに出してスキップする
             Debug.LogWarning("オープニングの会話ファイルが設定されていないため、オープニングフェーズをスキップします。");
         }
 
@@ -95,13 +109,6 @@ public class StartupSequenceManager : MonoBehaviour
         }
 
         yield return StartCoroutine(Fade(Color.clear));
-
-        // --- BGM再生をトリガー ---
-        if (BGMManager.Instance != null)
-        {
-            BGMManager.Instance.TriggerBGMPlayback();
-        }
-
 
         if (desktopManager != null)
         {

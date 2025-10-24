@@ -794,7 +794,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0.5}
   m_AnchorMax: {x: 1, y: 0.5}
-  m_AnchoredPosition: {x: -623.53, y: 455.7}
+  m_AnchoredPosition: {x: -623.5299, y: 455.7}
   m_SizeDelta: {x: -1247.06, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &85130814
@@ -4233,7 +4233,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   objectSlotManager: {fileID: 1827574993}
+  screenEffectsController: {fileID: 249891266}
   resultSceneName: P4_Result
+  tvOffDelay: 2
 --- !u!1 &563466255
 GameObject:
   m_ObjectHideFlags: 0
@@ -5636,6 +5638,7 @@ GameObject:
   m_Component:
   - component: {fileID: 825537252}
   - component: {fileID: 825537251}
+  - component: {fileID: 825537253}
   m_Layer: 0
   m_Name: DragDropManager
   m_TagString: Untagged
@@ -5664,6 +5667,13 @@ MonoBehaviour:
   parentCanvas: {fileID: 1329838284}
   mainCamera: {fileID: 249891262}
   uiCamera: {fileID: 1474572219}
+  audioSource: {fileID: 825537253}
+  trashSound: {fileID: 8300000, guid: b008a31d9bc911546b70fec586c0607f, type: 3}
+  trashVolume: 1
+  correctPlacementSound: {fileID: 8300000, guid: b3b5a6f45cf22b0459675cee49639458, type: 3}
+  correctPlacementVolume: 1
+  incorrectPlacementSound: {fileID: 8300000, guid: d7d33fd968cf2bd4b98aeddc531a698c, type: 3}
+  incorrectPlacementVolume: 1
 --- !u!4 &825537252
 Transform:
   m_ObjectHideFlags: 0
@@ -5679,6 +5689,102 @@ Transform:
   m_Children: []
   m_Father: {fileID: 1943600837}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!82 &825537253
+AudioSource:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 825537250}
+  m_Enabled: 1
+  serializedVersion: 4
+  OutputAudioMixerGroup: {fileID: 0}
+  m_audioClip: {fileID: 0}
+  m_PlayOnAwake: 1
+  m_Volume: 1
+  m_Pitch: 1
+  Loop: 0
+  Mute: 0
+  Spatialize: 0
+  SpatializePostEffects: 0
+  Priority: 128
+  DopplerLevel: 1
+  MinDistance: 1
+  MaxDistance: 500
+  Pan2D: 0
+  rolloffMode: 0
+  BypassEffects: 0
+  BypassListenerEffects: 0
+  BypassReverbZones: 0
+  rolloffCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    - serializedVersion: 3
+      time: 1
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  panLevelCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  spreadCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  reverbZoneMixCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
 --- !u!1 &845168673
 GameObject:
   m_ObjectHideFlags: 0
@@ -12041,7 +12147,7 @@ MonoBehaviour:
   - slotTransform: {fileID: 1953910310}
     currentObject: {fileID: 532814896}
     allowedItemTypes: 
-    correctItemType: 0
+    correctItemType: 1
     isCorrectWhenEmpty: 1
   - slotTransform: {fileID: 545085800}
     currentObject: {fileID: 1368678417}
@@ -12065,13 +12171,13 @@ MonoBehaviour:
     isCorrectWhenEmpty: 0
   - slotTransform: {fileID: 1372319067}
     currentObject: {fileID: 1648498518}
-    allowedItemTypes: 
+    allowedItemTypes: 05000000
     correctItemType: 5
     isCorrectWhenEmpty: 0
   - slotTransform: {fileID: 710092790}
     currentObject: {fileID: 383373053}
     allowedItemTypes: 
-    correctItemType: 0
+    correctItemType: 8
     isCorrectWhenEmpty: 0
   - slotTransform: {fileID: 2022395364}
     currentObject: {fileID: 107389050}

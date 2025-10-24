@@ -13,6 +13,6 @@ MonoBehaviour:
   m_Name: StartScene
   m_EditorClassIdentifier: 
   sceneName: P1&P2
-  bgmClip: {fileID: 8300000, guid: 88bad4bf1d7b94b4ba371ba07b211272, type: 3}
+  bgmClip: {fileID: 8300000, guid: 73bd2c706a71cef44a6bf53b743cddba, type: 3}
   volume: 0.1
   playOnLoad: 0

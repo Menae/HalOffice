@@ -44,6 +44,15 @@ public class ChatController : MonoBehaviour
     [Header("発言者プロフィール (Speaker Profiles)")]
     [SerializeField] private List<SpeakerProfile> speakerProfiles;
 
+    [Header("サウンド設定 (Sound Settings)")]
+    [Tooltip("効果音を再生するためのAudioSource")]
+    public AudioSource audioSource;
+    [Tooltip("チャットウィンドウが開く時の効果音")]
+    public AudioClip openWindowSound;
+    [Range(0f, 1f)]
+    [Tooltip("ウィンドウが開く効果音の音量")]
+    public float openWindowVolume = 1.0f;
+
     private Dictionary<string, Sprite> speakerIconDatabase;
     private Story currentStory;
 
@@ -54,11 +63,6 @@ public class ChatController : MonoBehaviour
         public Sprite icon;
     }
 
-    // IsConversationFinished, Awake, StartConversation, AdvanceConversation, ToggleChatWindow, InitializeDatabase, DisplayLine は変更なし
-
-    // DisplayChoices, MakeChoice, GetPrefabFromTags, GetSpeakerIconFromTags, RebuildLog, DisplayLineWithoutScroll, ScrollToBottom は変更なし
-
-    // ▼▼▼【修正】ForceScrollDownメソッドを修正 ▼▼▼
     private IEnumerator ForceScrollDown()
     {
         yield return new WaitForEndOfFrame();
@@ -74,7 +78,6 @@ public class ChatController : MonoBehaviour
         }
     }
 
-    // (変更のないメソッドは省略)
     public bool IsConversationFinished()
     {
         return currentStory == null || !currentStory.canContinue && currentStory.currentChoices.Count == 0;
@@ -89,6 +92,11 @@ public class ChatController : MonoBehaviour
 
     public void StartConversation(TextAsset inkJsonAsset)
     {
+        if (audioSource != null && openWindowSound != null)
+        {
+            audioSource.PlayOneShot(openWindowSound, openWindowVolume);
+        }
+
         GlobalUIManager manager = GlobalUIManager.Instance;
         if (manager == null || chatPanel == null || manager.layoutDefault == null || manager.layoutSpecial == null)
         {
@@ -174,6 +182,11 @@ public class ChatController : MonoBehaviour
 
         bool willBeActive = !chatPanel.activeSelf;
         chatPanel.SetActive(willBeActive);
+
+        if (willBeActive && audioSource != null && openWindowSound != null)
+        {
+            audioSource.PlayOneShot(openWindowSound, openWindowVolume);
+        }
 
         if (willBeActive)
         {

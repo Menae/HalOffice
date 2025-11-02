@@ -28,7 +28,7 @@ AIにも好みがあるらしい。人間らしさを追求した結果、こう
 
 # prefab: left
 # speaker: Boss
-ここは評価にも⼤きく関わってくるからな。
+そんなインシデントを起こせばお前自身の評価にも響くからな、気を付けろよ。
 
 # highlight: DetectionMeter
 # prefab: left
@@ -47,7 +47,7 @@ AI の違和感は可視化されている、よく⾒ておくように 。
 # highlight: Right
 # prefab: left
 # speaker: Boss
-右にあるのが君に課せられたAIの調整内容だ。これに沿うように作業してくれ。
+右に記されているのがAIの調整方針だ。これに沿うように作業してくれ。
 
 # highlight: Left
 # prefab: left
@@ -60,7 +60,7 @@ AI の違和感は可視化されている、よく⾒ておくように 。
 
 # prefab: left
 # speaker: Boss
-環境は人格を形作る。部屋を変えることで、AI を依頼に沿うように調整するんだ。
+環境は人格を形作る。部屋を変えることで、AIの特性を調整するんだ。
 
 # prefab: right
 # speaker: Player
@@ -74,13 +74,13 @@ AI の違和感は可視化されている、よく⾒ておくように 。
 #show_gif:DD
 # prefab: left
 # speaker: Boss
-オブジェクトを選んで、左クリックで設置場所までドラッグ。これで設置する。
+オブジェクトを選んで、左クリック。設置場所までドラッグ。これで設置する。
 
  
 #show_gif:trash
 # prefab: left
 # speaker: Boss
-部屋ものを削除する時も、同じように左クリックでゴミ箱まで持っていけばいい。
+部屋のものを削除する時も、同じように左クリックからのドラッグでゴミ箱まで持っていけばいい。
 
 
 #highlight:Log
@@ -91,7 +91,7 @@ AI の違和感は可視化されている、よく⾒ておくように 。
 #reset_effects
 # prefab: left
 # speaker: Boss
-それともう分かってるかもしれないが、画面中央にカーソルを持ってくと操作しにくくなるぞ。
+それともう気づいたかもしれないが、画面中央にカーソルを持ってくと操作しにくくなるぞ。
 
 # prefab: left
 # speaker: Boss
@@ -130,8 +130,14 @@ AI の違和感は可視化されている、よく⾒ておくように 。
 == final_conversation ==
 # prefab: left
 # speaker: Boss
+作業を終了したいときは左下のボタンで完了するんだ。
+
+# prefab: left
+# speaker: Boss
 よし、では今回は教育⽤ AI の開発だ。早速取り掛かってくれ！
 
+# prefab: left
+# speaker: Boss
 ちなみにこのチャットは画面下部の「チャット」を押せばいつでも見返せるぞ、健闘を祈る！
 
 #tutorial_end

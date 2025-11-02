@@ -249,29 +249,23 @@ public class DesktopManager : MonoBehaviour
 
         isFading = false;
 
-        bool shouldShowTutorial = (PlayerPrefs.GetInt("HasSeenTutorial", 0) == 0);
-#if UNITY_EDITOR
-        if (forceShowTutorialInEditor) { shouldShowTutorial = true; }
-#endif
-
-        if (shouldShowTutorial)
+        // PlayerPrefsのチェックを削除し、常にチュートリアルを実行するように変更
+        // （forceShowTutorialInEditorのチェックも不要になります）
+        if (ChatController.Instance != null && tutorialChatInk != null)
         {
-            // シングルトン経由でChatControllerを呼び出す
-            if (ChatController.Instance != null && tutorialChatInk != null)
-            {
-                ChatController.Instance.StartConversation(tutorialChatInk);
-                PlayerPrefs.SetInt("HasSeenTutorial", 1);
-            }
+            ChatController.Instance.StartConversation(tutorialChatInk);
+            // PlayerPrefs.SetInt("HasSeenTutorial", 1); // ◀ チュートリアルを見たことを記録する処理を削除
         }
-        else
-        {
-            //StartCoroutine(ShowNotificationRoutine());
-        }
+        // else 
+        // {
+        //     StartCoroutine(ShowNotificationRoutine());
+        // } ◀ チュートリアルが必ず実行されるため、elseブロックも削除
+        // (ShowNotificationRoutineは HandleTutorialFinished から呼び出されます)
     }
 
     private void HandleTutorialFinished()
     {
-        //StartCoroutine(ShowNotificationRoutine());
+        StartCoroutine(ShowNotificationRoutine());
     }
 
     private IEnumerator ShowNotificationRoutine()

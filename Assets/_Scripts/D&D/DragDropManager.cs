@@ -2,9 +2,13 @@
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
 using System.Collections.Generic;
+using System;
 
 public class DragDropManager : MonoBehaviour
 {
+    public static event Action OnDragStarted;
+    public static event Action OnDragEnded;
+
     /// <summary>
     /// 現在アクティブなCursorControllerを保持する静的プロパティ
     /// </summary>
@@ -236,6 +240,7 @@ public class DragDropManager : MonoBehaviour
         }
 
         currentDraggedObject.gameObject.SetActive(false);
+        OnDragStarted?.Invoke();
     }
 
     private void StartHoldingUI(UIDraggable uiDraggable, PointerEventData eventData)
@@ -253,6 +258,8 @@ public class DragDropManager : MonoBehaviour
             dragProxyImage.transform.SetParent(ActiveCursor.cursorImage.transform, true);
             dragProxyImage.rectTransform.anchoredPosition = Vector2.zero;
         }
+
+        OnDragStarted?.Invoke();
     }
 
     private void SetupProxy(Sprite sprite)
@@ -267,6 +274,8 @@ public class DragDropManager : MonoBehaviour
 
 private void HandleDrop(PointerEventData eventData)
 {
+    OnDragEnded?.Invoke();
+
     // --- 代理イメージの後処理 ---
     dragProxyImage.transform.SetParent(parentCanvas.transform, true);
     dragProxyImage.gameObject.SetActive(false);

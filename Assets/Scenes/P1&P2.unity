@@ -227,6 +227,7 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
+  - {fileID: 239481403}
   - {fileID: 1972265168}
   - {fileID: 1922439570}
   m_Father: {fileID: 397777440}
@@ -1007,16 +1008,16 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 239481402}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 892562162}
+  m_Father: {fileID: 27365480}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 35, y: 53}
+  m_AnchoredPosition: {x: 33.000046, y: 55.1}
   m_SizeDelta: {x: 40, y: 40}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &239481404
@@ -3821,7 +3822,6 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 239481403}
   - {fileID: 91618595}
   - {fileID: 1179243079}
   m_Father: {fileID: 397777440}
@@ -4422,7 +4422,7 @@ MonoBehaviour:
   loginPhase: {fileID: 1123203960}
   desktopManager: {fileID: 1510773763}
   titleLogoAnimator: {fileID: 1932122865}
-  titleAnimDuration: 2.5
+  titleAnimDuration: 3.5
   openingDialogueManager: {fileID: 338687887}
   openingChatInk: {fileID: 0}
   audioSource: {fileID: 1027743465}
@@ -6654,7 +6654,7 @@ MonoBehaviour:
   desktopScreen: {fileID: 397777439}
   exitButton: {fileID: 344666917}
   notificationBadge: {fileID: 239481402}
-  notificationDelay: 2
+  notificationDelay: 0.5
   notificationSound: {fileID: 8300000, guid: 3c6068442b2924435aa605fbb914e768, type: 3}
   notificationVolume: 0.2
   audioSource: {fileID: 1510773765}

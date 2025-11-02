@@ -10,7 +10,7 @@ public class ExitButtonController : MonoBehaviour
     {
         // 確認ダイアログを表示し、「はい」が押されたら評価処理を呼び出す
         confirmationDialog.Show(
-            "作業を中断しますか？\n進捗は全て失われます。",
+            "作業を終了しますか？",
             () => { evaluationTrigger.EndDayAndEvaluate(); }
         );
     }

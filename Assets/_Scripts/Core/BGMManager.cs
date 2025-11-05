@@ -90,7 +90,6 @@ public class BGMManager : MonoBehaviour
         audioSource.Stop();
     }
 
-    // ▼▼▼ このメソッドを追加 ▼▼▼
     /// <summary>
     /// 待機中のBGMの再生を開始します。
     /// </summary>

@@ -69,12 +69,11 @@ public class StartupSequenceManager : MonoBehaviour
         titlePhase.SetActive(true);
         yield return StartCoroutine(Fade(Color.clear));
 
-        // ▼▼▼【ここから追加】SE再生処理を追加 ▼▼▼
+        // SE再生処理を追加
         if (audioSource != null && titleLogoSound != null)
         {
             audioSource.PlayOneShot(titleLogoSound, titleLogoVolume);
         }
-        // ▲▲▲【ここまで追加】▲▲▲
 
         if (titleLogoAnimator != null) titleLogoAnimator.SetBool("TitleBoot", true);
         yield return new WaitForSeconds(titleAnimDuration);
@@ -101,6 +100,7 @@ public class StartupSequenceManager : MonoBehaviour
         }
 
         // --- 3. ログイン画面フェーズ ---
+        BGMManager.Instance.TriggerBGMPlayback();
         loginPhase.SetActive(true);
         if (desktopManager != null)
         {

@@ -81,6 +81,7 @@ public class DesktopManager : MonoBehaviour
     // --- 内部処理用の変数 ---
     private bool isFading = false;
     private bool hasClearedFirstNotification = false;
+    private Transform iconHoverFrameOriginalParent;
 
     #region Unity Lifecycle Methods
 
@@ -96,6 +97,13 @@ public class DesktopManager : MonoBehaviour
 
     void Start()
     {
+        // ホバーフレームの元の親を保存し、非表示にしておく
+        if (iconHoverFrame != null)
+        {
+            iconHoverFrameOriginalParent = iconHoverFrame.transform.parent;
+            iconHoverFrame.gameObject.SetActive(false);
+        }
+
         // --- ボタンのクリックイベントをスクリプトから登録 ---
         if (startButton != null)
         {
@@ -250,7 +258,6 @@ public class DesktopManager : MonoBehaviour
         isFading = false;
 
         // PlayerPrefsのチェックを削除し、常にチュートリアルを実行するように変更
-        // （forceShowTutorialInEditorのチェックも不要になります）
         if (ChatController.Instance != null && tutorialChatInk != null)
         {
             ChatController.Instance.StartConversation(tutorialChatInk);
@@ -316,17 +323,37 @@ public class DesktopManager : MonoBehaviour
     private void ShowHoverFrame(Transform iconTransform)
     {
         if (iconHoverFrame == null) return;
-        iconHoverFrame.transform.SetParent(iconTransform.parent, false);
-        iconHoverFrame.rectTransform.position = iconTransform.position;
-        iconHoverFrame.rectTransform.sizeDelta = iconTransform.GetComponent<RectTransform>().sizeDelta;
+
+        // 1. 親をホバー対象のアイコン自身に変更する
+        iconHoverFrame.transform.SetParent(iconTransform, false);
+
+        // 2. RectTransformを親（アイコン）に合わせてストレッチさせる
+        RectTransform frameRect = iconHoverFrame.rectTransform;
+        frameRect.anchorMin = Vector2.zero;     // (0, 0)
+        frameRect.anchorMax = Vector2.one;      // (1, 1)
+        frameRect.pivot = new Vector2(0.5f, 0.5f);
+        frameRect.sizeDelta = Vector2.zero;     // サイズ差分なし
+        frameRect.anchoredPosition = Vector2.zero; // 位置も中央
+
+        // 3. 描画順序を一番後ろ（アイコンの背景）にする
         iconHoverFrame.transform.SetAsFirstSibling();
+
+        // 4. 表示する
         iconHoverFrame.gameObject.SetActive(true);
     }
 
     private void HideHoverFrame()
     {
         if (iconHoverFrame == null) return;
+
+        // 1. 非表示にする
         iconHoverFrame.gameObject.SetActive(false);
+
+        // 2. 親を元の場所（DesktopManagerなど）に戻す
+        if (iconHoverFrameOriginalParent != null)
+        {
+            iconHoverFrame.transform.SetParent(iconHoverFrameOriginalParent, false);
+        }
     }
 
     #endregion

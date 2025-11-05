@@ -69,13 +69,15 @@ public class StartupSequenceManager : MonoBehaviour
         titlePhase.SetActive(true);
         yield return StartCoroutine(Fade(Color.clear));
 
-        // SE再生処理を追加
+        if (titleLogoAnimator != null) titleLogoAnimator.SetBool("TitleBoot", true);
+
+        // SE再生処理
+        yield return new WaitForSeconds(0.5f); // 少し待ってから効果音を再生
         if (audioSource != null && titleLogoSound != null)
         {
             audioSource.PlayOneShot(titleLogoSound, titleLogoVolume);
         }
 
-        if (titleLogoAnimator != null) titleLogoAnimator.SetBool("TitleBoot", true);
         yield return new WaitForSeconds(titleAnimDuration);
         if (titleLogoAnimator != null) titleLogoAnimator.SetBool("TitleBoot", false);
 
@@ -99,8 +101,9 @@ public class StartupSequenceManager : MonoBehaviour
             Debug.LogWarning("オープニングの会話ファイルが設定されていないため、オープニングフェーズをスキップします。");
         }
 
+        yield return new WaitForSeconds(0.5f);
+
         // --- 3. ログイン画面フェーズ ---
-        BGMManager.Instance.TriggerBGMPlayback();
         loginPhase.SetActive(true);
         if (desktopManager != null)
         {
@@ -109,6 +112,7 @@ public class StartupSequenceManager : MonoBehaviour
         }
 
         yield return StartCoroutine(Fade(Color.clear));
+        BGMManager.Instance.TriggerBGMPlayback();
 
         if (desktopManager != null)
         {

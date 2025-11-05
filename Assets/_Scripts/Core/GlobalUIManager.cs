@@ -35,8 +35,11 @@ public class GlobalUIManager : MonoBehaviour
     {
         [Tooltip("管理対象のウィンドウオブジェクト（例：ChatPanel）")]
         public GameObject appWindow;
-        [Tooltip("上記ウィンドウがアクティブな時に表示する選択フレーム")]
-        public GameObject selectionFrame;
+
+        [Tooltip("デフォルト状態のアイコン（アイコンA）")]
+        public GameObject iconDefault;
+        [Tooltip("ウィンドウがアクティブな時に表示するアイコン（アイコンB）")]
+        public GameObject iconActive;
     }
 
     [Header("コンポーネント参照")]
@@ -161,7 +164,7 @@ public class GlobalUIManager : MonoBehaviour
     }
 
     /// <summary>
-    /// 全ての登録済みウィンドウの状態をチェックし、選択フレームの表示を更新する
+    /// 全ての登録済みウィンドウの状態をチェックし、アイコンの表示を更新する
     /// </summary>
     private void UpdateTaskbarIcons()
     {
@@ -169,12 +172,30 @@ public class GlobalUIManager : MonoBehaviour
 
         foreach (var entry in taskbarIconEntries)
         {
-            if (entry.appWindow != null && entry.selectionFrame != null)
+            // 登録が不完全な場合はスキップ
+            if (entry.appWindow == null || entry.iconDefault == null || entry.iconActive == null)
             {
-                // ウィンドウがアクティブかどうかを判定し、
-                // それに合わせて選択フレームの表示/非表示を切り替える
-                bool isWindowActive = entry.appWindow.activeSelf;
-                entry.selectionFrame.SetActive(isWindowActive);
+                continue;
+            }
+
+            // ウィンドウがアクティブかどうかを判定
+            bool isWindowActive = entry.appWindow.activeSelf;
+
+            // ウィンドウがアクティブなら
+            if (isWindowActive)
+            {
+                // アイコンA（デフォルト）を非表示
+                entry.iconDefault.SetActive(false);
+                // アイコンB（アクティブ）を表示
+                entry.iconActive.SetActive(true);
+            }
+            // ウィンドウが非アクティブなら（閉じているなら）
+            else
+            {
+                // アイコンA（デフォルト）を表示
+                entry.iconDefault.SetActive(true);
+                // アイコンB（アクティブ）を非表示
+                entry.iconActive.SetActive(false);
             }
         }
     }

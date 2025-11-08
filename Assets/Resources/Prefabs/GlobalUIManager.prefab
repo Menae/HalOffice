@@ -2917,8 +2917,7 @@ MonoBehaviour:
   - appWindow: {fileID: 8024397667996916883}
     iconDefault: {fileID: 7834624872287366835}
     iconActive: {fileID: 8854264117051894010}
-  scenesToHideTaskbar:
-  - P4_Result
+  scenesToHideTaskbar: []
   layoutDefault: {fileID: 3663279832629758959}
   layoutSpecial: {fileID: 6082687015796301340}
   specialLayoutScenes:
@@ -2956,6 +2955,7 @@ MonoBehaviour:
   choiceButtonPrefabDefault: {fileID: 8741885597613308964, guid: e3634c9bba0caf942a1a08c1f695cd92, type: 3}
   choiceButtonPrefabSpecial: {fileID: 8741885597613308964, guid: e3634c9bba0caf942a1a08c1f695cd92, type: 3}
   skipButton: {fileID: 6957896255212360423}
+  skipLineDelay: 0.05
   speakerProfiles:
   - tag: Player
     icon: {fileID: 21300000, guid: b36683e0c4ae06e4587206d188646587, type: 3}

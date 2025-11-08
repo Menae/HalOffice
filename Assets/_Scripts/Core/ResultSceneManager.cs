@@ -134,6 +134,8 @@ public class ResultSceneManager : MonoBehaviour
 
         if (tvOffAnimator != null)
         {
+            if (GlobalUIManager.Instance != null) GlobalUIManager.Instance.SetDesktopUIVisibility(false);
+
             if (audioSource != null && tvOffSound != null)
             {
                 audioSource.PlayOneShot(tvOffSound, tvOffVolume);

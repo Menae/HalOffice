@@ -7755,7 +7755,7 @@ MonoBehaviour:
   screenFadeImage: {fileID: 1160373682}
   fadeInDuration: 2
   startGameButton: {fileID: 1269871083}
-  totalTimeInSeconds: 120
+  totalTimeInSeconds: 10
   eventA_TriggerTime: 40
   imageObjectA: {fileID: 0}
   eventB_TriggerTime: 80

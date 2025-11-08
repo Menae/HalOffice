@@ -43,29 +43,20 @@ public class DetectionManager : MonoBehaviour
 
     private void HandleTimeUp()
     {
+        // isGameOverフラグは、二重呼び出しを防ぐために残す
         if (isGameOver) return;
         isGameOver = true;
         OnGameOver?.Invoke();
 
-        // TVオフ演出をトリガー
-        if (screenEffects != null)
+        // 既に修正済みの「完璧な」ゲームオーバー処理を即座に呼び出す
+        if (evaluationTrigger != null)
         {
-            screenEffects.TriggerTvOff();
+            evaluationTrigger.EndDayAndEvaluate();
         }
-
-        // 自身でシーンをロードするのをやめ、Day1Managerに命令する
-        if (day1Manager != null)
+        else
         {
-            // 2秒後に調査終了処理を呼び出すコルーチンを開始
-            StartCoroutine(RequestEndInvestigationAfterDelay(2.0f));
+            Debug.LogError("EvaluationTriggerがDetectionManagerに設定されていません！");
         }
-    }
-
-    private IEnumerator RequestEndInvestigationAfterDelay(float delay)
-    {
-        yield return new WaitForSeconds(delay);
-        // Day1Managerに、gameOverSceneNameに遷移するように命令
-        evaluationTrigger.EndDayAndEvaluate();
     }
 
     void Update()

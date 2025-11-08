@@ -136,25 +136,25 @@ public class GlobalUIManager : MonoBehaviour
     /// </summary>
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
-        // --- 1. タスクバーの表示/非表示 ---
+        // --- 1. タスクバーの表示/非表示を決定 ---
         if (scenesToHideTaskbar.Contains(scene.name))
         {
-            taskbarObject.SetActive(false);
+            // 両方（タスクバーとアイコン）を非表示にする
+            SetDesktopUIVisibility(false);
         }
         else
         {
-            taskbarObject.SetActive(true);
+            // 両方（タスクバーとアイコン）を表示する
+            SetDesktopUIVisibility(true);
         }
 
         // --- 2. 時計の稼働/停止を決定 ---
         if (scene.name == mainSceneName)
         {
-            // メインシーンが始まったら時計をリセットして起動
             ResetAndStartClock();
         }
         else
         {
-            // それ以外のシーン（スタート画面など）では時計を止めて固定表示
             StopClockAndShowFixedTime();
         }
 

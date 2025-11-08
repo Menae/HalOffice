@@ -49,10 +49,12 @@ public class EvaluationTrigger : MonoBehaviour
 
         Debug.Log($"評価が完了。スコア: {score}。TVオフ演出を再生してリザルトシーンへ遷移します。");
 
-        // --- ▼ TVオフ演出トリガーを発動 ▼ ---
+        // 1. まずタスクバーを消す（予約）
+        if (GlobalUIManager.Instance != null) GlobalUIManager.Instance.SetDesktopUIVisibility(false);
+
+        // --- ▼ TVオフ演出とシーン遷移をコルーチンに任せる ▼ ---
         if (screenEffectsController != null)
         {
-            screenEffectsController.TriggerTvOff();
             StartCoroutine(DelayedSceneTransition()); // 遅延でシーン遷移
         }
         else
@@ -67,6 +69,16 @@ public class EvaluationTrigger : MonoBehaviour
     /// </summary>
     private IEnumerator DelayedSceneTransition()
     {
+        // 1. 1フレーム待機する
+        yield return null;
+
+        // 2. タスクバーが消えた後で、TVオフ演出を開始する
+        if (screenEffectsController != null)
+        {
+            screenEffectsController.TriggerTvOff();
+        }
+
+        // 3. 元々の待機処理
         yield return new WaitForSeconds(tvOffDelay);
         SceneManager.LoadScene(resultSceneName);
     }

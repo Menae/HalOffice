@@ -196,6 +196,8 @@ public class Day1Manager : MonoBehaviour
 
     private void TriggerTimesUp()
     {
+        if (GlobalUIManager.Instance != null) GlobalUIManager.Instance.SetDesktopUIVisibility(false);
+
         isTimeUp = true;
         Debug.Log("時間切れ！");
 
@@ -210,6 +212,8 @@ public class Day1Manager : MonoBehaviour
     /// <param name="nextSceneName">次にロードするシーンの名前</param>
     public void EndInvestigation(string nextSceneName)
     {
+        if (GlobalUIManager.Instance != null) GlobalUIManager.Instance.SetDesktopUIVisibility(false);
+
         // 1. InvestigationManagerに、集めた証拠をGameManagerに渡すよう命令
         if (InvestigationManager.Instance != null)
         {
@@ -221,7 +225,6 @@ public class Day1Manager : MonoBehaviour
         }
 
         // 2. 次のシーンをロードする
-        //    （もしフェードアウトなどの演出が必要なら、ここにその処理を挟む）
         UnityEngine.SceneManagement.SceneManager.LoadScene(nextSceneName);
     }
 

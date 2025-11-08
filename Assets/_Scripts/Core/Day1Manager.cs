@@ -176,9 +176,10 @@ public class Day1Manager : MonoBehaviour
 
     private void TriggerTimesUp()
     {
-        // if (isTimeUp) return; // ← この行を削除またはコメントアウト
         isTimeUp = true;
         Debug.Log("時間切れ！");
+
+        OnTimeUp?.Invoke();
 
         evaluationTrigger.EndDayAndEvaluate();
     }

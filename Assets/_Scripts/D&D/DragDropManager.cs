@@ -74,7 +74,6 @@ public class DragDropManager : MonoBehaviour
     private UIDraggable currentUIDraggable;
     private UIDraggable selectedUIDraggable;
     private ObjectSlot originalSlot;
-    private bool canDrop = false;
 
     public static DragDropManager Instance { get; private set; }
 

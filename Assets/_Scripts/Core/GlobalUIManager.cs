@@ -51,7 +51,6 @@ public class GlobalUIManager : MonoBehaviour
     public GameObject taskbarObject;
     [Tooltip("デスクトップアイコンの親オブジェクト")]
     public GameObject desktopIconsObject;
-    public GameObject chatAppPanel;
 
     [Header("日付表示設定")]
     [Tooltip("現在の日数を表示するTextMeshPro（例：Day 1）")]
@@ -68,9 +67,9 @@ public class GlobalUIManager : MonoBehaviour
 
     [Header("チャットアプリのレイアウト設定")]
     [Tooltip("デフォルトのレイアウトの親オブジェクト")]
-    public GameObject layoutDefault; // Inspectorで「Chat-Layout1」をセット
+    public GameObject layoutDefault;
     [Tooltip("特別シーン用のレイアウトの親オブジェクト")]
-    public GameObject layoutSpecial; // Inspectorで「Chat-Layout2」をセット
+    public GameObject layoutSpecial;
     [Tooltip("特別レイアウトを適用したいシーンの名前リスト")]
     public List<string> specialLayoutScenes;
 
@@ -94,9 +93,6 @@ public class GlobalUIManager : MonoBehaviour
         }
         _instance = this;
         DontDestroyOnLoad(this.gameObject);
-
-        // 自分と同じGameObjectにアタッチされているChatControllerを自動で取得
-        chatController = GetComponent<ChatController>();
     }
 
     /// <summary>
@@ -105,15 +101,6 @@ public class GlobalUIManager : MonoBehaviour
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
         // --- 1. タスクバーの表示/非表示を決定（この処理は残す）---
-        if (scenesToHideTaskbar.Contains(scene.name))
-        {
-            taskbarObject.SetActive(false);
-        }
-        else
-        {
-            taskbarObject.SetActive(true);
-        }
-
         if (scenesToHideTaskbar.Contains(scene.name))
         {
             taskbarObject.SetActive(false);

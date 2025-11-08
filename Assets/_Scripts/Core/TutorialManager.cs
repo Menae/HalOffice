@@ -40,6 +40,7 @@ public class TutorialManager : MonoBehaviour
     public bool IsPlayingEffect { get; private set; } = false;
     private bool isTutorialFinished = false;
     private bool cancelVideoLoops = false;
+    private Coroutine currentEffectCoroutine = null;
 
     private void Awake()
     {
@@ -98,13 +99,16 @@ public class TutorialManager : MonoBehaviour
             switch (key)
             {
                 case "highlight":
-                    StartCoroutine(ProcessHighlightTag(value));
+                    // 既に何か動いていたら止める（安全策）
+                    if (currentEffectCoroutine != null) StopCoroutine(currentEffectCoroutine);
+                    currentEffectCoroutine = StartCoroutine(ProcessHighlightTag(value));
                     break;
                 case "highlight_off":
                     DeactivateAllHighlights();
                     break;
                 case "show_gif":
-                    StartCoroutine(ShowTutorialVideo(value)); // ←新しいメソッドに変更
+                    if (currentEffectCoroutine != null) StopCoroutine(currentEffectCoroutine);
+                    currentEffectCoroutine = StartCoroutine(ShowTutorialVideo(value));
                     break;
                 case "tutorial_end":
                     StartCoroutine(FinishTutorialSequence());
@@ -146,6 +150,8 @@ public class TutorialManager : MonoBehaviour
 
         // 会話はまだ進めないが、入力受付だけを再開する
         IsPlayingEffect = false;
+        currentEffectCoroutine = null; // 待機が終了したので参照をクリア
+
         if (GameManager.Instance != null)
             GameManager.Instance.SetInputEnabled(true);
 
@@ -162,8 +168,6 @@ public class TutorialManager : MonoBehaviour
         video.panel.SetActive(false);
     }
 
-
-
     private IEnumerator ProcessHighlightTag(string highlightData)
     {
         IsPlayingEffect = true;
@@ -175,6 +179,7 @@ public class TutorialManager : MonoBehaviour
         }
         yield return new WaitForSeconds(1.0f);
         IsPlayingEffect = false;
+        currentEffectCoroutine = null; // 待機が終了したので参照をクリア
     }
 
     private IEnumerator FinishTutorialSequence()
@@ -213,7 +218,6 @@ public class TutorialManager : MonoBehaviour
         }
     }
 
-
     private void ActivateHighlight(string name)
     {
         HighlightTarget target = highlightTargets.Find(ht => ht.name == name);
@@ -236,5 +240,32 @@ public class TutorialManager : MonoBehaviour
             if (target.panel != null)
                 target.panel.SetActive(false);
         }
+    }
+
+    /// <summary>
+    /// ChatControllerから呼び出す
+    /// 現在再生中の全てのチュートリアルエフェクト（ハイライト、動画など）を
+    /// 強制的に停止し、待機状態を解除する。
+    /// </summary>
+    public void ForceStopAllEffects()
+    {
+        Debug.Log("強制スキップ：エフェクトを強制停止します。");
+
+        // 1. 待機させているコルーチン（ハイライトや動画の1周目）が
+        //    動いていれば、即座に強制停止する
+        if (currentEffectCoroutine != null)
+        {
+            StopCoroutine(currentEffectCoroutine);
+            currentEffectCoroutine = null;
+        }
+
+        // 2. 既存の ResetEffects() を呼び出す
+        //    これにより、動画のバックグラウンドループが停止し、
+        //    全てのハイライトと動画パネルが非表示になる
+        ResetEffects();
+
+        // 3. ChatControllerの待機を即座に解除する
+        //    (IsPlayingEffectがtrueのまま停止した場合に備える)
+        IsPlayingEffect = false;
     }
 }

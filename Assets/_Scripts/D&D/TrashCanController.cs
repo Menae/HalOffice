@@ -8,6 +8,8 @@ public class TrashCanController : MonoBehaviour
     public Animator lidAnimator;
     [Tooltip("蓋が開くアニメーションのBoolパラメータ名")]
     public string openParameterName = "IsOpen";
+    [Tooltip("このUIが属するCanvasのRender Camera（UI Camera）")]
+    public Camera uiCamera;
 
     [Header("設定")]
     [Tooltip("カーソルがこの距離（ピクセル）以内に近づいたら蓋を開く")]
@@ -58,10 +60,26 @@ public class TrashCanController : MonoBehaviour
             return;
         }
 
-        // ゴミ箱のUI座標と、マウスのスクリーン座標の距離を計算
-        float distance = Vector2.Distance(rectTransform.position, Input.mousePosition);
+        if (uiCamera == null)
+        {
+            // 毎フレーム警告が出ないよう、一度だけ警告し、処理を止める
+            if (isDragInProgress) // ドラッグ開始時のみ
+            {
+                Debug.LogWarning("TrashCanControllerに 'uiCamera' が設定されていません！ Inspectorを確認してください。", this);
+            }
+            // uiCameraがないと蓋が開かないため、閉じておく
+            lidAnimator.SetBool(openParameterName, false);
+            return;
+        }
 
-        // 距離がしきい値以内かどうかをAnimatorに通知
+        // 1. ゴミ箱のWorld座標 (rectTransform.position) を Screen座標に変換
+        Vector2 trashCanScreenPosition = uiCamera.WorldToScreenPoint(rectTransform.position);
+
+        // 2. マウスのScreen座標 (Input.mousePosition) と、
+        //    変換したゴミ箱のScreen座標で距離を計算
+        float distance = Vector2.Distance(trashCanScreenPosition, Input.mousePosition);
+
+        // 3. 距離がしきい値以内かどうかをAnimatorに通知
         if (distance < detectionRadius)
         {
             lidAnimator.SetBool(openParameterName, true);

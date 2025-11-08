@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: WorldMap
   m_EditorClassIdentifier: 
   itemName: WorldMap
-  itemType: 0
+  itemType: 8
   itemPrefab: {fileID: 47273930053212805, guid: 2f92f913f38d9614eb4074c16f79f5f0, type: 3}
   descriptionInk: {fileID: 4900000, guid: 7e7b569c04b80c9409616e98b3d9836a, type: 3}
   missingReactionInk: {fileID: 0}

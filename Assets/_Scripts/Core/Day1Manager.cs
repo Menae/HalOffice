@@ -14,6 +14,10 @@ public class Day1Manager : MonoBehaviour
     [Tooltip("フェードインにかかる時間（秒）")]
     public float fadeInDuration = 2.0f;
 
+    [Header("チュートリアル設定")]
+    [Tooltip("チュートリアル完了後に表示する『ゲーム開始ボタン』")]
+    public Button startGameButton;
+
     [Header("タイマー設定")]
     [Tooltip("カウントダウンの開始時間（秒）")]
     public float totalTimeInSeconds = 300f;
@@ -118,10 +122,26 @@ public class Day1Manager : MonoBehaviour
         Debug.Log("StartGame() has been called! isGameActive will be set to true.");
         isGameActive = true;
 
-        //if (instructionPanel != null)
-        //{
-        //    instructionPanel.SetActive(false);
-        //}
+        // 押されたボタンを非表示にする
+        if (startGameButton != null)
+        {
+            startGameButton.gameObject.SetActive(false);
+        }
+    }
+
+    /// <summary>
+    /// チュートリアル会話終了後、ゲーム開始ボタンを表示する
+    /// </summary>
+    public void ShowStartGameButton()
+    {
+        if (startGameButton != null)
+        {
+            startGameButton.gameObject.SetActive(true);
+        }
+        else
+        {
+            Debug.LogError("StartGameButtonがDay1Managerに設定されていません！");
+        }
     }
 
     private void CheckTimedEvents()

@@ -187,7 +187,7 @@ public class TutorialManager : MonoBehaviour
             DragDropManager.Instance.SetInteractionEnabled(true); // 再び有効化
 
         if (GameManager.Instance != null) GameManager.Instance.SetInputEnabled(true);
-        if (day1Manager != null) day1Manager.StartGame();
+        if (day1Manager != null) day1Manager.ShowStartGameButton();
 
         yield return null;
         gameObject.SetActive(false);

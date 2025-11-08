@@ -32,6 +32,8 @@ public class NPCController : MonoBehaviour
     public Transform bubbleAnchor;
     public Transform visualsTransform;
     public Animator animator;
+    [Tooltip("ゲームの進行状態（チュートリアル中か）を監視するために使用")]
+    public Day1Manager day1Manager;
 
     [Header("通常ルーティーン設定 (Patrol)")]
     public List<Transform> pointsOfInterest;
@@ -72,7 +74,17 @@ public class NPCController : MonoBehaviour
         rb = GetComponent<Rigidbody2D>();
         rb.gravityScale = 0;
         rb.freezeRotation = true;
-        initialPosition = transform.position; // 初期位置を記憶
+        initialPosition = transform.position;
+
+        // day1Managerがインスペクタで設定されていなければ、シーンから探す
+        if (day1Manager == null)
+        {
+            day1Manager = FindObjectOfType<Day1Manager>();
+            if (day1Manager == null)
+            {
+                Debug.LogWarning("NPCControllerがDay1Managerを見つけられません。チュートリアル中の停止が機能しない可能性があります。", this);
+            }
+        }
 
         if (fovObject != null) fovObject.SetActive(false);
         OnEnterState();
@@ -80,6 +92,35 @@ public class NPCController : MonoBehaviour
 
     void Update()
     {
+        // 1. チュートリアル中かどうかの判定
+        if (day1Manager != null && !day1Manager.isGameActive)
+        {
+            // チュートリアル中 (isGameActive == false) の場合
+
+            // 1a. 動作コルーチンを強制停止 (既に止まっている場合もある)
+            if (behaviorCoroutine != null)
+            {
+                StopCoroutine(behaviorCoroutine);
+                behaviorCoroutine = null;
+            }
+
+            // 1b. AnimatorとRigidbodyをリセットして、その場で完全に停止させる
+            animator.SetFloat("moveX", 0f);
+            animator.SetFloat("moveY", 0f);
+            rb.velocity = Vector2.zero;
+
+            // 1c. このフレームの以降の処理 (視界チェックなど) をすべてスキップ
+            return;
+        }
+
+        // 2. チュートリアルが終了した瞬間の再開処理
+        // (ゲームはアクティブになったが、動作コルーチンがまだ動いていない場合)
+        if (day1Manager != null && day1Manager.isGameActive && behaviorCoroutine == null)
+        {
+            // 停止していたNPCの動作を再開させる
+            OnEnterState();
+        }
+
         CheckFieldOfView();
         HandleTriggers();
         UpdateRigidbodyVelocity(); // Rigidbodyの速度更新をまとめる

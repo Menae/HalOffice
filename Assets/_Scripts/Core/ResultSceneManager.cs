@@ -16,6 +16,20 @@ public class ResultSceneManager : MonoBehaviour
         public TextAsset resultInkFile;
     }
 
+    [Header("デバッグ設定")]
+    [Tooltip("trueの場合、シーンを直接再生してもダミースコアで動作します")]
+    public bool enableDebugMode = false;
+    [Tooltip("デバッグモード時に使用する仮のスコア")]
+    public int debugScore = 3;
+
+    [Header("リザルトUI設定")]
+    [Tooltip("最初に起動アニメーションを実行するUIパネル")]
+    public GameObject evaluationUIPanel;
+    [Tooltip("UIパネル起動時に発火させるアニメータートリガー名")]
+    public string bootAnimationTrigger = "BOOT";
+    [Tooltip("シーン開始後、UIパネルを起動するまでの待機時間")]
+    public float initialDelay = 1.0f;
+
     [Header("演出設定")]
     [Tooltip("スコアに応じた演出のリスト。スコアが低い順に並べてください。")]
     public List<ResultEntry> resultEntries;
@@ -38,14 +52,29 @@ public class ResultSceneManager : MonoBehaviour
 
     void Start()
     {
+        // 最初にUIパネルを非表示にしておく
+        if (evaluationUIPanel != null)
+        {
+            evaluationUIPanel.SetActive(false);
+        }
+
+        // --- 通常のゲームフロー ---
         if (GameManager.Instance != null && GameManager.Instance.shouldShowResults)
         {
             GameManager.Instance.shouldShowResults = false;
             int score = GameManager.Instance.correctPlacementCount;
             StartCoroutine(ResultSequence(score));
         }
+        // --- デバッグ用のフロー---
+        else if (Application.isEditor && enableDebugMode)
+        {
+            Debug.LogWarning($"デバッグモードでリザルトを開始します。ダミースコア: {debugScore}");
+            StartCoroutine(ResultSequence(debugScore));
+        }
+        // --- どちらにも当てはまらない場合 ---
         else
         {
+            // 元々の警告
             Debug.LogWarning("GameManager経由ではないため、リザルトをスキップします。");
         }
     }
@@ -67,6 +96,23 @@ public class ResultSceneManager : MonoBehaviour
             yield break;
         }
 
+        // 1. シーンが読み込まれたら、1秒待機
+        yield return new WaitForSeconds(initialDelay);
+
+        // 2. 評価アプリのUIパネルを有効化
+        if (evaluationUIPanel != null)
+        {
+            evaluationUIPanel.SetActive(true);
+
+            // 3. UIパネルのアニメーターを取得し "BOOT" トリガーを発火
+            Animator uiAnimator = evaluationUIPanel.GetComponent<Animator>();
+            if (uiAnimator != null && !string.IsNullOrEmpty(bootAnimationTrigger))
+            {
+                uiAnimator.SetTrigger(bootAnimationTrigger);
+            }
+        }
+
+        // 4. あとは今まで通り (天秤アニメーションの前の待機)
         yield return new WaitForSeconds(delayBetweenAnimations);
 
         if (scaleAnimator != null && !string.IsNullOrEmpty(entryToPlay.scaleAnimationTrigger))

@@ -257,6 +257,8 @@ public class DesktopManager : MonoBehaviour
 
         isFading = false;
 
+        yield return new WaitForSeconds(1f); // 少し待機
+
         // PlayerPrefsのチェックを削除し、常にチュートリアルを実行するように変更
         if (ChatController.Instance != null && tutorialChatInk != null)
         {

@@ -1,0 +1,1 @@
+﻿{"inkVersion":21,"root":[["#","^move_char:Boss:BossTalkPosition","/#","^...","\n","^BOSS: 来たか、Player。","\n","^PLAYER: お待ちしていました。","\n","^BOSS: 準備は整った。すぐに来い。","\n","#","^wait:1.0","/#","#","^move_char:Boss:BossStart","/#","^BOSS: 「...遅れるなよ。」","\n",["done",{"#f":5,"#n":"g-0"}],null],"done",{"#f":1}],"listDefs":{}}

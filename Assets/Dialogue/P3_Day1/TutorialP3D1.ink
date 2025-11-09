@@ -117,6 +117,7 @@ AI の違和感は可視化されている、よく⾒ておくように 。
 == confirm_repeat ==
 # prefab: left
 # speaker: Boss
+#skip_target
 もう一度説明してほしいか？
 * [はい]
     # prefab: left
@@ -138,7 +139,7 @@ AI の違和感は可視化されている、よく⾒ておくように 。
 
 # prefab: left
 # speaker: Boss
+#tutorial_end
 ちなみにこのチャットは画面下部の「チャット」を押せばいつでも見返せるぞ、健闘を祈る！
 
-#tutorial_end
 -> END

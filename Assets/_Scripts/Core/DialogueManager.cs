@@ -30,6 +30,8 @@ public class DialogueManager : MonoBehaviour
 
     private Story currentStory;
     public bool dialogueIsPlaying { get; private set; }
+    public static event Action<List<string>> OnTagsProcessed;
+    public bool IsEffectPlaying { get; private set; }
 
     public static event Action OnDialogueStart;
     public static event Action OnDialogueEnd;
@@ -94,6 +96,9 @@ public class DialogueManager : MonoBehaviour
         GameManager.Instance.SetInputEnabled(true);
 
         dialogueIsPlaying = false;
+
+        IsEffectPlaying = false; // エフェクトフラグもリセット
+
         dialogueText.text = "";
 
         if (typingAudioSource != null && typingAudioSource.isPlaying)
@@ -156,6 +161,12 @@ public class DialogueManager : MonoBehaviour
         //ダイアログが再生中でなければ何もしない
         if (!dialogueIsPlaying) return;
 
+        // エフェクト再生中（キャラ移動や待機中）は、クリック進行を無視する
+        if (IsEffectPlaying)
+        {
+            return;
+        }
+
         //テキストがまだ表示中の場合 (タイプライター効果の途中)
         if (displayLineCoroutine != null)
         {
@@ -208,26 +219,10 @@ public class DialogueManager : MonoBehaviour
 
     private void HandleTags(List<string> currentTags)
     {
-        foreach (string tag in currentTags)
+        // タグがあれば、購読者（StartupSequenceManager）に通知する
+        if (currentTags.Count > 0)
         {
-            string[] splitTag = tag.Split(':');
-            if (splitTag.Length != 2)
-            {
-                Debug.LogError("Tag could not be parsed: " + tag);
-                continue;
-            }
-
-            string tagKey = splitTag[0].Trim();
-            string tagValue = splitTag[1].Trim();
-
-            switch (tagKey)
-            {
-                case "speaker":
-                    break;
-                default:
-                    Debug.LogWarning("Unhandled tag: " + tag);
-                    break;
-            }
+            OnTagsProcessed?.Invoke(currentTags);
         }
     }
 
@@ -268,6 +263,12 @@ public class DialogueManager : MonoBehaviour
 
     public void MakeChoice(int choiceIndex)
     {
+        // エフェクト再生中は選択肢を決定できない
+        if (IsEffectPlaying)
+        {
+            return;
+        }
+
         if (choiceIndex < 0 || choiceIndex >= currentStory.currentChoices.Count)
         {
             Debug.LogError($"Invalid choice index: {choiceIndex}");
@@ -286,5 +287,14 @@ public class DialogueManager : MonoBehaviour
 
         currentStory.ChooseChoiceIndex(choiceIndex);
         ContinueStory();
+    }
+
+    /// <summary>
+    /// 外部（StartupSequenceManagerなど）から、エフェクト再生中フラグを設定する
+    /// （trueにすると、AdvanceDialogueのクリック進行が一時停止する）
+    /// </summary>
+    public void SetIsPlayingEffect(bool isPlaying)
+    {
+        IsEffectPlaying = isPlaying;
     }
 }

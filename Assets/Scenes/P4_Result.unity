@@ -5199,8 +5199,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c83ffac5c6f061c4b95da6756715c265, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  enableDebugMode: 0
-  debugScore: 3
+  enableDebugMode: 1
+  debugScore: 0
   evaluationUIPanel: {fileID: 121705566}
   bootAnimationTrigger: BOOT
   initialDelay: 1

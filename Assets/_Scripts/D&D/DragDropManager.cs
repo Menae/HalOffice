@@ -186,7 +186,7 @@ public class DragDropManager : MonoBehaviour
         }
         else
         {
-            Debug.LogError("条件失敗：ドラッグを開始できませんでした。");
+            Debug.LogWarning("条件失敗：ドラッグを開始できませんでした。");
         }
     }
 

@@ -16,6 +16,15 @@ public class ItemData : ScriptableObject
     [Tooltip("ゲーム内に配置される際のプレハブ")]
     public GameObject itemPrefab;
 
+    [Tooltip("ドラッグ中、配置可能な場所に来た時に表示するハイライト画像")]
+    public Sprite highlightSprite;
+
+    [Tooltip("ハイライト画像の表示位置の微調整（X, Y）。中心がズレている場合に使用")]
+    public Vector2 highlightOffset = Vector2.zero;
+
+    [Tooltip("ハイライト画像の拡大率（X, Y）。(1, 1)が等倍")]
+    public Vector2 highlightScale = Vector2.one;
+
     [Tooltip("アイテムをクリックした際に表示される説明文のInkファイル")]
     public TextAsset descriptionInk;
 

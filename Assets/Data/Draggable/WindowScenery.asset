@@ -13,7 +13,11 @@ MonoBehaviour:
   m_Name: WindowScenery
   m_EditorClassIdentifier: 
   itemName: WindowScenery
-  itemType: 0
+  itemType: 2
   itemPrefab: {fileID: 7874761534678376013, guid: a1439ed6201a7174da62c1f846754f9a, type: 3}
+  highlightSprite: {fileID: 21300000, guid: f252f5eded2ae4364af9e1ec33da6e64, type: 3}
+  highlightOffset: {x: -5, y: 10}
+  highlightScale: {x: 1.2, y: 1.5}
   descriptionInk: {fileID: 4900000, guid: e190a12ae70a9d345b656fa581e0eb49, type: 3}
   missingReactionInk: {fileID: 4900000, guid: 73cb4ca1c8b1c4444a421b85fa4e6152, type: 3}
+  placedReactionInk: {fileID: 0}

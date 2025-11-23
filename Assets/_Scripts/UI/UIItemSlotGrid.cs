@@ -122,10 +122,20 @@ public class UIItemSlotGrid : MonoBehaviour
 
     void OnValidate()
     {
-        EnsurePadding();
-        ResolveReferences();
-        EnsureGrid();
-        ApplyLayoutOnly();
+        // OnValidate内での即時レイアウト変更はUnityの禁止事項のため、
+        // エディタの次の描画タイミングまで処理を遅延させます。
+#if UNITY_EDITOR
+        UnityEditor.EditorApplication.delayCall += () =>
+        {
+            // 遅延実行される頃にはオブジェクトが削除されている可能性への対策
+            if (this == null || gameObject == null) return;
+
+            EnsurePadding();
+            ResolveReferences();
+            EnsureGrid();
+            ApplyLayoutOnly();
+        };
+#endif
     }
 
     // -----------------------------
@@ -137,7 +147,6 @@ public class UIItemSlotGrid : MonoBehaviour
         ResolveReferences();
         EnsurePadding();
         EnsureGrid();
-        ApplyLayoutOnly();
 
         if (content == null)
         {
@@ -150,6 +159,9 @@ public class UIItemSlotGrid : MonoBehaviour
             return;
         }
 
+        // ---------------------------------------------------------
+        // 1. 強制クリアモードの場合（手動設定も消えます）
+        // ---------------------------------------------------------
         if (clearBeforeBuild)
         {
             for (int i = content.childCount - 1; i >= 0; --i)
@@ -164,69 +176,98 @@ public class UIItemSlotGrid : MonoBehaviour
             }
         }
 
-        for (int i = 0; i < totalSlots; i++)
+        // ---------------------------------------------------------
+        // 2. 差分更新ロジック（既存を守りつつ増減）
+        // ---------------------------------------------------------
+        int currentCount = content.childCount;
+        int targetCount = totalSlots;
+
+        // A. 足りない場合：不足分だけ追加生成
+        if (currentCount < targetCount)
         {
-            var go = Instantiate(slotPrefabRoot, content);
-
-            // 万一プレハブが非アクティブだった場合の保険
-            if (!go.activeSelf) go.SetActive(true);
-
-            var rt = go.transform as RectTransform;
-            if (rt != null)
+            int addCount = targetCount - currentCount;
+            for (int i = 0; i < addCount; i++)
             {
-                rt.localScale = Vector3.one;
-                rt.anchoredPosition3D = Vector3.zero;
-            }
+                var go = Instantiate(slotPrefabRoot, content);
 
-            // UIDraggable 用のCanvasGroup自動付与（既存）
-            if (autoAddCanvasGroupForDrag)
-            {
-                var draggable = go.GetComponentInChildren<UIDraggable>(true);
-                if (draggable != null && draggable.GetComponent<CanvasGroup>() == null)
+                // 万一プレハブが非アクティブだった場合の保険
+                if (!go.activeSelf) go.SetActive(true);
+
+                var rt = go.transform as RectTransform;
+                if (rt != null)
                 {
-                    draggable.gameObject.AddComponent<CanvasGroup>();
+                    rt.localScale = Vector3.one;
+                    rt.anchoredPosition3D = Vector3.zero;
                 }
-            }
 
-            // —— 可視化の保険：子階層に描画可能な Graphic が無い or 全て Sprite=None なら仮背景を差す ——
-            if (debugEnsureVisible)
-            {
-                bool hasRenderable = false;
-                var graphics = go.GetComponentsInChildren<UnityEngine.UI.Graphic>(true);
-                foreach (var g in graphics)
+                // UIDraggable 用のCanvasGroup自動付与（既存）
+                if (autoAddCanvasGroupForDrag)
                 {
-                    // Image なら Sprite が入っているか、Text系ならフォント・テキストで表示される
-                    if (g is UnityEngine.UI.Image img)
+                    var draggable = go.GetComponentInChildren<UIDraggable>(true);
+                    if (draggable != null && draggable.GetComponent<CanvasGroup>() == null)
                     {
-                        if (img.sprite != null && img.color.a > 0f && img.enabled) { hasRenderable = true; break; }
-                    }
-                    else if (g.color.a > 0f && g.enabled)
-                    {
-                        hasRenderable = true; break;
+                        draggable.gameObject.AddComponent<CanvasGroup>();
                     }
                 }
 
-                if (!hasRenderable)
+                // —— 可視化の保険（デバッグ表示用） ——
+                if (debugEnsureVisible)
                 {
-                    // 仮のマゼンタ背景をフルサイズで貼る（これが見えれば A が原因）
-                    var dbgGO = new GameObject("_DebugBG", typeof(UnityEngine.UI.Image));
-                    dbgGO.transform.SetParent(go.transform, false);
-                    var dbgImg = dbgGO.GetComponent<UnityEngine.UI.Image>();
-                    dbgImg.raycastTarget = false;
-                    // Built-in スプライトを安全に取得
-                    dbgImg.sprite = Resources.GetBuiltinResource<Sprite>("UI/Skin/UISprite.psd");
-                    dbgImg.color = new Color(1f, 0f, 1f, 0.4f);
+                    bool hasRenderable = false;
+                    var graphics = go.GetComponentsInChildren<UnityEngine.UI.Graphic>(true);
+                    foreach (var g in graphics)
+                    {
+                        if (g is UnityEngine.UI.Image img)
+                        {
+                            if (img.sprite != null && img.color.a > 0f && img.enabled) { hasRenderable = true; break; }
+                        }
+                        else if (g.color.a > 0f && g.enabled)
+                        {
+                            hasRenderable = true; break;
+                        }
+                    }
 
-                    var dbgRT = dbgGO.GetComponent<RectTransform>();
-                    dbgRT.anchorMin = Vector2.zero;
-                    dbgRT.anchorMax = Vector2.one;
-                    dbgRT.offsetMin = Vector2.zero;
-                    dbgRT.offsetMax = Vector2.zero;
+                    if (!hasRenderable)
+                    {
+                        var dbgGO = new GameObject("_DebugBG", typeof(UnityEngine.UI.Image));
+                        dbgGO.transform.SetParent(go.transform, false);
+                        var dbgImg = dbgGO.GetComponent<UnityEngine.UI.Image>();
+                        dbgImg.raycastTarget = false;
+#if UNITY_EDITOR
+                        dbgImg.sprite = UnityEditor.AssetDatabase.GetBuiltinExtraResource<Sprite>("UI/Skin/UISprite.psd");
+#endif
+                        dbgImg.color = new Color(1f, 0f, 1f, 0.4f);
+
+                        var dbgRT = dbgGO.GetComponent<RectTransform>();
+                        dbgRT.anchorMin = Vector2.zero;
+                        dbgRT.anchorMax = Vector2.one;
+                        dbgRT.offsetMin = Vector2.zero;
+                        dbgRT.offsetMax = Vector2.zero;
+                    }
                 }
             }
         }
+        // B. 多すぎる場合：末尾から削除
+        else if (currentCount > targetCount)
+        {
+            int removeCount = currentCount - targetCount;
+            for (int i = 0; i < removeCount; i++)
+            {
+                // 末尾（最新に追加されたもの）から削除していくことで、
+                // 前の方にある（手動設定された可能性が高い）スロットを守る
+                var child = content.GetChild(content.childCount - 1);
+#if UNITY_EDITOR
+                if (!Application.isPlaying) DestroyImmediate(child.gameObject);
+                else Destroy(child.gameObject);
+#else
+                Destroy(child.gameObject);
+#endif
+            }
+        }
 
-
+        // ---------------------------------------------------------
+        // 3. スクロール設定とレイアウト更新
+        // ---------------------------------------------------------
         if (scrollRect != null)
         {
             scrollRect.vertical = true;
@@ -238,9 +279,10 @@ public class UIItemSlotGrid : MonoBehaviour
 
         // 直後は Viewport サイズが未確定なことがあるので、次フレームで再レイアウト
         if (Application.isPlaying) StartDeferredLayout();
+        else ApplyLayoutOnly(); // エディタ上なら即時反映
 
         builtOnceAtRuntime = true;
-        if (debugLogs) Debug.Log($"[UIItemSlotGrid] Generated {totalSlots} slots under {content.name}.", this);
+        if (debugLogs) Debug.Log($"[UIItemSlotGrid] Updated slots. Current Total: {content.childCount}", this);
     }
 
     // Optional: push item dataset into slots

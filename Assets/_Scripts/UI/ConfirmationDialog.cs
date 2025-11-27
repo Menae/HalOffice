@@ -14,6 +14,7 @@ public class ConfirmationDialog : MonoBehaviour
     public Button yesButton;
     [Tooltip("「いいえ」ボタン")]
     public Button noButton;
+    public Button closeButton;
 
     // 「はい」が押された時に実行する処理を記憶する変数
     private UnityAction onConfirmAction;
@@ -23,6 +24,7 @@ public class ConfirmationDialog : MonoBehaviour
         // ボタンが押された時の処理を登録
         yesButton.onClick.AddListener(OnConfirm);
         noButton.onClick.AddListener(OnCancel);
+        closeButton.onClick.AddListener(OnCancel);
         // 最初は非表示にしておく
         dialogPanel.SetActive(false);
     }

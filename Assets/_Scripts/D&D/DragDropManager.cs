@@ -9,6 +9,11 @@ public class DragDropManager : MonoBehaviour
     public static event Action OnDragStarted;
     public static event Action OnDragEnded;
 
+    // アイテムがスロットに正常に配置された時に呼ばれるイベント
+    public event Action OnItemPlaced;
+    // アイテムがゴミ箱に捨てられた時に呼ばれるイベント
+    public event Action OnItemTrashed;
+
     /// <summary>
     /// 現在アクティブなCursorControllerを保持する静的プロパティ
     /// </summary>
@@ -42,7 +47,12 @@ public class DragDropManager : MonoBehaviour
     public LayerMask draggableLayer;
     public ScreenToWorldConverter screenToWorldConverter;
     public EventSystem eventSystem;
-    public Image dragProxyImage;
+    [Tooltip("ドラッグ操作のルートオブジェクト（移動させる親）")]
+    public RectTransform dragProxyRoot;
+    [Tooltip("アイテム本体の画像を表示するImage")]
+    public Image dragProxyItemImage;
+    [Tooltip("ハイライト（後光）を表示するImage")]
+    public Image dragProxyHighlightImage;
     public Canvas parentCanvas;
     public Camera mainCamera;
     public Camera uiCamera;
@@ -186,12 +196,60 @@ public class DragDropManager : MonoBehaviour
         }
         else
         {
-            Debug.LogError("条件失敗：ドラッグを開始できませんでした。");
+            Debug.LogWarning("条件失敗：ドラッグを開始できませんでした。");
         }
     }
 
     public void HandleDrag(PointerEventData eventData)
     {
+        // アイテムを持っていないなら何もしない
+        if (currentState != DdState.HoldingItem) return;
+
+        // 現在ドラッグしているアイテムのデータを取得（UI由来かワールド由来かで分岐）
+        ItemData currentItemData = null;
+        if (currentDraggedObject != null)
+        {
+            currentItemData = currentDraggedObject.itemData;
+        }
+        else if (currentUIDraggable != null)
+        {
+            currentItemData = currentUIDraggable.itemData;
+        }
+
+        // データが取得できない場合は処理中断
+        if (currentItemData == null) return;
+
+        // --- 判定ロジック ---
+
+        bool showHighlight = false;
+
+        // カーソル下のドロップゾーンを探す（既存メソッドを活用）
+        DropZone zoneUnderCursor = FindDropZoneUnderCursor();
+
+        // ゾーンが見つかり、かつそれが「ゲームスロット」である場合
+        if (zoneUnderCursor != null && zoneUnderCursor.zoneType == DropZone.ZoneType.GameSlot)
+        {
+            ObjectSlot slot = zoneUnderCursor.associatedSlot;
+
+            // 1. スロットが存在する
+            // 2. スロットが空である（占有されていない）
+            // 3. そのスロットがこのアイテムタイプを受け入れ可能である
+            if (slot != null && !slot.IsOccupied() && slot.CanAccept(currentItemData.itemType))
+            {
+                // 全ての条件を満たした場合のみ、ハイライトを表示
+                showHighlight = true;
+            }
+        }
+        // ※必要であればここに「ゴミ箱(TrashCan)」の上に来た時の処理も追加可能です
+
+        // --- ビジュアルへの反映 ---
+
+        if (dragProxyHighlightImage != null)
+        {
+            // 状態が変わった時だけSetActiveを呼ぶと少し負荷が軽いですが、
+            // UnityのSetActiveは内部でチェックしているので毎フレーム呼んでも問題ありません。
+            dragProxyHighlightImage.gameObject.SetActive(showHighlight);
+        }
     }
 
     public void HandleEndDrag(PointerEventData eventData)
@@ -207,6 +265,7 @@ public class DragDropManager : MonoBehaviour
         currentState = DdState.HoldingItem;
         currentDraggedObject = draggable;
         originalSlot = draggable.currentSlot;
+
         if (originalSlot != null)
         {
             originalSlot.currentObject = null;
@@ -214,28 +273,33 @@ public class DragDropManager : MonoBehaviour
         }
 
         SpriteRenderer sr = draggable.GetComponent<SpriteRenderer>();
-        SetupProxy(sr.sprite);
 
+        // ItemDataの取得
+        ItemData data = draggable.itemData;
+        Sprite highlightSprite = (data != null) ? data.highlightSprite : null;
 
-        // SpriteRendererのワールド空間での境界を取得
+        // オフセットの取得
+        Vector2 offset = (data != null) ? data.highlightOffset : Vector2.zero;
+
+        // ▼スケールの取得（Vector2）
+        Vector2 scale = (data != null) ? data.highlightScale : Vector2.one;
+
+        // SetupProxyへ渡す
+        SetupProxy(sr.sprite, highlightSprite, offset, scale);
+
+        // サイズ計算処理
         Bounds worldBounds = sr.bounds;
-
-        // 境界の最小と最大の角をスクリーン座標に変換
         Vector2 minScreenPoint = mainCamera.WorldToScreenPoint(worldBounds.min);
         Vector2 maxScreenPoint = mainCamera.WorldToScreenPoint(worldBounds.max);
-
-        // スクリーン座標での差分から、ピクセル単位での大きさを計算
         Vector2 pixelSize = maxScreenPoint - minScreenPoint;
 
-        // 計算した大きさを代理UIのsizeDeltaに設定
-        dragProxyImage.rectTransform.sizeDelta = new Vector2(Mathf.Abs(pixelSize.x), Mathf.Abs(pixelSize.y));
-        dragProxyImage.rectTransform.localScale = Vector3.one;
-
+        dragProxyRoot.sizeDelta = new Vector2(Mathf.Abs(pixelSize.x), Mathf.Abs(pixelSize.y));
+        dragProxyRoot.localScale = Vector3.one;
 
         if (ActiveCursor != null)
         {
-            dragProxyImage.transform.SetParent(ActiveCursor.cursorImage.transform, true);
-            dragProxyImage.rectTransform.anchoredPosition = Vector2.zero;
+            dragProxyRoot.SetParent(ActiveCursor.cursorImage.transform, true);
+            dragProxyRoot.anchoredPosition = Vector2.zero;
         }
 
         currentDraggedObject.gameObject.SetActive(false);
@@ -248,61 +312,110 @@ public class DragDropManager : MonoBehaviour
         currentUIDraggable = uiDraggable;
 
         Image sourceImage = uiDraggable.GetComponent<Image>();
-        SetupProxy(sourceImage.sprite);
-        dragProxyImage.rectTransform.sizeDelta = sourceImage.rectTransform.sizeDelta;
-        dragProxyImage.rectTransform.localScale = Vector3.one * uiDraggable.dragScale;
+
+        // ItemDataの取得
+        ItemData data = uiDraggable.itemData;
+        Sprite highlightSprite = (data != null) ? data.highlightSprite : null;
+
+        // オフセットの取得
+        Vector2 offset = (data != null) ? data.highlightOffset : Vector2.zero;
+
+        // スケールの取得（Vector2） 
+        Vector2 scale = (data != null) ? data.highlightScale : Vector2.one;
+
+        // SetupProxyへ渡す
+        SetupProxy(sourceImage.sprite, highlightSprite, offset, scale);
+
+        dragProxyRoot.sizeDelta = sourceImage.rectTransform.sizeDelta;
+        dragProxyRoot.localScale = Vector3.one * uiDraggable.dragScale;
 
         if (ActiveCursor != null)
         {
-            dragProxyImage.transform.SetParent(ActiveCursor.cursorImage.transform, true);
-            dragProxyImage.rectTransform.anchoredPosition = Vector2.zero;
+            dragProxyRoot.SetParent(ActiveCursor.cursorImage.transform, true);
+            dragProxyRoot.anchoredPosition = Vector2.zero;
         }
 
         OnDragStarted?.Invoke();
     }
 
-    private void SetupProxy(Sprite sprite)
+    /// <summary>
+    /// プロキシ（ドラッグ中の見た目）を初期化する
+    /// </summary>
+    /// <param name="mainSprite">アイテム本体の画像</param>
+    /// <param name="highlightSprite">ハイライト用画像</param>
+    /// <param name="offset">ハイライトの位置ズレ補正</param>
+    /// <param name="scale">ハイライトの拡大率(X, Y)</param>
+    private void SetupProxy(Sprite mainSprite, Sprite highlightSprite, Vector2 offset, Vector2 scale)
     {
-        dragProxyImage.sprite = sprite;
-        dragProxyImage.gameObject.SetActive(true);
+        // 1. Rootの表示
+        dragProxyRoot.gameObject.SetActive(true);
 
-        // dragOffsetの計算は各StartDrag...メソッドに移動するため、ここでは削除
+        // レイキャストがプロキシに遮られないようにCanvasGroupで制御
+        CanvasGroup rootGroup = dragProxyRoot.GetComponent<CanvasGroup>();
+        if (rootGroup == null) rootGroup = dragProxyRoot.gameObject.AddComponent<CanvasGroup>();
+        rootGroup.blocksRaycasts = false;
+        rootGroup.interactable = false;
 
-        dragProxyImage.raycastTarget = false;
+        // 2. アイテム画像の設定
+        if (dragProxyItemImage != null)
+        {
+            dragProxyItemImage.sprite = mainSprite;
+            dragProxyItemImage.raycastTarget = false;
+            dragProxyItemImage.gameObject.SetActive(true);
+
+            // アイテム画像は常に中心（0,0）
+            dragProxyItemImage.rectTransform.anchoredPosition = Vector2.zero;
+        }
+
+        // 3. ハイライト画像の設定
+        if (dragProxyHighlightImage != null)
+        {
+            dragProxyHighlightImage.sprite = highlightSprite;
+            dragProxyHighlightImage.raycastTarget = false;
+
+            // ▼▼▼ 位置（Offset）とサイズ（Scale X,Y）を適用 ▼▼▼
+            dragProxyHighlightImage.rectTransform.anchoredPosition = offset;
+            dragProxyHighlightImage.rectTransform.localScale = new Vector3(scale.x, scale.y, 1f);
+
+            // 初期状態は非表示
+            dragProxyHighlightImage.gameObject.SetActive(false);
+        }
     }
 
-private void HandleDrop(PointerEventData eventData)
-{
-    OnDragEnded?.Invoke();
-
-    // --- 代理イメージの後処理 ---
-    dragProxyImage.transform.SetParent(parentCanvas.transform, true);
-    dragProxyImage.gameObject.SetActive(false);
-    if (InkDialogueManager.Instance != null) { InkDialogueManager.Instance.CloseDialogue(); }
-
-    // --- ドロップ先の判定 ---
-    DropZone targetZone = FindDropZoneUnderCursor();
-
-    // --- オブジェクトごとのドロップ処理 ---
-    if (currentDraggedObject != null)
+    private void HandleDrop(PointerEventData eventData)
     {
-        HandleGameWorldDrop(targetZone);
-        currentDraggedObject.SetHighlight(false); // ★ハイライトを消す
-    }
-    else if (currentUIDraggable != null)
-    {
-        HandleUIDrop(targetZone);
-        currentUIDraggable.SetHighlight(false); // ★ハイライトを消す
-    }
+        OnDragEnded?.Invoke();
 
-    // --- 状態のリセット ---
-    currentState = DdState.Idle;
-    selectedObject = null;
-    selectedUIDraggable = null;
-    currentDraggedObject = null;
-    currentUIDraggable = null;
-    originalSlot = null;
-}
+        // --- 代理イメージの後処理 ---
+        // Rootを親キャンバスに戻して非表示にする
+        dragProxyRoot.SetParent(parentCanvas.transform, true);
+        dragProxyRoot.gameObject.SetActive(false);
+
+        if (InkDialogueManager.Instance != null) { InkDialogueManager.Instance.CloseDialogue(); }
+
+        // --- ドロップ先の判定 ---
+        DropZone targetZone = FindDropZoneUnderCursor();
+
+        // --- オブジェクトごとのドロップ処理 ---
+        if (currentDraggedObject != null)
+        {
+            HandleGameWorldDrop(targetZone);
+            currentDraggedObject.SetHighlight(false);
+        }
+        else if (currentUIDraggable != null)
+        {
+            HandleUIDrop(targetZone);
+            currentUIDraggable.SetHighlight(false);
+        }
+
+        // --- 状態のリセット ---
+        currentState = DdState.Idle;
+        selectedObject = null;
+        selectedUIDraggable = null;
+        currentDraggedObject = null;
+        currentUIDraggable = null;
+        originalSlot = null;
+    }
 
     private void HandleGameWorldDrop(DropZone targetZone)
     {
@@ -316,6 +429,9 @@ private void HandleDrop(PointerEventData eventData)
             ObjectSlot removedFromSlot = originalSlot;
             Destroy(currentDraggedObject.gameObject);
             GameEventManager.InvokeObjectRemoved(removedFromSlot);
+
+            // ゴミ箱イベント発火
+            OnItemTrashed?.Invoke();
         }
         else
         {
@@ -348,6 +464,9 @@ private void HandleDrop(PointerEventData eventData)
                 }
 
                 PlaceInNewSlot(slot);
+
+                // 配置成功イベント発火
+                OnItemPlaced?.Invoke();
             }
             else
             {
@@ -358,16 +477,48 @@ private void HandleDrop(PointerEventData eventData)
 
     private void HandleUIDrop(DropZone targetZone)
     {
-        if (targetZone == null || targetZone.zoneType != DropZone.ZoneType.GameSlot)
+        if (targetZone == null) return;
+
+        // ---------------------------------------------------------
+        // A. チュートリアルモード（練習）の判定
+        // ---------------------------------------------------------
+        if (targetZone.isTutorialZone)
         {
+            // チュートリアル用のゴミ箱だった場合
+            if (targetZone.zoneType == DropZone.ZoneType.TrashCan)
+            {
+                if (audioSource != null && trashSound != null)
+                    audioSource.PlayOneShot(trashSound, trashVolume);
+
+                // UI上のダミーアイテムを使用済みにする（非表示にする等）
+                currentUIDraggable.MarkAsUsed(); // または gameObject.SetActive(false) でも可
+
+                // 成功イベント発火
+                OnItemTrashed?.Invoke();
+            }
+            // チュートリアル用のスロットだった場合
+            else if (targetZone.zoneType == DropZone.ZoneType.GameSlot)
+            {
+                if (audioSource != null && correctPlacementSound != null)
+                    audioSource.PlayOneShot(correctPlacementSound, correctPlacementVolume);
+
+                currentUIDraggable.MarkAsUsed();
+
+                // 成功イベント発火
+                OnItemPlaced?.Invoke();
+            }
+
+            // チュートリアルの場合はここで終了（実体化はしない）
             return;
         }
 
+        // ---------------------------------------------------------
+        // B. 本番モード（従来通りの処理）
+        // ---------------------------------------------------------
+        if (targetZone.zoneType != DropZone.ZoneType.GameSlot) return;
+
         ObjectSlot slot = targetZone.associatedSlot;
-        if (slot == null || slot.IsOccupied())
-        {
-            return;
-        }
+        if (slot == null || slot.IsOccupied()) return;
 
         if (currentUIDraggable.itemData == null || currentUIDraggable.itemData.itemPrefab == null)
         {
@@ -376,25 +527,18 @@ private void HandleDrop(PointerEventData eventData)
         }
 
         // 正解・不正解を判定してSEを再生
-        // このスロットの正解タイプと、置いたアイテムのタイプが一致するか？
         if (slot.correctItemType == currentUIDraggable.itemData.itemType)
         {
-            // 正解のSEを再生
             if (audioSource != null && correctPlacementSound != null)
-            {
                 audioSource.PlayOneShot(correctPlacementSound, correctPlacementVolume);
-            }
         }
         else
         {
-            // 不正解のSEを再生
             if (audioSource != null && incorrectPlacementSound != null)
-            {
                 audioSource.PlayOneShot(incorrectPlacementSound, incorrectPlacementVolume);
-            }
         }
 
-        // 全てのチェックを通過した場合のみ、アイテムを生成して配置
+        // アイテムを生成して配置
         GameObject newItem = Instantiate(
             currentUIDraggable.itemData.itemPrefab,
             slot.slotTransform.position,
@@ -408,7 +552,10 @@ private void HandleDrop(PointerEventData eventData)
             slot.currentObject = newDraggable;
             newDraggable.currentSlot = slot;
             currentUIDraggable.MarkAsUsed();
-            FindObjectOfType<ObjectSlotManager>().MarkSlotAsNewlyPlaced(slot);
+            if (FindObjectOfType<ObjectSlotManager>() != null)
+                FindObjectOfType<ObjectSlotManager>().MarkSlotAsNewlyPlaced(slot);
+
+            OnItemPlaced?.Invoke();
         }
     }
 

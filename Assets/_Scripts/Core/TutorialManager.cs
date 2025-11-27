@@ -37,10 +37,22 @@ public class TutorialManager : MonoBehaviour
     [Tooltip("Inkタグから呼び出せる動画リスト")]
     public List<TutorialVideo> tutorialVideos;
 
+    [Header("チュートリアル専用ウィンドウ")]
+    [Tooltip("ドラッグ練習用のウィンドウ（パネル）")]
+    public GameObject dragPracticeWindow;
+    [Tooltip("ドラッグ練習用のダミーアイテム（リセット用）")]
+    public UIDraggable dummyDragItem;
+    [Tooltip("ゴミ捨て練習用のウィンドウ（パネル）")]
+    public GameObject trashPracticeWindow;
+    [Tooltip("ゴミ捨て練習用のダミーアイテム（リセット用）")]
+    public UIDraggable dummyTrashItem;
+
     public bool IsPlayingEffect { get; private set; } = false;
     private bool isTutorialFinished = false;
     private bool cancelVideoLoops = false;
     private Coroutine currentEffectCoroutine = null;
+    private bool isWaitingForPlacement = false;
+    private bool isWaitingForTrash = false;
 
     private void Awake()
     {
@@ -48,8 +60,29 @@ public class TutorialManager : MonoBehaviour
         else Destroy(gameObject);
     }
 
-    private void OnEnable() => ChatController.OnTagsProcessed += HandleTags;
-    private void OnDisable() => ChatController.OnTagsProcessed -= HandleTags;
+    private void OnEnable()
+    {
+        ChatController.OnTagsProcessed += HandleTags;
+
+        // ▼▼▼ 追加 ▼▼▼
+        if (DragDropManager.Instance != null)
+        {
+            DragDropManager.Instance.OnItemPlaced += OnUserPlacedItem;
+            DragDropManager.Instance.OnItemTrashed += OnUserTrashedItem;
+        }
+    }
+
+    private void OnDisable()
+    {
+        ChatController.OnTagsProcessed -= HandleTags;
+
+        // ▼▼▼ 追加 ▼▼▼
+        if (DragDropManager.Instance != null)
+        {
+            DragDropManager.Instance.OnItemPlaced -= OnUserPlacedItem;
+            DragDropManager.Instance.OnItemTrashed -= OnUserTrashedItem;
+        }
+    }
 
     private void Start() => ResetEffects();
 
@@ -99,7 +132,6 @@ public class TutorialManager : MonoBehaviour
             switch (key)
             {
                 case "highlight":
-                    // 既に何か動いていたら止める（安全策）
                     if (currentEffectCoroutine != null) StopCoroutine(currentEffectCoroutine);
                     currentEffectCoroutine = StartCoroutine(ProcessHighlightTag(value));
                     break;
@@ -110,6 +142,13 @@ public class TutorialManager : MonoBehaviour
                     if (currentEffectCoroutine != null) StopCoroutine(currentEffectCoroutine);
                     currentEffectCoroutine = StartCoroutine(ShowTutorialVideo(value));
                     break;
+                case "wait_for_drag":
+                    StartCoroutine(PrepareInteractionWait(true, false));
+                    break;
+                case "wait_for_trash":
+                    StartCoroutine(PrepareInteractionWait(false, true));
+                    break;
+
                 case "tutorial_end":
                     StartCoroutine(FinishTutorialSequence());
                     break;
@@ -198,6 +237,90 @@ public class TutorialManager : MonoBehaviour
         gameObject.SetActive(false);
     }
 
+    // ユーザーの操作待ちを開始する
+    private IEnumerator PrepareInteractionWait(bool waitForPlacement, bool waitForTrash)
+    {
+        Debug.Log($"操作練習開始: Placement={waitForPlacement}, Trash={waitForTrash}");
+
+        IsPlayingEffect = true;
+        isWaitingForPlacement = waitForPlacement;
+        isWaitingForTrash = waitForTrash;
+
+        // 入力を許可
+        if (GameManager.Instance != null) GameManager.Instance.SetInputEnabled(true);
+        if (DragDropManager.Instance != null) DragDropManager.Instance.SetInteractionEnabled(true);
+
+        // 専用ウィンドウの表示処理
+        if (waitForPlacement)
+        {
+            if (dragPracticeWindow != null)
+            {
+                dragPracticeWindow.SetActive(true);
+                // ダミーアイテムを初期状態（使用可能）に戻す
+                if (dummyDragItem != null) ResetDummyItem(dummyDragItem);
+            }
+        }
+        else if (waitForTrash)
+        {
+            if (trashPracticeWindow != null)
+            {
+                trashPracticeWindow.SetActive(true);
+                // ダミーアイテムを初期状態に戻す
+                if (dummyTrashItem != null) ResetDummyItem(dummyTrashItem);
+            }
+        }
+
+        yield return null;
+    }
+
+    // ダミーアイテムの状態をリセットするヘルパーメソッド
+    private void ResetDummyItem(UIDraggable item)
+    {
+        item.ResetState();
+    }
+
+    // アイテム配置成功時に呼ばれる
+    private void OnUserPlacedItem()
+    {
+        if (isWaitingForPlacement)
+        {
+            Debug.Log("チュートリアル: 配置成功を確認");
+            CompleteInteractionStep();
+        }
+    }
+
+    // ゴミ捨て成功時に呼ばれる
+    private void OnUserTrashedItem()
+    {
+        if (isWaitingForTrash)
+        {
+            Debug.Log("チュートリアル: ゴミ捨て成功を確認");
+            CompleteInteractionStep();
+        }
+    }
+
+    // ステップ完了処理
+    private void CompleteInteractionStep()
+    {
+        // ウィンドウを閉じる
+        if (dragPracticeWindow != null) dragPracticeWindow.SetActive(false);
+        if (trashPracticeWindow != null) trashPracticeWindow.SetActive(false);
+
+        isWaitingForPlacement = false;
+        isWaitingForTrash = false;
+
+        // 操作を再び無効化
+        if (DragDropManager.Instance != null)
+            DragDropManager.Instance.SetInteractionEnabled(false);
+
+        IsPlayingEffect = false;
+
+        if (ChatController.Instance != null)
+        {
+            ChatController.Instance.AdvanceConversation();
+        }
+    }
+
     private void ResetEffects()
     {
         cancelVideoLoops = true;
@@ -216,6 +339,9 @@ public class TutorialManager : MonoBehaviour
                 if (v.panel != null) v.panel.SetActive(false);
             }
         }
+
+        if (dragPracticeWindow != null) dragPracticeWindow.SetActive(false);
+        if (trashPracticeWindow != null) trashPracticeWindow.SetActive(false);
     }
 
     private void ActivateHighlight(string name)

@@ -13,6 +13,9 @@ public class DropZone : MonoBehaviour
     [Tooltip("このドロップゾーンの種類を選択してください")]
     public ZoneType zoneType = ZoneType.GameSlot;
 
+    [Tooltip("チェックを入れると、チュートリアル用の「練習ゾーン」として扱います（アイテムの実体化を行いません）")]
+    public bool isTutorialZone = false;
+
     // このDropZoneがゲーム世界のObjectSlotである場合、
     // 対応するObjectSlotの情報をここに設定する
     [HideInInspector]

@@ -69,18 +69,26 @@ AI の違和感は可視化されている、よく⾒ておくように 。
 # prefab: left
 # speaker: Boss
 #reset_effects
-では具体的な操作方法についても説明する。
+では具体的な操作方法についても説明する。習うより慣れろだ、実際にやってみたまえ。
 
-#show_gif:DD
 # prefab: left
 # speaker: Boss
-オブジェクトを選んで、左クリック。設置場所までドラッグ。これで設置する。
+# wait_for_drag
+表示されたウィンドウにあるオブジェクトを掴んで、スロットまでドラッグして配置してみろ。
+// ↑ ここでプレイヤーが配置を完了するまで会話が止まります
 
- 
-#show_gif:trash
 # prefab: left
 # speaker: Boss
-部屋のものを削除する時も、同じように左クリックからのドラッグでゴミ箱まで持っていけばいい。
+悪くない手際だ。
+
+# prefab: left
+# speaker: Boss
+# wait_for_trash
+次は削除だ。不要なものは、同じようにドラッグしてゴミ箱まで持っていけばいい。やってみろ。
+
+# prefab: left
+# speaker: Boss
+うむ、完璧だ。
 
 
 #highlight:Log

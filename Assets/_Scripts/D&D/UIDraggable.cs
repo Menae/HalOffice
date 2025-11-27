@@ -69,6 +69,13 @@ public class UIDraggable : MonoBehaviour, IPointerClickHandler, IBeginDragHandle
         }
     }
 
+    public void ResetState()
+    {
+        isUsed = false;
+        GetComponent<Image>().color = Color.white;
+        if (GetComponent<Button>() != null) GetComponent<Button>().interactable = true;
+    }
+
     public void SetHighlight(bool isActive)
     {
         if (highlightGraphic != null)

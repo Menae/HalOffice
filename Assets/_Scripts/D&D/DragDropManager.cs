@@ -9,6 +9,11 @@ public class DragDropManager : MonoBehaviour
     public static event Action OnDragStarted;
     public static event Action OnDragEnded;
 
+    // アイテムがスロットに正常に配置された時に呼ばれるイベント
+    public event Action OnItemPlaced;
+    // アイテムがゴミ箱に捨てられた時に呼ばれるイベント
+    public event Action OnItemTrashed;
+
     /// <summary>
     /// 現在アクティブなCursorControllerを保持する静的プロパティ
     /// </summary>
@@ -424,6 +429,9 @@ public class DragDropManager : MonoBehaviour
             ObjectSlot removedFromSlot = originalSlot;
             Destroy(currentDraggedObject.gameObject);
             GameEventManager.InvokeObjectRemoved(removedFromSlot);
+
+            // ゴミ箱イベント発火
+            OnItemTrashed?.Invoke();
         }
         else
         {
@@ -456,6 +464,9 @@ public class DragDropManager : MonoBehaviour
                 }
 
                 PlaceInNewSlot(slot);
+
+                // 配置成功イベント発火
+                OnItemPlaced?.Invoke();
             }
             else
             {
@@ -466,16 +477,48 @@ public class DragDropManager : MonoBehaviour
 
     private void HandleUIDrop(DropZone targetZone)
     {
-        if (targetZone == null || targetZone.zoneType != DropZone.ZoneType.GameSlot)
+        if (targetZone == null) return;
+
+        // ---------------------------------------------------------
+        // A. チュートリアルモード（練習）の判定
+        // ---------------------------------------------------------
+        if (targetZone.isTutorialZone)
         {
+            // チュートリアル用のゴミ箱だった場合
+            if (targetZone.zoneType == DropZone.ZoneType.TrashCan)
+            {
+                if (audioSource != null && trashSound != null)
+                    audioSource.PlayOneShot(trashSound, trashVolume);
+
+                // UI上のダミーアイテムを使用済みにする（非表示にする等）
+                currentUIDraggable.MarkAsUsed(); // または gameObject.SetActive(false) でも可
+
+                // 成功イベント発火
+                OnItemTrashed?.Invoke();
+            }
+            // チュートリアル用のスロットだった場合
+            else if (targetZone.zoneType == DropZone.ZoneType.GameSlot)
+            {
+                if (audioSource != null && correctPlacementSound != null)
+                    audioSource.PlayOneShot(correctPlacementSound, correctPlacementVolume);
+
+                currentUIDraggable.MarkAsUsed();
+
+                // 成功イベント発火
+                OnItemPlaced?.Invoke();
+            }
+
+            // チュートリアルの場合はここで終了（実体化はしない）
             return;
         }
 
+        // ---------------------------------------------------------
+        // B. 本番モード（従来通りの処理）
+        // ---------------------------------------------------------
+        if (targetZone.zoneType != DropZone.ZoneType.GameSlot) return;
+
         ObjectSlot slot = targetZone.associatedSlot;
-        if (slot == null || slot.IsOccupied())
-        {
-            return;
-        }
+        if (slot == null || slot.IsOccupied()) return;
 
         if (currentUIDraggable.itemData == null || currentUIDraggable.itemData.itemPrefab == null)
         {
@@ -484,25 +527,18 @@ public class DragDropManager : MonoBehaviour
         }
 
         // 正解・不正解を判定してSEを再生
-        // このスロットの正解タイプと、置いたアイテムのタイプが一致するか？
         if (slot.correctItemType == currentUIDraggable.itemData.itemType)
         {
-            // 正解のSEを再生
             if (audioSource != null && correctPlacementSound != null)
-            {
                 audioSource.PlayOneShot(correctPlacementSound, correctPlacementVolume);
-            }
         }
         else
         {
-            // 不正解のSEを再生
             if (audioSource != null && incorrectPlacementSound != null)
-            {
                 audioSource.PlayOneShot(incorrectPlacementSound, incorrectPlacementVolume);
-            }
         }
 
-        // 全てのチェックを通過した場合のみ、アイテムを生成して配置
+        // アイテムを生成して配置
         GameObject newItem = Instantiate(
             currentUIDraggable.itemData.itemPrefab,
             slot.slotTransform.position,
@@ -516,7 +552,10 @@ public class DragDropManager : MonoBehaviour
             slot.currentObject = newDraggable;
             newDraggable.currentSlot = slot;
             currentUIDraggable.MarkAsUsed();
-            FindObjectOfType<ObjectSlotManager>().MarkSlotAsNewlyPlaced(slot);
+            if (FindObjectOfType<ObjectSlotManager>() != null)
+                FindObjectOfType<ObjectSlotManager>().MarkSlotAsNewlyPlaced(slot);
+
+            OnItemPlaced?.Invoke();
         }
     }
 

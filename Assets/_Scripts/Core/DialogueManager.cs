@@ -12,9 +12,25 @@ public class DialogueManager : MonoBehaviour
     [SerializeField] private float typingSpeed = 0.04f;
     [SerializeField] private TextMeshProUGUI dialogueText;
 
-    [Header("連動オブジェクト")]
-    [Tooltip("ダイアログ再生中にのみ表示するオブジェクト")]
+    [Header("UI要素")]
+    [Tooltip("ダイアログの背景画像（任意）。設定されている場合、ダイアログ表示中のみ有効化されます。")]
+    public GameObject dialogueBackground;
+
+    [Header("連動オブジェクト (カーソル)")]
+    [Tooltip("クリック待ちの時に表示するカーソルオブジェクト")]
     public GameObject objectToActivateDuringDialogue;
+
+    [Header("カーソルアニメーション設定")]
+    [Tooltip("カーソルが上下に動く幅")]
+    [SerializeField] private float cursorMoveRange = 10f;
+    [Tooltip("カーソルが動く周期の速さ")]
+    [SerializeField] private float cursorMoveSpeed = 5f;
+    [Tooltip("【レトロ風】動きを更新する間隔(秒)。0.1〜0.2くらいが昔のゲームっぽくなります。0にすると滑らかになります。")]
+    [SerializeField] private float retroStepInterval = 0.15f;
+
+    private RectTransform cursorRect;
+    private Vector2 cursorOriginalPos;
+    private float lastCursorUpdateTime; // アニメーション更新用タイマー
 
     private Coroutine displayLineCoroutine;
     private bool canContinueToNextLine = false;
@@ -35,11 +51,10 @@ public class DialogueManager : MonoBehaviour
 
     public static event Action OnDialogueStart;
     public static event Action OnDialogueEnd;
-    //どの会話ファイルが終了したかを通知するイベント
     public static event Action<TextAsset> OnDialogueFinished;
 
     private static DialogueManager instance;
-    private TextAsset currentPlayingInk; //現在再生中のInkファイルを覚えておく
+    private TextAsset currentPlayingInk;
 
     private void Awake()
     {
@@ -59,6 +74,22 @@ public class DialogueManager : MonoBehaviour
     {
         dialogueIsPlaying = false;
 
+        if (dialogueBackground != null)
+        {
+            dialogueBackground.SetActive(false);
+        }
+
+        // カーソルオブジェクトの初期化
+        if (objectToActivateDuringDialogue != null)
+        {
+            cursorRect = objectToActivateDuringDialogue.GetComponent<RectTransform>();
+            if (cursorRect != null)
+            {
+                cursorOriginalPos = cursorRect.anchoredPosition;
+            }
+            objectToActivateDuringDialogue.SetActive(false); // 最初は非表示
+        }
+
         choicesText = new TextMeshProUGUI[choices.Length];
         for (int i = 0; i < choices.Length; i++)
         {
@@ -66,17 +97,39 @@ public class DialogueManager : MonoBehaviour
         }
     }
 
+    private void Update()
+    {
+        // カーソルが有効な場合、レトロ風に上下アニメーションさせる
+        if (dialogueIsPlaying && objectToActivateDuringDialogue != null && objectToActivateDuringDialogue.activeSelf)
+        {
+            // 設定した間隔（retroStepInterval）が経過した時だけ位置を更新する
+            if (Time.time - lastCursorUpdateTime > retroStepInterval)
+            {
+                lastCursorUpdateTime = Time.time; // タイマー更新
+
+                if (cursorRect != null)
+                {
+                    // Sin波を計算
+                    float rawSin = Mathf.Sin(Time.time * cursorMoveSpeed);
+
+                    // 値を丸めて整数（ピクセル単位）にする
+                    float yOffset = Mathf.Round(rawSin * cursorMoveRange);
+
+                    cursorRect.anchoredPosition = cursorOriginalPos + new Vector2(0, yOffset);
+                }
+            }
+        }
+    }
+
     public void EnterDialogueMode(TextAsset inkJSON)
     {
-        currentPlayingInk = inkJSON; //再生するファイルを覚えておく
-
-        //GameManagerに入力停止を命令
+        currentPlayingInk = inkJSON;
         GameManager.Instance.SetInputEnabled(false);
 
-        if (objectToActivateDuringDialogue != null)
-        {
-            objectToActivateDuringDialogue.SetActive(true);
-        }
+        // ここではまだカーソルを表示しない (テキスト表示完了を待つ)
+        UpdateCursorState();
+
+        SetDialogueBackgroundActive(true);
 
         currentStory = new Story(inkJSON.text);
         dialogueIsPlaying = true;
@@ -84,20 +137,15 @@ public class DialogueManager : MonoBehaviour
         StartCoroutine(StartDialogue());
     }
 
-
     private IEnumerator ExitDialogueMode()
     {
         yield return new WaitForSeconds(0.2f);
 
-        //どの会話が終了したかをその会話ファイルと共に通知する
         OnDialogueFinished?.Invoke(currentPlayingInk);
-
-        //GameManagerに入力再開を命令
         GameManager.Instance.SetInputEnabled(true);
 
         dialogueIsPlaying = false;
-
-        IsEffectPlaying = false; // エフェクトフラグもリセット
+        IsEffectPlaying = false;
 
         dialogueText.text = "";
 
@@ -106,11 +154,13 @@ public class DialogueManager : MonoBehaviour
             typingAudioSource.Stop();
         }
 
-        // オブジェクトを非表示化
+        // カーソル非表示
         if (objectToActivateDuringDialogue != null)
         {
             objectToActivateDuringDialogue.SetActive(false);
         }
+
+        SetDialogueBackgroundActive(false);
 
         Debug.Log("Dialogue ended. Enabling player controls.");
         OnDialogueEnd?.Invoke();
@@ -126,28 +176,31 @@ public class DialogueManager : MonoBehaviour
     {
         if (currentStory.canContinue)
         {
-            //以前のテキスト表示コルーチンが残っていれば停止
             if (displayLineCoroutine != null)
             {
                 StopCoroutine(displayLineCoroutine);
             }
 
-            //canContinueToNextLineをfalseに設定しテキスト表示中は次の行に進めないようにする
             canContinueToNextLine = false;
-            dialogueText.text = ""; //次の行を表示する前にテキストをクリア
+            UpdateCursorState(); // テキスト表示中はカーソルを隠す
 
-            //新しいコルーチンを開始してテキストを一文字ずつ表示
-            displayLineCoroutine = StartCoroutine(DisplayLine(currentStory.Continue().Trim()));
+            dialogueText.text = "";
+
+            string nextLine = currentStory.Continue().Trim();
+
+            if (string.IsNullOrEmpty(nextLine))
+            {
+                SetDialogueBackgroundActive(false);
+            }
+            else
+            {
+                SetDialogueBackgroundActive(true);
+            }
+
+            displayLineCoroutine = StartCoroutine(DisplayLine(nextLine));
 
             HandleTags(currentStory.currentTags);
             DisplayChoices();
-
-            //waitingForPlayerInput は DisplayLine コルーチンが終了した後に true に設定される
-            //または、選択肢が表示された場合にここで true に設定する
-            if (currentStory.currentChoices.Count > 0)
-            {
-                
-            }
         }
         else
         {
@@ -158,68 +211,48 @@ public class DialogueManager : MonoBehaviour
 
     public void AdvanceDialogue()
     {
-        //ダイアログが再生中でなければ何もしない
         if (!dialogueIsPlaying) return;
+        if (IsEffectPlaying) return;
 
-        // エフェクト再生中（キャラ移動や待機中）は、クリック進行を無視する
-        if (IsEffectPlaying)
-        {
-            return;
-        }
-
-        //テキストがまだ表示中の場合 (タイプライター効果の途中)
         if (displayLineCoroutine != null)
         {
             StopCoroutine(displayLineCoroutine);
-            dialogueText.text = currentStory.currentText.Trim(); //全文を即座に表示
+            dialogueText.text = currentStory.currentText.Trim();
             displayLineCoroutine = null;
             canContinueToNextLine = true;
+            UpdateCursorState(); // 表示完了したので条件次第でカーソル表示
         }
-        //テキストの表示が完了している場合
         else if (canContinueToNextLine)
         {
-            ContinueStory(); //次の行に進む
+            ContinueStory();
         }
     }
 
     private IEnumerator DisplayLine(string line)
     {
-        //テキストボックスを空にする
         dialogueText.text = "";
-        //次の行に進めないように設定
         canContinueToNextLine = false;
+        UpdateCursorState(); // 念のため非表示更新
 
         foreach (char letter in line.ToCharArray())
         {
-            //文字が表示されるたびにサウンドエフェクトを再生
             if (typingAudioSource != null && typingSoundClip != null)
             {
                 typingAudioSource.PlayOneShot(typingSoundClip, typingVolume);
             }
 
-            dialogueText.text += letter; //一文字ずつ追加
-            yield return new WaitForSeconds(typingSpeed); //指定されたタイピングスピードで待機
+            dialogueText.text += letter;
+            yield return new WaitForSeconds(typingSpeed);
         }
 
-        //全ての文字が表示されたら、次の行に進める状態にする
         canContinueToNextLine = true;
+        UpdateCursorState(); // テキスト表示完了、ここでカーソルが表示されるはず
 
-        //選択肢がない場合のみ、プレイヤーの入力待ち状態にする
-        if (currentStory.currentChoices.Count == 0)
-        {
-            
-        }
-        else
-        {
-            //選択肢がある場合は、選択肢の表示後にwaitingForPlayerInputがtrueになるため、ここでは何もしない
-        }
-
-        displayLineCoroutine = null; //コルーチンが完了したら変数をリセット
+        displayLineCoroutine = null;
     }
 
     private void HandleTags(List<string> currentTags)
     {
-        // タグがあれば、購読者（StartupSequenceManager）に通知する
         if (currentTags.Count > 0)
         {
             OnTagsProcessed?.Invoke(currentTags);
@@ -229,7 +262,6 @@ public class DialogueManager : MonoBehaviour
     private void DisplayChoices()
     {
         List<Choice> currentChoices = currentStory.currentChoices;
-
         if (currentChoices.Count > choices.Length)
         {
             Debug.LogError($"Too many choices given: {currentChoices.Count}");
@@ -248,6 +280,9 @@ public class DialogueManager : MonoBehaviour
             choices[i].SetActive(false);
         }
 
+        // 選択肢が出ている間はカーソルを隠したいので更新
+        UpdateCursorState();
+
         StartCoroutine(SelectFirstChoice());
     }
 
@@ -263,11 +298,7 @@ public class DialogueManager : MonoBehaviour
 
     public void MakeChoice(int choiceIndex)
     {
-        // エフェクト再生中は選択肢を決定できない
-        if (IsEffectPlaying)
-        {
-            return;
-        }
+        if (IsEffectPlaying) return;
 
         if (choiceIndex < 0 || choiceIndex >= currentStory.currentChoices.Count)
         {
@@ -275,13 +306,13 @@ public class DialogueManager : MonoBehaviour
             return;
         }
 
-        //選択時にタイピングコルーチンが実行中であれば停止
         if (displayLineCoroutine != null)
         {
             StopCoroutine(displayLineCoroutine);
             displayLineCoroutine = null;
         }
-        canContinueToNextLine = false; //新しいテキストが表示されるので、再度falseに設定
+        canContinueToNextLine = false;
+        UpdateCursorState(); // 選択した瞬間カーソル等は非表示
 
         EventSystem.current.SetSelectedGameObject(null);
 
@@ -289,12 +320,44 @@ public class DialogueManager : MonoBehaviour
         ContinueStory();
     }
 
-    /// <summary>
-    /// 外部（StartupSequenceManagerなど）から、エフェクト再生中フラグを設定する
-    /// （trueにすると、AdvanceDialogueのクリック進行が一時停止する）
-    /// </summary>
     public void SetIsPlayingEffect(bool isPlaying)
     {
         IsEffectPlaying = isPlaying;
+        UpdateCursorState(); // エフェクト状態が変わったらカーソルの表示も更新
+    }
+
+    private void SetDialogueBackgroundActive(bool isActive)
+    {
+        if (dialogueBackground != null)
+        {
+            dialogueBackground.SetActive(isActive);
+        }
+    }
+
+    /// <summary>
+    /// 現在の状態に基づいてカーソルの表示/非表示を更新する
+    /// 条件: 会話中 AND エフェクト再生中でない AND テキスト表示完了 AND 選択肢が出ていない
+    /// </summary>
+    private void UpdateCursorState()
+    {
+        if (objectToActivateDuringDialogue == null) return;
+
+        // 会話中でないなら非表示
+        if (!dialogueIsPlaying)
+        {
+            objectToActivateDuringDialogue.SetActive(false);
+            return;
+        }
+
+        // 選択肢が表示されているかチェック
+        bool choicesAreActive = (currentStory != null && currentStory.currentChoices.Count > 0);
+
+        // 表示条件:
+        // 1. エフェクト再生中でない
+        // 2. 次の行へ進める状態（テキスト表示完了）
+        // 3. 選択肢が表示されていない
+        bool shouldShow = !IsEffectPlaying && canContinueToNextLine && !choicesAreActive;
+
+        objectToActivateDuringDialogue.SetActive(shouldShow);
     }
 }

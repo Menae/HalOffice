@@ -281,13 +281,15 @@ public class StartupSequenceManager : MonoBehaviour
     }
 
     /// <summary>
-    /// タグの処理を非同期で行うコルーチン
+    /// タグの処理を非同期で行うコルーチン（並列処理対応版）
     /// </summary>
     private IEnumerator ProcessTagsRoutine(List<string> tags)
     {
+        // 実行したコルーチン（移動やアニメ）を監視するためのリスト
+        List<Coroutine> activeCoroutines = new List<Coroutine>();
+
         foreach (string tag in tags)
         {
-            // タグをコロン(:)で分割
             string[] parts = tag.Split(':');
             if (parts.Length == 0) continue;
 
@@ -299,42 +301,47 @@ public class StartupSequenceManager : MonoBehaviour
                 case "move_char":
                     if (parts.Length < 3)
                     {
-                        Debug.LogWarning($"Move tag format error: {tag}. Expected '#move_char: ActorName, LocationName'");
+                        Debug.LogWarning($"Move tag format error: {tag}");
                         continue;
                     }
                     string actorToMove = parts[1].Trim();
                     string locationName = parts[2].Trim();
-                    yield return StartCoroutine(MoveCharacterRoutine(actorToMove, locationName));
+
+                    // yield returnせず、リストに追加して即座に次の処理へ進む
+                    activeCoroutines.Add(StartCoroutine(MoveCharacterRoutine(actorToMove, locationName)));
                     break;
 
                 // Ink形式: #play_anim: ActorName, TriggerName, Duration
                 case "play_anim":
                     if (parts.Length < 4)
                     {
-                        Debug.LogWarning($"Anim tag format error: {tag}. Expected '#play_anim: ActorName, TriggerName, Duration'");
+                        Debug.LogWarning($"Anim tag format error: {tag}");
                         continue;
                     }
                     string actorToAnimate = parts[1].Trim();
                     string triggerName = parts[2].Trim();
                     if (float.TryParse(parts[3].Trim(), out float animDuration))
                     {
-                        yield return StartCoroutine(PlayAnimationRoutine(actorToAnimate, triggerName, animDuration));
+                        // ここも並列化
+                        activeCoroutines.Add(StartCoroutine(PlayAnimationRoutine(actorToAnimate, triggerName, animDuration)));
                     }
                     break;
 
                 // Ink形式: #wait: 1.5
                 case "wait":
-                    if (parts.Length < 2)
-                    {
-                        Debug.LogWarning($"Wait tag format error: {tag}. Expected '#wait: Duration'");
-                        continue;
-                    }
+                    if (parts.Length < 2) continue;
                     if (float.TryParse(parts[1].Trim(), out float waitTime))
                     {
                         yield return new WaitForSeconds(waitTime);
                     }
                     break;
             }
+        }
+
+        // 【修正点】全ての命令を出し終えた後で、走っているコルーチンが全部終わるのを待つ
+        foreach (var c in activeCoroutines)
+        {
+            if (c != null) yield return c;
         }
 
         // 全てのタグ処理が完了したので、DialogueManagerの待機を解除する

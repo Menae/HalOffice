@@ -12,6 +12,10 @@ public class ScreenEffectsController : MonoBehaviour
     [Tooltip("TVオフ演出用のUIパネル")]
     public GameObject tvOffEffectPanel;
 
+    [Header("ゲーム終了時の制御")]
+    [Tooltip("TVオフ演出時に無効化（非表示）にするNPCオブジェクト")]
+    public GameObject npcObjectToDisable;
+
     [Header("サウンド設定")]
     [Tooltip("エフェクトと同時に再生する効果音")]
     public AudioClip glitchSoundClip;
@@ -28,7 +32,8 @@ public class ScreenEffectsController : MonoBehaviour
     private AudioSource audioSource;
     private Animator tvOffAnimator;
     private bool hasTriggeredEffect30 = false;
-    private bool hasTriggeredEffect70 = false; // 70に到達したかのフラグ
+    private bool hasTriggeredEffect70 = false;
+    private bool areEffectsSuspended = false;
     private Coroutine effect30Coroutine;
 
     private void Start()
@@ -50,23 +55,25 @@ public class ScreenEffectsController : MonoBehaviour
             tvOffEffectPanel.SetActive(false);
             tvOffAnimator = tvOffEffectPanel.GetComponent<Animator>();
         }
+
+        // 初期化時にフラグをリセット（再プレイ時などのため）
+        areEffectsSuspended = false;
     }
 
     private void Update()
     {
         if (glitchController == null || detectionManager == null) return;
 
+        if (areEffectsSuspended) return;
+
         float currentDetection = detectionManager.GetCurrentDetection();
 
         // --- 1. しきい値を超えた瞬間のトリガー処理 ---
-        
-        // 70に達した瞬間の処理
         if (currentDetection >= 70f && !hasTriggeredEffect70)
         {
             hasTriggeredEffect70 = true;
             audioSource.PlayOneShot(glitchSoundClip, glitchVolumeScale);
         }
-        // 30に達した瞬間の処理
         else if (currentDetection >= 30f && !hasTriggeredEffect30)
         {
             hasTriggeredEffect30 = true;
@@ -78,19 +85,14 @@ public class ScreenEffectsController : MonoBehaviour
         if (currentDetection < 70f) hasTriggeredEffect70 = false;
         if (currentDetection < 30f) hasTriggeredEffect30 = false;
 
-
         // --- 3. 状態に応じた永続的なエフェクト処理 ---
-
-        // 30のコルーチンが動いている間は、コルーチンがエフェクトを管理する
         if (effect30Coroutine != null) return;
 
-        // 70以上の時は永続的にエフェクトをかける
         if (currentDetection >= 70f)
         {
             glitchController.noiseAmount = 30f;
             glitchController.glitchStrength = 200f;
         }
-        // それ以外の時はエフェクトをオフにする
         else
         {
             glitchController.noiseAmount = 0f;
@@ -98,18 +100,14 @@ public class ScreenEffectsController : MonoBehaviour
         }
     }
 
-    // 見つかり度30の時に0.5秒間だけエフェクトを再生するコルーチン
     private IEnumerator Effect30Routine()
     {
-        // 30に達した時の効果音はこちらで再生
         audioSource.PlayOneShot(glitchSoundClip, glitchVolumeScale);
-
         glitchController.noiseAmount = 30f;
         glitchController.glitchStrength = 200f;
 
         yield return new WaitForSeconds(0.5f);
 
-        // 0.5秒後、もし70以上の永続エフェクトが発動していなければ、エフェクトをオフに戻す
         if (detectionManager.GetCurrentDetection() < 70f)
         {
             glitchController.noiseAmount = 0f;
@@ -122,6 +120,14 @@ public class ScreenEffectsController : MonoBehaviour
     // TVオフ演出のメソッド
     public void TriggerTvOff()
     {
+        areEffectsSuspended = true;
+
+        if (glitchController != null)
+        {
+            glitchController.noiseAmount = 0f;
+            glitchController.glitchStrength = 0f;
+        }
+
         if (audioSource != null && tvOffSoundClip != null)
         {
             audioSource.PlayOneShot(tvOffSoundClip, tvOffVolumeScale);
@@ -130,6 +136,21 @@ public class ScreenEffectsController : MonoBehaviour
         {
             tvOffEffectPanel.SetActive(true);
             tvOffAnimator.SetTrigger("TVOFF");
+        }
+
+        // NPCを無効化する処理
+        if (npcObjectToDisable != null)
+        {
+            npcObjectToDisable.SetActive(false);
+            Debug.Log("TVオフ演出に伴い、NPCを無効化しました。");
+        }
+    }
+
+    public void TriggerTvOn()
+    {
+        if (tvOffEffectPanel != null)
+        {
+            tvOffEffectPanel.SetActive(false);
         }
     }
 }

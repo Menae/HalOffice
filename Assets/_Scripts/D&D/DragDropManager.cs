@@ -92,6 +92,12 @@ public class DragDropManager : MonoBehaviour
     public void SetInteractionEnabled(bool enabled)
     {
         InteractionEnabled = enabled;
+
+        // ついでにカーソルにも命令を伝える（連動）
+        if (ActiveCursor != null)
+        {
+            ActiveCursor.SetInputEnabled(enabled);
+        }
     }
 
 

@@ -55,6 +55,11 @@ public class Day1Manager : MonoBehaviour
 
     void Start()
     {
+        if (GameManager.Instance != null)
+        {
+            GameManager.Instance.SetInputEnabled(false);
+        }
+
         audioSource = GetComponent<AudioSource>();
         currentTime = totalTimeInSeconds;
         if (imageObjectA != null) imageObjectA.SetActive(false);
@@ -121,6 +126,12 @@ public class Day1Manager : MonoBehaviour
     {
         Debug.Log("StartGame() has been called! isGameActive will be set to true.");
         isGameActive = true;
+
+        // ここで初めてプレイヤーの操作を解禁する
+        if (GameManager.Instance != null)
+        {
+            GameManager.Instance.SetInputEnabled(true);
+        }
 
         // 押されたボタンを非表示にする
         if (startGameButton != null)

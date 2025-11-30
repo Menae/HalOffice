@@ -82,6 +82,14 @@ public class GameManager : MonoBehaviour
     public void SetInputEnabled(bool enabled)
     {
         isInputEnabled = enabled;
+
+        // ドラッグ＆ドロップの制御
+        if (DragDropManager.Instance != null)
+        {
+            // ここで DragDropManager に伝えれば、
+            // DragDropManager が自動的に CursorController にも伝えてくれます
+            DragDropManager.Instance.SetInteractionEnabled(enabled);
+        }
     }
 
     public void AdvanceDay()
@@ -94,6 +102,30 @@ public class GameManager : MonoBehaviour
         {
             GlobalUIManager.Instance.RefreshDayDisplay();
         }
+    }
+
+    /// <summary>
+    /// リザルト画面が閉じられた（アンロードされた）タイミングで発火するイベント
+    /// </summary>
+    public event Action OnResultSceneClosed;
+
+    /// <summary>
+    /// リザルトシーン側から呼び出す。「閉じるボタン」を押した時に実行する。
+    /// </summary>
+    /// <param name="sceneName">閉じたいリザルトシーンの名前</param>
+    public void CloseResultScene(string sceneName)
+    {
+        StartCoroutine(UnloadResultRoutine(sceneName));
+    }
+
+    private System.Collections.IEnumerator UnloadResultRoutine(string sceneName)
+    {
+        // 指定されたシーンを非同期でアンロード（破棄）する
+        yield return UnityEngine.SceneManagement.SceneManager.UnloadSceneAsync(sceneName);
+
+        // アンロードが完了したことを通知する
+        Debug.Log("リザルトシーンが閉じられました。メインシーンへ制御を戻します。");
+        OnResultSceneClosed?.Invoke();
     }
 
 }

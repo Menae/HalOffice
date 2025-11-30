@@ -33,7 +33,7 @@ public class DialogueManager : MonoBehaviour
     private float lastCursorUpdateTime; // アニメーション更新用タイマー
 
     private Coroutine displayLineCoroutine;
-    private bool canContinueToNextLine = false;
+    public bool canContinueToNextLine = false;
 
     [Header("Audio")]
     [SerializeField] private AudioSource typingAudioSource;
@@ -58,15 +58,35 @@ public class DialogueManager : MonoBehaviour
 
     private void Awake()
     {
+        // 加算ロードに対応するための修正:
+        // 新しいDialogueManager（リザルト側）が生まれたら、警告を出さずにそちらを優先する。
         if (instance != null)
         {
-            Debug.LogWarning("More than one DialogueManager found!");
+            // 警告は出さない（意図的な重複なので）
+            // Debug.LogWarning("More than one DialogueManager found!"); 
         }
         instance = this;
     }
 
+    /// <summary>
+    /// シーンがアンロードされたりして破棄される時に呼ばれる
+    /// </summary>
+    private void OnDestroy()
+    {
+        // もし自分が「現在の王様（instance）」だったなら、王座を空にする
+        if (instance == this)
+        {
+            instance = null;
+        }
+    }
+
     public static DialogueManager GetInstance()
     {
+        // もし王座が空なら、今生存しているDialogueManager（メインシーンに残っている方）を探して再任させる
+        if (instance == null)
+        {
+            instance = FindObjectOfType<DialogueManager>();
+        }
         return instance;
     }
 

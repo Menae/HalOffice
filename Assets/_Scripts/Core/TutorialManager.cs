@@ -227,10 +227,6 @@ public class TutorialManager : MonoBehaviour
         ResetEffects();
         Debug.Log("チュートリアルが完全に終了しました。");
 
-        if (DragDropManager.Instance != null)
-            DragDropManager.Instance.SetInteractionEnabled(true); // 再び有効化
-
-        if (GameManager.Instance != null) GameManager.Instance.SetInputEnabled(true);
         if (day1Manager != null) day1Manager.ShowStartGameButton();
 
         yield return null;

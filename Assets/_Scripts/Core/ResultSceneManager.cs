@@ -129,8 +129,10 @@ public class ResultSceneManager : MonoBehaviour
             yield return new WaitUntil(() => DialogueManager.GetInstance().dialogueIsPlaying == false);
         }
 
-        GameManager.Instance.currentDay++;
-        Debug.Log($"Day {GameManager.Instance.currentDay} に進みます。");
+        // 日付を進める処理（currentDay++）を削除
+        // （メインシーンに戻り、全ての演出が終わった後で進めるため）
+
+        Debug.Log("リザルト演出終了。メインシーンへ戻ります。");
 
         if (tvOffAnimator != null)
         {
@@ -141,10 +143,23 @@ public class ResultSceneManager : MonoBehaviour
                 audioSource.PlayOneShot(tvOffSound, tvOffVolume);
             }
 
+            // TVオフ（暗転）演出
             tvOffAnimator.SetTrigger("TVOFF");
+
+            // 暗転しきるまで少し待つ
             yield return new WaitForSeconds(2.0f);
         }
 
-        SceneManager.LoadScene(loginSceneName);
+        // このGameObjectが所属しているシーンの名前を取得する
+        string currentSceneName = this.gameObject.scene.name;
+        if (GameManager.Instance != null)
+        {
+            GameManager.Instance.CloseResultScene(currentSceneName);
+        }
+        else
+        {
+            // 万が一GameManagerがいない場合は従来の挙動
+            SceneManager.LoadScene(loginSceneName);
+        }
     }
 }

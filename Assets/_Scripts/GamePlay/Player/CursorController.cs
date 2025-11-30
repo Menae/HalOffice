@@ -71,6 +71,7 @@ public class CursorController : MonoBehaviour
     private Vector3 cursorVelocity = Vector3.zero; // SmoothDampで使う速度変数
     private AudioSource audioSource;
     private bool wasOverGameWorldLastFrame = false;
+    private bool isInputEnabled = true;
 
     private void OnEnable()
     {
@@ -96,6 +97,15 @@ public class CursorController : MonoBehaviour
         currentCursorPosition = Input.mousePosition;
     }
 
+    public void SetInputEnabled(bool enabled)
+    {
+        isInputEnabled = enabled;
+        if (!enabled)
+        {
+            SetCursorStateNormal(); // 無効化されたら見た目を即座に通常に戻す
+        }
+    }
+
     void Update()
     {
         if (cursorImage == null || targetNpc == null) return;
@@ -104,7 +114,9 @@ public class CursorController : MonoBehaviour
         Vector3 targetPosition = (Vector2)Input.mousePosition + cursorOffset;
         cursorImage.enabled = true;
 
-        if (targetNpc.isCursorInView && isOverGameWorld)
+        // --- 1. NPCへの干渉（視線検知・震え） ---
+        // これは「入力有効」な時だけ行う
+        if (isInputEnabled && targetNpc.isCursorInView && isOverGameWorld)
         {
             if (detectionIncreaseChannel != null)
             {
@@ -120,41 +132,35 @@ public class CursorController : MonoBehaviour
             SetCursorStateNormal();
         }
 
-        // 状態に応じてカーソルの移動方法を決定する
+        // --- 2. カーソルの移動 ---
+        // これは常に行う（フリーズしたと思わせないため）
         if (isOverGameWorld)
         {
-            // 1. ゲーム世界の上にいる場合：常に慣性をかける
             currentCursorPosition = Vector3.SmoothDamp(currentCursorPosition, targetPosition, ref cursorVelocity, smoothTime);
         }
-        else // 2. UI要素の上にいる場合
+        else
         {
-            // 2a. 前のフレームではゲーム世界にいた場合（＝UIに侵入した瞬間）
+            // UI上の挙動（省略...元のコードのままでOK）
             if (wasOverGameWorldLastFrame)
             {
-                // 視覚カーソルが実カーソルに追いつくまで、スムーズに着地させる
                 if (Vector3.Distance(currentCursorPosition, targetPosition) > 1.0f)
-                {
                     currentCursorPosition = Vector3.SmoothDamp(currentCursorPosition, targetPosition, ref cursorVelocity, smoothTime);
-                }
-                else // 追いついたら即座に追従
+                else
                 {
                     currentCursorPosition = targetPosition;
                     cursorVelocity = Vector3.zero;
                 }
             }
-            // 2b. 前のフレームからずっとUIの上にいる場合
             else
             {
-                // 慣性を完全に切り、即座に追従させる
                 currentCursorPosition = targetPosition;
                 cursorVelocity = Vector3.zero;
             }
         }
-
-        // 最後に、現在の状態を「前のフレームの状態」として記憶する
         wasOverGameWorldLastFrame = isOverGameWorld;
 
-        // クリック効果音の再生
+        // --- 3. クリック音の再生 ---
+        // これで入力が無効でも、クリック音だけは鳴ります（フィードバックとして重要）
         if (Input.GetMouseButtonDown(0))
         {
             if (audioSource != null && leftClickSound != null)

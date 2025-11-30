@@ -13,6 +13,6 @@ MonoBehaviour:
   m_Name: P4_InvestigationRecord
   m_EditorClassIdentifier: 
   sceneName: P4_Result
-  bgmClip: {fileID: 8300000, guid: 88bad4bf1d7b94b4ba371ba07b211272, type: 3}
-  volume: 0.1
+  bgmClip: {fileID: 8300000, guid: d40ca72d609706e4fa526d01cf5b1533, type: 3}
+  volume: 0.4
   playOnLoad: 1

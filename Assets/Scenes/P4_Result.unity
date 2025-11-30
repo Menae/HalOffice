@@ -2178,6 +2178,14 @@ PrefabInstance:
       propertyPath: m_Name
       value: BGMManager
       objectReference: {fileID: 0}
+    - target: {fileID: 4946640057098321150, guid: c679bca286c437f4caa67e0559272410, type: 3}
+      propertyPath: bgmDataList.Array.size
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 4946640057098321150, guid: c679bca286c437f4caa67e0559272410, type: 3}
+      propertyPath: bgmDataList.Array.data[2]
+      value: 
+      objectReference: {fileID: 11400000, guid: 82846a3b7a1160e4383c3a48e781a7ec, type: 2}
     - target: {fileID: 6120846828488155350, guid: c679bca286c437f4caa67e0559272410, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
@@ -5866,7 +5874,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   typingSpeed: 0.04
   dialogueText: {fileID: 787369099}
+  dialogueBackground: {fileID: 0}
   objectToActivateDuringDialogue: {fileID: 453363865}
+  cursorMoveRange: 10
+  cursorMoveSpeed: 5
+  retroStepInterval: 0.15
   typingAudioSource: {fileID: 1517821901}
   typingSoundClip: {fileID: 8300000, guid: ebc976ebae60add4da25a3a8662890d8, type: 3}
   typingVolume: 0.2

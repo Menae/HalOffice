@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: WorldMap
   m_EditorClassIdentifier: 
   itemName: WorldMap
-  itemType: 0
+  itemType: 8
   itemPrefab: {fileID: 47273930053212805, guid: 2f92f913f38d9614eb4074c16f79f5f0, type: 3}
   highlightSprite: {fileID: 21300000, guid: 78c10276c331f4443b02543823501363, type: 3}
   highlightOffset: {x: -4, y: -3}

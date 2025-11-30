@@ -46,19 +46,24 @@ public class EvaluationTrigger : MonoBehaviour
     public Animator handAnimator;
     [Tooltip("破壊されるNPCのアニメーター")]
     public Animator crushedNpcAnimator;
-
     [Tooltip("警報音のSE")]
     public AudioClip alarmSound;
     [Range(0f, 1f)]
     public float alarmVolume = 1.0f;
-
     [Tooltip("破壊音（潰した時の音）")]
     public AudioClip crushSound;
     [Range(0f, 1f)]
     public float crushVolume = 1.0f;
-
     [Tooltip("神の手アニメーションの再生待ち時間（秒）")]
     public float handAnimationDuration = 2.0f;
+
+    [Header("Good End 設定")]
+    [Tooltip("会話用のInkファイル")]
+    public TextAsset goodEndInk;
+    [Tooltip("吹き出し制御スクリプト（Ending_Good_Book内のNPCにアタッチしたもの）")]
+    public ResultSpeechBubbleController goodEndBubbleController;
+    [Tooltip("本を読むアニメーター")]
+    public Animator bookReadAnimator;
 
     [Header("遷移設定")]
     [Tooltip("全ての演出終了後に遷移するシーン名")]
@@ -231,13 +236,27 @@ public class EvaluationTrigger : MonoBehaviour
             // アニメーションが終わるまで待機
             yield return new WaitForSeconds(handAnimationDuration);
         }
-        // 2. GOOD ENDING (Book)
+        // メソッド内の分岐（Good End）
         else if (score >= scoreThresholdForGood)
         {
-            // ... (まだ未実装なのでそのまま)
             Debug.Log($"Score: {score} -> GOOD ENDING (Book)");
             targetEnding = endingBookRoot;
             if (targetEnding != null) targetEnding.SetActive(true);
+
+            // 1. 吹き出し会話を再生（待機する）
+            if (goodEndBubbleController != null && goodEndInk != null)
+            {
+                // 3秒間表示したままにする
+                yield return StartCoroutine(goodEndBubbleController.PlaySpeechSequence(goodEndInk, 3.0f));
+            }
+
+            // 2. 本を読むアニメーション開始
+            if (bookReadAnimator != null)
+            {
+                bookReadAnimator.SetTrigger("Book");
+            }
+
+            // 読書シーンを少し見せる
             yield return new WaitForSeconds(4.0f);
         }
         // 3. NORMAL ENDING A

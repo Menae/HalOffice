@@ -15,6 +15,14 @@ public class RetroDetectionMeter : MonoBehaviour
     [Header("メーター設定")]
     [Tooltip("目盛りの総数")]
     public int numberOfTicks = 20;
+
+    [Tooltip("目盛りと目盛りの間の距離（ピクセル単位）")]
+    public float tickSpacing = 5f;
+
+    // メーター全体の開始位置オフセット
+    [Tooltip("メーター全体の生成開始位置のオフセット。\nX = 左からの余白\nY = 上からの余白")]
+    public Vector2Int meterOffset = Vector2Int.zero;
+
     [Tooltip("メーターが満タンになる見つかり度の最大値")]
     public float maxDetectionValue = 100f;
     [Tooltip("目盛りがオフの時の色")]
@@ -22,73 +30,81 @@ public class RetroDetectionMeter : MonoBehaviour
     [Tooltip("目盛りがオンの時の色")]
     public Color colorOn = Color.red;
 
-    // 生成した目盛りのImageコンポーネントを管理するためのリスト
     private List<Image> meterTicks = new List<Image>();
 
     void Start()
     {
-        // 起動時にメーターを自動生成する
         GenerateMeter();
     }
 
     void Update()
     {
-        // detectionManagerが設定されていなければ何もしない
         if (detectionManager == null) return;
-
-        // メーターの表示を更新する
         UpdateMeterDisplay();
     }
 
+    private void OnValidate()
+    {
+        // インスペクタで値を変更した際にリアルタイム反映
+        UpdateLayoutSettings();
+    }
+
     /// <summary>
-    /// 設定に基づいてメーターの目盛りを自動生成する
+    /// レイアウトグループの設定（間隔とオフセット）を適用する
     /// </summary>
+    private void UpdateLayoutSettings()
+    {
+        if (ticksParent != null)
+        {
+            HorizontalLayoutGroup layoutGroup = ticksParent.GetComponent<HorizontalLayoutGroup>();
+            if (layoutGroup != null)
+            {
+                layoutGroup.spacing = tickSpacing;
+
+                // オフセットをPaddingとして適用
+                layoutGroup.padding = new RectOffset(meterOffset.x, 0, meterOffset.y, 0);
+            }
+        }
+    }
+
     private void GenerateMeter()
     {
-        // 念のため、既にあればクリアする
+        // 設定を適用
+        UpdateLayoutSettings();
+
+        // 既存の削除
         foreach (Transform child in ticksParent)
         {
             Destroy(child.gameObject);
         }
         meterTicks.Clear();
 
-        // 設定された数の目盛りを生成し、リストに追加する
+        // 生成
         for (int i = 0; i < numberOfTicks; i++)
         {
             GameObject tickObject = Instantiate(meterTickPrefab, ticksParent);
             Image tickImage = tickObject.GetComponent<Image>();
             if (tickImage != null)
             {
-                tickImage.color = colorOff; // 初期色はオフ
+                tickImage.color = colorOff;
                 meterTicks.Add(tickImage);
             }
         }
     }
 
-    /// <summary>
-    /// 現在の見つかり度に応じてメーターの見た目を更新する
-    /// </summary>
     private void UpdateMeterDisplay()
     {
-        // 現在の見つかり度を取得
         float currentDetection = detectionManager.GetCurrentDetection();
-
-        // 見つかり度を0-1の割合に変換
         float ratio = Mathf.Clamp01(currentDetection / maxDetectionValue);
-
-        // オンにすべき目盛りの数を計算する
-        // (例: ratioが0.26なら、20 * 0.26 = 5.2 -> 5個の目盛りがオンになる)
         int litTicksCount = Mathf.FloorToInt(ratio * numberOfTicks);
 
-        // 全ての目盛りをループし、オンかオフかを判定して色を設定する
         for (int i = 0; i < meterTicks.Count; i++)
         {
-            // iがオンにすべき数より小さい場合、その目盛りはオンにする
             if (i < litTicksCount)
             {
                 meterTicks[i].color = colorOn;
             }
-            else // そうでなければオフにする
+            else
             {
                 meterTicks[i].color = colorOff;
             }

@@ -5474,10 +5474,10 @@ MonoBehaviour:
   audioSource: {fileID: 1027743465}
   titleLogoSound: {fileID: 8300000, guid: de710935681a475428faf299a1a17851, type: 3}
   titleLogoVolume: 1
-  openingBgm: {fileID: 8300000, guid: 73bd2c706a71cef44a6bf53b743cddba, type: 3}
+  openingBgm: {fileID: 8300000, guid: 56168b2de687eaf4ba78076a43452940, type: 3}
   openingBgmVolume: 0.3
   openingAmbience: {fileID: 8300000, guid: 70de2b25b4a257444954776b9748ba0d, type: 3}
-  openingAmbienceVolume: 0.2
+  openingAmbienceVolume: 0.1
   audioFadeDuration: 1
 --- !u!4 &1027743464
 Transform:

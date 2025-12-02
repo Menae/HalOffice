@@ -110,6 +110,18 @@ public class StartupSequenceManager : MonoBehaviour
     [Tooltip("タイトルロゴ効果音の音量")]
     public float titleLogoVolume = 1.0f;
 
+    [Header("オープニング専用オーディオ")]
+    [Tooltip("OP中に流すBGM")]
+    public AudioClip openingBgm;
+    [Range(0f, 1f)] public float openingBgmVolume = 0.5f;
+    [Tooltip("OP中に流す環境音（ガヤ音）")]
+    public AudioClip openingAmbience;
+    [Range(0f, 1f)] public float openingAmbienceVolume = 0.5f;
+    [Tooltip("オーディオのフェードアウト時間（0なら即停止）")]
+    public float audioFadeDuration = 1.0f;
+
+    private AudioSource opBgmSource;
+    private AudioSource opAmbienceSource;
     private bool openingProceedClicked = false;
     private bool openingProceedRoutineRunning = false;
     private MovieActor currentSpeakingActor;
@@ -122,6 +134,15 @@ public class StartupSequenceManager : MonoBehaviour
 
         // 行の表示完了を検知してアニメを止める
         DialogueManager.OnLineFinishDisplaying += StopSpeakingAnimation;
+
+        // BGM用と環境音用に2つのスピーカー(AudioSource)を動的に追加します
+        opBgmSource = gameObject.AddComponent<AudioSource>();
+        opBgmSource.loop = true;
+        opBgmSource.playOnAwake = false;
+
+        opAmbienceSource = gameObject.AddComponent<AudioSource>();
+        opAmbienceSource.loop = true;
+        opAmbienceSource.playOnAwake = false;
 
         if (openingProceedButton != null)
             openingProceedButton.onClick.AddListener(OnOpeningProceedClicked);
@@ -207,6 +228,10 @@ public class StartupSequenceManager : MonoBehaviour
         if (openingDialogueManager != null && openingChatInk != null)
         {
             if (openingMoviePhase != null) openingMoviePhase.SetActive(true);
+
+            // フェードイン開始前に音を鳴らす
+            PlayOpeningAudio();
+
             // 黒→透明でオープニングへ
             yield return StartCoroutine(Fade(Color.clear, fadeToOpening));
 
@@ -222,6 +247,10 @@ public class StartupSequenceManager : MonoBehaviour
             yield return new WaitUntil(() => openingProceedClicked);
 
             if (openingProceedPanel != null) openingProceedPanel.SetActive(false);
+
+            // 画面フェードアウトと同時に音もフェードアウト開始
+            // Coroutineを並列で走らせることで、画面が暗くなるのと同時に音が消えていく
+            StartCoroutine(FadeOutOpeningAudio(audioFadeDuration));
 
             // 透明→黒で次へ
             yield return StartCoroutine(Fade(Color.black, fadeFromOpening));
@@ -549,5 +578,46 @@ public class StartupSequenceManager : MonoBehaviour
         // ここでMainSequence側の待機が解除され、フェードへ進む
         openingProceedClicked = true;
         openingProceedRoutineRunning = false;
+    }
+
+    private void PlayOpeningAudio()
+    {
+        if (openingBgm != null)
+        {
+            opBgmSource.clip = openingBgm;
+            opBgmSource.volume = openingBgmVolume;
+            opBgmSource.Play();
+        }
+        if (openingAmbience != null)
+        {
+            opAmbienceSource.clip = openingAmbience;
+            opAmbienceSource.volume = openingAmbienceVolume;
+            opAmbienceSource.Play();
+        }
+    }
+
+    private IEnumerator FadeOutOpeningAudio(float duration)
+    {
+        float startBgmVol = opBgmSource.volume;
+        float startAmbienceVol = opAmbienceSource.volume;
+        float timer = 0f;
+
+        while (timer < duration)
+        {
+            timer += Time.deltaTime;
+            float t = timer / duration;
+
+            // 音量を徐々に下げる
+            opBgmSource.volume = Mathf.Lerp(startBgmVol, 0f, t);
+            opAmbienceSource.volume = Mathf.Lerp(startAmbienceVol, 0f, t);
+
+            yield return null;
+        }
+
+        // 完全に停止
+        opBgmSource.Stop();
+        opAmbienceSource.Stop();
+        opBgmSource.volume = startBgmVol; // 一応戻しておく
+        opAmbienceSource.volume = startAmbienceVol;
     }
 }

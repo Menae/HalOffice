@@ -51,6 +51,7 @@ public class DialogueManager : MonoBehaviour
 
     public static event Action OnDialogueStart;
     public static event Action OnDialogueEnd;
+    public static event Action OnLineFinishDisplaying;
     public static event Action<TextAsset> OnDialogueFinished;
 
     private static DialogueManager instance;
@@ -252,7 +253,9 @@ public class DialogueManager : MonoBehaviour
     {
         dialogueText.text = "";
         canContinueToNextLine = false;
-        UpdateCursorState(); // 念のため非表示更新
+        UpdateCursorState();
+
+        line = line.Replace("<br>", "\n");
 
         foreach (char letter in line.ToCharArray())
         {
@@ -265,8 +268,11 @@ public class DialogueManager : MonoBehaviour
             yield return new WaitForSeconds(typingSpeed);
         }
 
+        // 文字表示が終わったのでイベント通知
+        OnLineFinishDisplaying?.Invoke();
+
         canContinueToNextLine = true;
-        UpdateCursorState(); // テキスト表示完了、ここでカーソルが表示されるはず
+        UpdateCursorState();
 
         displayLineCoroutine = null;
     }

@@ -112,12 +112,16 @@ public class StartupSequenceManager : MonoBehaviour
 
     private bool openingProceedClicked = false;
     private bool openingProceedRoutineRunning = false;
+    private MovieActor currentSpeakingActor;
 
     // DialogueManagerの会話終了イベントを購読するための処理
     private void OnEnable()
     {
         DialogueManager.OnDialogueFinished += OnOpeningChatFinished;
         DialogueManager.OnTagsProcessed += HandleMovieTags;
+
+        // 行の表示完了を検知してアニメを止める
+        DialogueManager.OnLineFinishDisplaying += StopSpeakingAnimation;
 
         if (openingProceedButton != null)
             openingProceedButton.onClick.AddListener(OnOpeningProceedClicked);
@@ -127,6 +131,8 @@ public class StartupSequenceManager : MonoBehaviour
     {
         DialogueManager.OnDialogueFinished -= OnOpeningChatFinished;
         DialogueManager.OnTagsProcessed -= HandleMovieTags;
+
+        DialogueManager.OnLineFinishDisplaying -= StopSpeakingAnimation;
 
         if (openingProceedButton != null)
             openingProceedButton.onClick.RemoveListener(OnOpeningProceedClicked);
@@ -274,10 +280,34 @@ public class StartupSequenceManager : MonoBehaviour
     /// </summary>
     private void HandleMovieTags(List<string> tags)
     {
-        // DialogueManagerに「クリック進行」を一時停止させる
-        openingDialogueManager.SetIsPlayingEffect(true);
+        // 既存の処理（DialogueManagerを待機させる）
+        bool hasWaitEffect = false;
 
-        StartCoroutine(ProcessTagsRoutine(tags));
+        foreach (string tag in tags)
+        {
+            string[] parts = tag.Split(':');
+            string key = parts[0].Trim();
+
+            // 話者タグの処理
+            if (key == "speaker" && parts.Length > 1)
+            {
+                string speakerName = parts[1].Trim();
+                StartSpeakingAnimation(speakerName);
+            }
+
+            // 既存のタグ（move_charなど）が含まれているかチェック
+            if (key == "move_char" || key == "play_anim" || key == "wait")
+            {
+                hasWaitEffect = true;
+            }
+        }
+
+        // 演出系タグがある場合のみコルーチンを開始
+        if (hasWaitEffect)
+        {
+            openingDialogueManager.SetIsPlayingEffect(true);
+            StartCoroutine(ProcessTagsRoutine(tags));
+        }
     }
 
     /// <summary>
@@ -416,6 +446,35 @@ public class StartupSequenceManager : MonoBehaviour
 
         // 4. 指定された時間だけ待機する
         yield return new WaitForSeconds(duration);
+    }
+
+    /// <summary>
+    /// 指定されたアクターのSpeakアニメーションを開始する
+    /// </summary>
+    private void StartSpeakingAnimation(string actorName)
+    {
+        // 前に喋っていた人がいれば、その人の口を閉じる
+        StopSpeakingAnimation();
+
+        // 新しい話者を探す
+        MovieActor actor = movieActors.Find(a => a.actorName == actorName);
+        if (actor != null && actor.actorAnimator != null)
+        {
+            actor.actorAnimator.SetBool("Speak", true);
+            currentSpeakingActor = actor;
+        }
+    }
+
+    /// <summary>
+    /// 現在喋っているアクターのアニメーションを停止する
+    /// </summary>
+    private void StopSpeakingAnimation()
+    {
+        if (currentSpeakingActor != null && currentSpeakingActor.actorAnimator != null)
+        {
+            currentSpeakingActor.actorAnimator.SetBool("Speak", false);
+        }
+        currentSpeakingActor = null;
     }
 
     // DialogueManagerから会話終了イベントを受け取った時に呼ばれる (現在は未使用)

@@ -75,6 +75,14 @@ public class DetectionManager : MonoBehaviour
         }
     }
 
+    // 外部から強制的に検知を停止させるメソッド
+    public void ForceStopDetection()
+    {
+        // これをtrueにすることで、UpdateやIncreaseDetectionが即座に動かなくなります
+        isGameOver = true;
+        Debug.Log("DetectionManager: 強制停止しました。");
+    }
+
     public float GetCurrentDetection() { return currentDetection; }
     public float GetMaxDetection() { return maxDetection; }
 }

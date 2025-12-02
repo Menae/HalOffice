@@ -65,6 +65,20 @@ public class EvaluationTrigger : MonoBehaviour
     [Tooltip("本を読むアニメーター")]
     public Animator bookReadAnimator;
 
+    [Header("Normal End 設定")]
+    [Tooltip("システムメッセージ用のInkファイル")]
+    public TextAsset normalEndSystemInk;
+    [Tooltip("NPCのセリフ用のInkファイル")]
+    public TextAsset normalEndWakeUpInk;
+    [Tooltip("NormalEnd演出用のアニメーター（Ending_Init_Root内のNPC）")]
+    public Animator normalEndAnimator;
+    [Tooltip("NPCにつけた吹き出し制御スクリプト")]
+    public ResultSpeechBubbleController normalEndBubbleController;
+    [Tooltip("初期化時の電子音SE")]
+    public AudioClip initSound;
+    [Range(0f, 1f)]
+    public float initVolume = 1.0f;
+
     [Header("遷移設定")]
     [Tooltip("全ての演出終了後に遷移するシーン名")]
     public string nextSceneName = "P1&P2";
@@ -259,13 +273,48 @@ public class EvaluationTrigger : MonoBehaviour
             // 読書シーンを少し見せる
             yield return new WaitForSeconds(4.0f);
         }
-        // 3. NORMAL ENDING A
+        // 3. NORMAL ENDING (Initialize)
         else if (endingInitRoot != null)
         {
-            // ... (そのまま)
+            Debug.Log($"Score: {score} -> NORMAL ENDING (Initialize)");
             targetEnding = endingInitRoot;
             if (targetEnding != null) targetEnding.SetActive(true);
-            yield return new WaitForSeconds(4.0f);
+
+            // A. システムメッセージ再生（ダイアログ）
+            if (normalEndSystemInk != null)
+            {
+                var dm = DialogueManager.GetInstance();
+                dm.EnterDialogueMode(normalEndSystemInk);
+
+                // 読み上げ待ち（文字数に応じて調整）
+                yield return new WaitForSeconds(4.0f);
+
+                // 自動送り
+                dm.AdvanceDialogue();
+                yield return new WaitUntil(() => dm.dialogueIsPlaying == false);
+            }
+
+            yield return new WaitForSeconds(0.5f);
+
+            // B. 電子音 ＆ 倒れるアニメーション
+            if (screenEffectsController != null && initSound != null)
+            {
+                screenEffectsController.GetComponent<AudioSource>().PlayOneShot(initSound, initVolume);
+            }
+
+            if (normalEndAnimator != null)
+            {
+                normalEndAnimator.SetTrigger("Init"); // 倒れるトリガー
+            }
+
+            // 起き上がりモーション待ち
+            yield return new WaitForSeconds(2.0f);
+
+            // D. NPCのセリフ（吹き出し）
+            if (normalEndBubbleController != null && normalEndWakeUpInk != null)
+            {
+                yield return StartCoroutine(normalEndBubbleController.PlaySpeechSequence(normalEndWakeUpInk, 3.0f));
+            }
         }
         // 4. NORMAL ENDING B
         else

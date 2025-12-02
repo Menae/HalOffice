@@ -120,6 +120,13 @@ public class ScreenEffectsController : MonoBehaviour
     // TVオフ演出のメソッド
     public void TriggerTvOff()
     {
+
+        // TVが消える瞬間に、見つかり度の上昇を完全に止める
+        if (detectionManager != null)
+        {
+            detectionManager.ForceStopDetection();
+        }
+
         areEffectsSuspended = true;
 
         if (glitchController != null)

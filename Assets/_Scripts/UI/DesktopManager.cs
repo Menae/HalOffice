@@ -36,6 +36,10 @@ public class DesktopManager : MonoBehaviour
     [Tooltip("効果音を再生するためのAudioSourceコンポーネント")]
     public AudioSource audioSource;
 
+    [Header("ハイライト演出設定")]
+    [Tooltip("Inkタグから呼び出せるハイライト対象リスト")]
+    public List<HighlightTarget> highlightTargets;
+
     [Header("デスクトップ設定")]
     [Tooltip("デスクトップのアプリ情報をまとめたリスト")]
     public List<AppEntry> desktopApps;
@@ -82,17 +86,20 @@ public class DesktopManager : MonoBehaviour
     private bool isFading = false;
     private bool hasClearedFirstNotification = false;
     private Transform iconHoverFrameOriginalParent;
+    private Coroutine currentEffectCoroutine = null;
 
     #region Unity Lifecycle Methods
 
     private void OnEnable()
     {
         ChatController.OnConversationFinished += HandleTutorialFinished;
+        ChatController.OnTagsProcessed += HandleTags;
     }
 
     private void OnDisable()
     {
         ChatController.OnConversationFinished -= HandleTutorialFinished;
+        ChatController.OnTagsProcessed -= HandleTags;
     }
 
     void Start()
@@ -355,6 +362,72 @@ public class DesktopManager : MonoBehaviour
         if (iconHoverFrameOriginalParent != null)
         {
             iconHoverFrame.transform.SetParent(iconHoverFrameOriginalParent, false);
+        }
+    }
+
+    private void HandleTags(List<string> tags)
+    {
+        foreach (string tag in tags)
+        {
+            string[] parts = tag.Split(':');
+            if (parts.Length == 0) continue;
+
+            string key = parts[0].Trim();
+            string value = parts.Length > 1 ? parts[1].Trim() : "";
+
+            switch (key)
+            {
+                case "highlight":
+                    if (currentEffectCoroutine != null) StopCoroutine(currentEffectCoroutine);
+                    currentEffectCoroutine = StartCoroutine(ProcessHighlightTag(value));
+                    break;
+
+                case "highlight_off":
+                    if (currentEffectCoroutine != null) StopCoroutine(currentEffectCoroutine);
+                    DeactivateAllHighlights();
+                    break;
+            }
+        }
+    }
+
+    private IEnumerator ProcessHighlightTag(string highlightData)
+    {
+        // まず全て消す
+        DeactivateAllHighlights();
+
+        // カンマ区切りで複数のハイライトに対応（例: #highlight: Right, Left）
+        string[] targetsToShow = highlightData.Split(',');
+        foreach (string targetName in targetsToShow)
+        {
+            ActivateHighlight(targetName.Trim());
+        }
+
+        // 即座に処理を終える（待機が必要な場合はここで調整）
+        yield return null;
+        currentEffectCoroutine = null;
+    }
+
+    private void ActivateHighlight(string name)
+    {
+        // リストから名前に一致するものを探して表示
+        HighlightTarget target = highlightTargets.Find(ht => ht.name == name);
+        if (target != null && target.panel != null)
+        {
+            target.panel.SetActive(true);
+        }
+        else
+        {
+            Debug.LogWarning($"DesktopManager: ハイライトターゲット '{name}' が見つかりません。設定を確認してください。");
+        }
+    }
+
+    private void DeactivateAllHighlights()
+    {
+        if (highlightTargets == null) return;
+        foreach (var target in highlightTargets)
+        {
+            if (target.panel != null)
+                target.panel.SetActive(false);
         }
     }
 

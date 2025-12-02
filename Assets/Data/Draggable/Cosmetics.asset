@@ -13,7 +13,11 @@ MonoBehaviour:
   m_Name: Cosmetics
   m_EditorClassIdentifier: 
   itemName: Cosmetics
-  itemType: 0
+  itemType: 15
   itemPrefab: {fileID: 779784437316295501, guid: c17c9608e6ffcd741bacf1c66423235b, type: 3}
+  highlightSprite: {fileID: 21300000, guid: d98163a9871004e7594f445cc605e95a, type: 3}
+  highlightOffset: {x: -9, y: 8}
+  highlightScale: {x: 1.1, y: 1}
   descriptionInk: {fileID: 4900000, guid: 99c1dcb3ffec8ab4a9afc918eea8759d, type: 3}
   missingReactionInk: {fileID: 4900000, guid: b45cdf626b9e2ee4895215692bc31508, type: 3}
+  placedReactionInk: {fileID: 0}

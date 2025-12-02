@@ -11091,7 +11091,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &940560657
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -21559,12 +21559,12 @@ MonoBehaviour:
   objectSlots:
   - slotTransform: {fileID: 1953910310}
     currentObject: {fileID: 532814896}
-    allowedItemTypes: 
-    correctItemType: 0
+    allowedItemTypes: 14000000
+    correctItemType: 20
     isCorrectWhenEmpty: 1
   - slotTransform: {fileID: 545085800}
     currentObject: {fileID: 1368678417}
-    allowedItemTypes: 0400000000000000
+    allowedItemTypes: 04000000
     correctItemType: 4
     isCorrectWhenEmpty: 0
   - slotTransform: {fileID: 651241036}

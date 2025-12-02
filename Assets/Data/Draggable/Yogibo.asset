@@ -13,7 +13,11 @@ MonoBehaviour:
   m_Name: Yogibo
   m_EditorClassIdentifier: 
   itemName: Yogibo
-  itemType: 0
+  itemType: 19
   itemPrefab: {fileID: 5223943838379850148, guid: 514eddf999b3edb469043cffcd24e0f7, type: 3}
+  highlightSprite: {fileID: 21300000, guid: 2a1915f36313c4921aeca076b965c140, type: 3}
+  highlightOffset: {x: 0, y: 0}
+  highlightScale: {x: 1, y: 1}
   descriptionInk: {fileID: 4900000, guid: b2eb610ef2bebda4faf4ec1abb439470, type: 3}
   missingReactionInk: {fileID: 4900000, guid: 1201edc86861ee9448ae4e2d1be81353, type: 3}
+  placedReactionInk: {fileID: 0}

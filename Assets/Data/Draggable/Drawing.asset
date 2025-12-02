@@ -13,7 +13,11 @@ MonoBehaviour:
   m_Name: Drawing
   m_EditorClassIdentifier: 
   itemName: Drawing
-  itemType: 0
+  itemType: 14
   itemPrefab: {fileID: 7991229922426110204, guid: c1a9cd77fa3d9b845a4bf5a43051be42, type: 3}
+  highlightSprite: {fileID: 21300000, guid: 436bd3c1e61fd44c396bb5017675ecc5, type: 3}
+  highlightOffset: {x: 30, y: 0}
+  highlightScale: {x: 0.95, y: 1.1}
   descriptionInk: {fileID: 4900000, guid: 780ab70140828134b8de1f0c5614f990, type: 3}
   missingReactionInk: {fileID: 4900000, guid: 9c207feaac98a8148bbbad446ad1664e, type: 3}
+  placedReactionInk: {fileID: 0}

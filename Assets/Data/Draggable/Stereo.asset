@@ -13,7 +13,11 @@ MonoBehaviour:
   m_Name: Stereo
   m_EditorClassIdentifier: 
   itemName: Stereo
-  itemType: 0
+  itemType: 17
   itemPrefab: {fileID: 682737125239244604, guid: c7a17c67ec2fbb54b9698d446b7dc1ac, type: 3}
+  highlightSprite: {fileID: 21300000, guid: bcbd85f46cb934d21800323176be2943, type: 3}
+  highlightOffset: {x: 0, y: 0}
+  highlightScale: {x: 1, y: 1}
   descriptionInk: {fileID: 4900000, guid: cf45e3df3a8fdd641ad8ce0f1143c702, type: 3}
   missingReactionInk: {fileID: 4900000, guid: 22592570173c25042829b971a937b7c8, type: 3}
+  placedReactionInk: {fileID: 0}

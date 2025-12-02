@@ -13,7 +13,11 @@ MonoBehaviour:
   m_Name: GameConsole
   m_EditorClassIdentifier: 
   itemName: GameConsole
-  itemType: 0
+  itemType: 16
   itemPrefab: {fileID: 2085415803132056864, guid: d4bda2a3cef4d1b4a95c5edff7d6c2d1, type: 3}
+  highlightSprite: {fileID: 21300000, guid: 6d2bc0166d8774057aba35f8fbc7b120, type: 3}
+  highlightOffset: {x: 0, y: 0}
+  highlightScale: {x: 6, y: 2.7}
   descriptionInk: {fileID: 4900000, guid: a87d97e64c9b7e748b344534c58a2010, type: 3}
   missingReactionInk: {fileID: 4900000, guid: ebc351e62afbc6b42bc95a09bb60ce1d, type: 3}
+  placedReactionInk: {fileID: 0}

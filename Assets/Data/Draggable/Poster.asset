@@ -13,7 +13,11 @@ MonoBehaviour:
   m_Name: Poster
   m_EditorClassIdentifier: 
   itemName: Poster
-  itemType: 0
+  itemType: 21
   itemPrefab: {fileID: 4412294675576219616, guid: 4c9abfbd344704f4aa129499a922bf66, type: 3}
+  highlightSprite: {fileID: 21300000, guid: 64767fcf19dc94028ad51496cc0873c9, type: 3}
+  highlightOffset: {x: 0, y: 0}
+  highlightScale: {x: 1, y: 1}
   descriptionInk: {fileID: 4900000, guid: 06b29d7a18a481d41ac0995a6931ad4e, type: 3}
   missingReactionInk: {fileID: 4900000, guid: 50c4b955fe7271c45a4e8b91eda78d94, type: 3}
+  placedReactionInk: {fileID: 0}

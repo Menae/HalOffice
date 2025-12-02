@@ -13,7 +13,11 @@ MonoBehaviour:
   m_Name: Teddybear
   m_EditorClassIdentifier: 
   itemName: Teddybear
-  itemType: 0
+  itemType: 18
   itemPrefab: {fileID: 5973849704179221348, guid: 9b713be31a9fa0044aaf0e3b2e5ca21e, type: 3}
+  highlightSprite: {fileID: 21300000, guid: 0f4623627fbd54996b98c94fd489a7b7, type: 3}
+  highlightOffset: {x: 0, y: 0}
+  highlightScale: {x: 1, y: 1}
   descriptionInk: {fileID: 4900000, guid: 31bab048aac72d44ba7befd0b721b400, type: 3}
   missingReactionInk: {fileID: 4900000, guid: 77bf1b3e5af764e4eb20dea279f6352e, type: 3}
+  placedReactionInk: {fileID: 0}

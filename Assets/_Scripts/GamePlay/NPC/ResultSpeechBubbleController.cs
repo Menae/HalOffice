@@ -42,7 +42,6 @@ public class ResultSpeechBubbleController : MonoBehaviour
             textToDisplay = story.Continue().Trim();
         }
 
-        // ▼▼▼ デバッグログ: 何が読み込まれたか確認 ▼▼▼
         Debug.Log($"ResultSpeechBubble: 読み込んだテキスト = 「{textToDisplay}」");
 
         if (string.IsNullOrEmpty(textToDisplay))
@@ -98,8 +97,10 @@ public class ResultSpeechBubbleController : MonoBehaviour
 
     private IEnumerator TypewriterRoutine(string fullText)
     {
-        // コントローラーへの参照を使う（GetComponentInChildrenはもう使わない）
+        // コントローラーへの参照を使う（GetComponentInChildrenは使わない）
         if (currentBubbleController == null) yield break;
+
+        fullText = fullText.Replace("<br>", "\n");
 
         string currentText = "";
 
@@ -107,7 +108,6 @@ public class ResultSpeechBubbleController : MonoBehaviour
         {
             currentText += letter;
 
-            // ▼▼▼ 追加したSetTextメソッドを使って安全に更新 ▼▼▼
             currentBubbleController.SetText(currentText);
 
             // SE再生

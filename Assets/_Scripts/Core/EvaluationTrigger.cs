@@ -26,61 +26,64 @@ public class EvaluationTrigger : MonoBehaviour
     public float fadeDuration = 2.0f;
 
     [Header("エンディング演出 (Endings)")]
-    [Tooltip("【バッド】神の手によって潰される演出のルートオブジェクト")]
-    public GameObject endingCrushedRoot;
-    [Tooltip("【中立】初期化される演出のルートオブジェクト")]
-    public GameObject endingInitRoot;
-    [Tooltip("【グッド】会話後に本を読み始める演出のルートオブジェクト")]
-    public GameObject endingBookRoot;
+    [Tooltip("【最高】本を読み始める演出（旧Goodを昇格）")]
+    public GameObject endingBestRoot; // 元 endingBookRoot
 
-    [Header("評価基準")]
-    [Tooltip("グッド演出（本を読む）が発生する最低スコア")]
-    public int scoreThresholdForGood = 8;
-    [Tooltip("バッド演出（潰される）が発生してしまうスコア以下")]
+    [Tooltip("【良好】新しいGood演出（これから作るもの）")]
+    public GameObject endingGoodRoot; // ★新規追加
+
+    [Tooltip("【普通】初期化される演出")]
+    public GameObject endingInitRoot;
+
+    [Tooltip("【最悪】神の手によって潰される演出")]
+    public GameObject endingCrushedRoot;
+
+    [Header("評価基準 (Thresholds)")]
+    [Tooltip("【最高】本読みエンドになる最低スコア")]
+    public int scoreThresholdForBest = 10;
+    [Tooltip("【良好】新Goodエンドになる最低スコア")]
+    public int scoreThresholdForGood = 7;
+    [Tooltip("【最悪】神の手エンドになるスコア以下")]
     public int scoreThresholdForBad = 3;
 
     [Header("Bad End 設定")]
-    [Tooltip("再生するダイアログのInkファイル")]
     public TextAsset badEndInk;
-    [Tooltip("神の手のアニメーター（Ending_Bad_Crushedの子要素に配置）")]
     public Animator handAnimator;
-    [Tooltip("破壊されるNPCのアニメーター")]
     public Animator crushedNpcAnimator;
-    [Tooltip("警報音のSE")]
     public AudioClip alarmSound;
-    [Range(0f, 1f)]
-    public float alarmVolume = 1.0f;
-    [Tooltip("破壊音（潰した時の音）")]
+    [Range(0f, 1f)] public float alarmVolume = 1.0f;
     public AudioClip crushSound;
-    [Range(0f, 1f)]
-    public float crushVolume = 1.0f;
-    [Tooltip("神の手アニメーションの再生待ち時間（秒）")]
+    [Range(0f, 1f)] public float crushVolume = 1.0f;
     public float handAnimationDuration = 2.0f;
 
-    [Header("Good End 設定")]
-    [Tooltip("会話用のInkファイル")]
-    public TextAsset goodEndInk;
-    [Tooltip("吹き出し制御スクリプト（Ending_Good_Book内のNPCにアタッチしたもの）")]
-    public ResultSpeechBubbleController goodEndBubbleController;
-    [Tooltip("本を読むアニメーター")]
-    public Animator bookReadAnimator;
-
     [Header("Normal End 設定")]
-    [Tooltip("システムメッセージ用のInkファイル")]
     public TextAsset normalEndSystemInk;
-    [Tooltip("NPCのセリフ用のInkファイル")]
     public TextAsset normalEndWakeUpInk;
-    [Tooltip("NormalEnd演出用のアニメーター（Ending_Init_Root内のNPC）")]
     public Animator normalEndAnimator;
-    [Tooltip("NPCにつけた吹き出し制御スクリプト")]
     public ResultSpeechBubbleController normalEndBubbleController;
-    [Tooltip("初期化時の電子音SE")]
     public AudioClip initSound;
-    [Range(0f, 1f)]
-    public float initVolume = 1.0f;
+    [Range(0f, 1f)] public float initVolume = 1.0f;
+    public float initDuration = 3.0f;
+
+    [Header("Good End 設定 (New)")]
+    public TextAsset goodEndInk;
+    public Animator goodEndAnimator;
+    public ResultSpeechBubbleController goodEndBubbleController;
+
+    [Header("Best End 設定 (Book)")]
+    public TextAsset bestEndInk;
+    public ResultSpeechBubbleController bestEndBubbleController;
+    public Animator bestEndAnimator;
+    [Tooltip("読み込み演出を表示するパネル")]
+    public GameObject bestEndLoadingPanel;
+    [Tooltip("進捗を表示するスライダー")]
+    public UnityEngine.UI.Slider bestEndLoadingSlider;
+    [Tooltip("読み込みにかかる時間（秒）")]
+    public float bestEndLoadingDuration = 2.0f;
+    public AudioClip metamorphoseSound;
+    [Range(0f, 1f)] public float metamorphoseVolume = 1.0f;
 
     [Header("遷移設定")]
-    [Tooltip("全ての演出終了後に遷移するシーン名")]
     public string nextSceneName = "P1&P2";
 
     /// <summary>
@@ -172,115 +175,189 @@ public class EvaluationTrigger : MonoBehaviour
     }
 
     /// <summary>
-    /// スコアに応じて4パターンの演出を分岐再生し、フェードアウトして遷移する
+    /// スコアに応じたエンディング演出（Best/Good/Bad/Normal）を再生し、
+    /// 最後に画面をフェードアウトさせて次のシーンへ遷移させるコルーチン。
     /// </summary>
     private IEnumerator PlayPostResultSequence()
     {
-        // 1. まず画面を明るく戻す
+        // ---------------------------------------------------------
+        // 1. 演出開始前の準備
+        // ---------------------------------------------------------
+
+        // 画面が暗転したままになっているため、まずは明るく戻して演出が見えるようにする
         if (screenEffectsController != null)
         {
             screenEffectsController.TriggerTvOn();
         }
 
-        // パネルが消える一瞬の間
+        // 画面が明るくなる演出（フェードなど）が終わるのを少し待つ
         yield return new WaitForSeconds(0.5f);
 
-        // 入力は無効化しておく
+        // 演出中にプレイヤーが余計な操作をしないよう、入力を無効化する
         if (GameManager.Instance != null) GameManager.Instance.SetInputEnabled(false);
 
+        // 現在のスコアを取得する
         int score = 0;
         if (GameManager.Instance != null) score = GameManager.Instance.correctPlacementCount;
 
+        // ---------------------------------------------------------
+        // 2. エンディング演出の分岐再生
+        // ---------------------------------------------------------
         GameObject targetEnding = null;
 
-        // --- 演出分岐 ---
-
-        // 1. BAD ENDING (Crushed)
-        if (score <= scoreThresholdForBad)
+        // --- ケース1: 最高のエンディング (BEST ENDING) ---
+        // 条件: スコアが「最高」の閾値以上であること
+        if (score >= scoreThresholdForBest)
         {
-            Debug.Log($"Score: {score} -> BAD ENDING (Crushed)");
-            targetEnding = endingCrushedRoot;
+            Debug.Log($"Score: {score} -> BEST ENDING (Book)");
 
-            // ルートオブジェクトを表示
+            // 演出用の親オブジェクトを表示
+            targetEnding = endingBestRoot;
             if (targetEnding != null) targetEnding.SetActive(true);
 
-            // A. ダイアログ再生
+            if (bestEndLoadingPanel != null && bestEndLoadingSlider != null)
+            {
+                // パネルを表示し、数値をリセット
+                bestEndLoadingPanel.SetActive(true);
+                bestEndLoadingSlider.value = 0f;
+
+                // 0% -> 100% (0.0 -> 1.0) へアニメーション
+                float loadTimer = 0f;
+                while (loadTimer < bestEndLoadingDuration)
+                {
+                    loadTimer += Time.deltaTime;
+                    // 0〜1の範囲で値を更新
+                    bestEndLoadingSlider.value = Mathf.Clamp01(loadTimer / bestEndLoadingDuration);
+                    yield return null;
+                }
+
+                // 確実に100%にする
+                bestEndLoadingSlider.value = 1.0f;
+
+                // 100%になった後、一拍置く（0.5秒）
+                yield return new WaitForSeconds(0.5f);
+
+                if (bestEndAnimator != null)
+                {
+                    bestEndAnimator.SetTrigger("Metamorphose");
+                }
+
+                yield return new WaitForSeconds(1.0f);
+
+                // パネルを非表示にする
+                bestEndLoadingPanel.SetActive(false);
+            }
+
+            if (screenEffectsController != null && metamorphoseSound != null)
+                screenEffectsController.GetComponent<AudioSource>().PlayOneShot(metamorphoseSound, metamorphoseVolume);
+
+            // A. NPCのセリフ（吹き出し）を表示
+            if (bestEndBubbleController != null && bestEndInk != null)
+            {
+                // 吹き出しを表示し、3秒間待機する
+                yield return StartCoroutine(bestEndBubbleController.PlaySpeechSequence(bestEndInk, 3.0f));
+            }
+
+            // B. 本を読むアニメーションを開始
+            if (bestEndAnimator != null)
+            {
+                bestEndAnimator.SetTrigger("Book");
+            }
+
+            // 読書している姿を見せるための余韻（4秒）
+            yield return new WaitForSeconds(4.0f);
+        }
+
+        // --- ケース2: 良好なエンディング (GOOD ENDING) ---
+        // 条件: 最高ではないが、「良好」の閾値以上であること
+        else if (score >= scoreThresholdForGood)
+        {
+            Debug.Log($"Score: {score} -> GOOD ENDING (New)");
+
+            if (goodEndAnimator != null)
+            {
+                goodEndAnimator.SetTrigger("Metamorphose");
+            }
+
+            targetEnding = endingGoodRoot;
+            if (targetEnding != null) targetEnding.SetActive(true);
+
+            yield return new WaitForSeconds(1.0f);
+
+            // A. NPCのセリフ（吹き出し）を表示
+            if (goodEndBubbleController != null && goodEndInk != null)
+            {
+                // Inkファイルを再生し、読み終わってから2秒間待機する
+                yield return StartCoroutine(goodEndBubbleController.PlaySpeechSequence(goodEndInk, 2.0f));
+            }
+            else
+            {
+                // 設定がない場合の保険として少し待つ
+                yield return new WaitForSeconds(3.0f);
+            }
+        }
+
+        // --- ケース3: 最悪のエンディング (BAD ENDING) ---
+        // 条件: スコアが「最悪」の閾値以下であること
+        else if (score <= scoreThresholdForBad)
+        {
+            Debug.Log($"Score: {score} -> BAD ENDING (Crushed)");
+
+            targetEnding = endingCrushedRoot;
+            if (targetEnding != null) targetEnding.SetActive(true);
+
+            // A. 警告メッセージ（ダイアログ）の表示
             if (badEndInk != null)
             {
                 var dm = DialogueManager.GetInstance();
                 dm.EnterDialogueMode(badEndInk);
 
-                // 文字が出終わるまで待つ
+                // 文字が表示されきるのを待つ
                 yield return new WaitUntil(() => dm.canContinueToNextLine);
 
                 // 読み終わる余韻（2秒）
                 yield return new WaitForSeconds(2.0f);
 
-                // クリックの代わりにコードから進める
+                // プレイヤーのクリックを待たず、強制的に会話を進めて閉じる
                 dm.AdvanceDialogue();
-
-                // 終了待ち
                 yield return new WaitUntil(() => dm.dialogueIsPlaying == false);
             }
 
             yield return new WaitForSeconds(1f);
 
-            // B. 警報音再生
+            // B. 警報音の再生
             if (screenEffectsController != null && alarmSound != null)
-            {
                 screenEffectsController.GetComponent<AudioSource>().PlayOneShot(alarmSound, alarmVolume);
-            }
 
             yield return new WaitForSeconds(1.5f);
 
-            // C. 神の手アニメーション再生
+            // C. 「神の手」による破壊演出
             if (handAnimator != null)
             {
-                handAnimator.SetTrigger("Kill");
+                handAnimator.SetTrigger("Kill"); // 手が下りてくるアニメーション
 
+                // 手が接触するタイミングに合わせて破壊音と破壊アニメを再生
                 yield return new WaitForSeconds(0.2f);
                 if (crushSound != null)
                 {
                     screenEffectsController.GetComponent<AudioSource>().PlayOneShot(crushSound, crushVolume);
-
-                    crushedNpcAnimator.SetTrigger("Die");
+                    if (crushedNpcAnimator != null) crushedNpcAnimator.SetTrigger("Die");
                 }
             }
-
-            // アニメーションが終わるまで待機
+            // アニメーションが完了するまで待機
             yield return new WaitForSeconds(handAnimationDuration);
         }
-        // メソッド内の分岐（Good End）
-        else if (score >= scoreThresholdForGood)
-        {
-            Debug.Log($"Score: {score} -> GOOD ENDING (Book)");
-            targetEnding = endingBookRoot;
-            if (targetEnding != null) targetEnding.SetActive(true);
 
-            // 1. 吹き出し会話を再生（待機する）
-            if (goodEndBubbleController != null && goodEndInk != null)
-            {
-                // 3秒間表示したままにする
-                yield return StartCoroutine(goodEndBubbleController.PlaySpeechSequence(goodEndInk, 3.0f));
-            }
-
-            // 2. 本を読むアニメーション開始
-            if (bookReadAnimator != null)
-            {
-                bookReadAnimator.SetTrigger("Book");
-            }
-
-            // 読書シーンを少し見せる
-            yield return new WaitForSeconds(4.0f);
-        }
-        // 3. NORMAL ENDING (Initialize)
-        else if (endingInitRoot != null)
+        // --- ケース4: 普通のエンディング (NORMAL ENDING) ---
+        // 条件: 上記のいずれにも当てはまらない場合（BadとGoodの中間のスコア）
+        else
         {
             Debug.Log($"Score: {score} -> NORMAL ENDING (Initialize)");
+
             targetEnding = endingInitRoot;
             if (targetEnding != null) targetEnding.SetActive(true);
 
-            // A. システムメッセージ再生（ダイアログ）
+            // A. 初期化を告げるシステムメッセージ（ダイアログ）
             if (normalEndSystemInk != null)
             {
                 var dm = DialogueManager.GetInstance();
@@ -289,67 +366,61 @@ public class EvaluationTrigger : MonoBehaviour
                 // 読み上げ待ち（文字数に応じて調整）
                 yield return new WaitForSeconds(4.0f);
 
-                // 自動送り
+                // 強制進行
                 dm.AdvanceDialogue();
                 yield return new WaitUntil(() => dm.dialogueIsPlaying == false);
             }
 
             yield return new WaitForSeconds(0.5f);
 
-            // B. 電子音 ＆ 倒れるアニメーション
+            // B. 初期化音 ＆ 倒れる演出
             if (screenEffectsController != null && initSound != null)
-            {
                 screenEffectsController.GetComponent<AudioSource>().PlayOneShot(initSound, initVolume);
-            }
 
-            if (normalEndAnimator != null)
-            {
-                normalEndAnimator.SetTrigger("Init"); // 倒れるトリガー
-            }
+            if (normalEndAnimator != null) normalEndAnimator.SetTrigger("Init");
 
-            // 起き上がりモーション待ち
-            yield return new WaitForSeconds(2.0f);
+            // 倒れている間の待機
+            yield return new WaitForSeconds(initDuration); // ここで倒れている時間を調整可能
 
-            // D. NPCのセリフ（吹き出し）
+            // D. NPCのセリフ（記憶喪失を示唆する吹き出し）
             if (normalEndBubbleController != null && normalEndWakeUpInk != null)
             {
                 yield return StartCoroutine(normalEndBubbleController.PlaySpeechSequence(normalEndWakeUpInk, 3.0f));
             }
         }
-        // 4. NORMAL ENDING B
-        else
-        {
-            // ... (そのまま)
-            targetEnding = null;
-            yield return new WaitForSeconds(2.0f);
-        }
 
-        // --- フェードアウト処理 ---
+        // ---------------------------------------------------------
+        // 3. 終了処理とシーン遷移
+        // ---------------------------------------------------------
+
         Debug.Log("フェードアウト開始...");
 
+        // 画面を徐々に暗くする（フェードアウト）
         if (fadeOutImage != null)
         {
             fadeOutImage.gameObject.SetActive(true);
-            fadeOutImage.color = new Color(0, 0, 0, 0);
+            fadeOutImage.color = new Color(0, 0, 0, 0); // 透明からスタート
 
             float timer = 0f;
             while (timer < fadeDuration)
             {
                 float alpha = timer / fadeDuration;
-                fadeOutImage.color = new Color(0, 0, 0, alpha);
+                fadeOutImage.color = new Color(0, 0, 0, alpha); // 徐々に黒く
                 timer += Time.deltaTime;
                 yield return null;
             }
-            fadeOutImage.color = new Color(0, 0, 0, 1);
+            fadeOutImage.color = new Color(0, 0, 0, 1); // 完全に真っ黒にする
         }
 
         Debug.Log("全シーケンス終了。遷移します。");
 
+        // 日付を進める（Day1 -> Day2）
         if (GameManager.Instance != null)
         {
             GameManager.Instance.AdvanceDay();
         }
 
+        // 次のシーン（タイトルや次の日のシーンなど）へロード
         SceneManager.LoadScene(nextSceneName);
     }
 }

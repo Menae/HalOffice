@@ -10,14 +10,14 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: c6080d36db368f04aa7827256c3e1044, type: 3}
-  m_Name: Books
+  m_Name: Poster
   m_EditorClassIdentifier: 
-  itemName: Books
-  itemType: 4
-  itemPrefab: {fileID: 673298669640621318, guid: 3ba2206bcfa0a314c9021357da07fc1c, type: 3}
+  itemName: Poster
+  itemType: 13
+  itemPrefab: {fileID: 47273930053212805, guid: c355f200b2ae05145b217333d66c49b0, type: 3}
   highlightSprite: {fileID: 21300000, guid: 64767fcf19dc94028ad51496cc0873c9, type: 3}
-  highlightOffset: {x: -1, y: 0}
-  highlightScale: {x: 1.2, y: 1.2}
-  descriptionInk: {fileID: 4900000, guid: 8eb392037db530941b0a5a4c50d07ed5, type: 3}
+  highlightOffset: {x: 3, y: -1}
+  highlightScale: {x: 1.1, y: 1.3}
+  descriptionInk: {fileID: 4900000, guid: ec24aba9b057c3540b8b3a4c8ca9b8da, type: 3}
   missingReactionInk: {fileID: 0}
-  placedReactionInk: {fileID: 4900000, guid: 5eb6376f9ed844a46a2c3f5a8f419679, type: 3}
+  placedReactionInk: {fileID: 4900000, guid: 8e66e3aa74d948f44b7b3e1a8749c217, type: 3}

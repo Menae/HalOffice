@@ -23,12 +23,13 @@ public class ObjectSlot
     /// </summary>
     public bool CanAccept(ItemType typeToCheck)
     {
-        // 許可リストが空の場合、どんなアイテムでも受け入れる（従来の挙動）
+        // リストが null または 要素数が 0 の場合は、無条件で許可(true)を返す
         if (allowedItemTypes == null || allowedItemTypes.Count == 0)
         {
             return true;
         }
-        // 許可リストに、チェックしたいアイテムの種類が含まれているか返す
+
+        // リストに要素がある場合のみ、含まれているかチェックする
         return allowedItemTypes.Contains(typeToCheck);
     }
 

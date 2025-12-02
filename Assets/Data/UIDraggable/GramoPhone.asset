@@ -15,6 +15,9 @@ MonoBehaviour:
   itemName: Gramophone
   itemType: 6
   itemPrefab: {fileID: 7706209518738731401, guid: fb4e1ef299fc6964db6b8a6a060b10bf, type: 3}
+  highlightSprite: {fileID: 21300000, guid: a37487e9b33da42e6b9e9ed04835d65a, type: 3}
+  highlightOffset: {x: -5, y: 0}
+  highlightScale: {x: 1.3, y: 1.1}
   descriptionInk: {fileID: 4900000, guid: 2a218284728b8fb4ca89b0f395acb0a3, type: 3}
   missingReactionInk: {fileID: 0}
   placedReactionInk: {fileID: 4900000, guid: 26cb5753d15c5604f819c494ab8deca9, type: 3}

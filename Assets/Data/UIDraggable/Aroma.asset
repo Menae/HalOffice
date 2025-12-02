@@ -10,14 +10,14 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: c6080d36db368f04aa7827256c3e1044, type: 3}
-  m_Name: Books
+  m_Name: Aroma
   m_EditorClassIdentifier: 
-  itemName: Books
-  itemType: 4
-  itemPrefab: {fileID: 673298669640621318, guid: 3ba2206bcfa0a314c9021357da07fc1c, type: 3}
-  highlightSprite: {fileID: 21300000, guid: 64767fcf19dc94028ad51496cc0873c9, type: 3}
-  highlightOffset: {x: -1, y: 0}
+  itemName: Aroma
+  itemType: 10
+  itemPrefab: {fileID: 5226260021507015456, guid: ee13f48dc1e64824d86391f43164ccad, type: 3}
+  highlightSprite: {fileID: 21300000, guid: ec148beb40503f14b9d9f4e19c56f63d, type: 3}
+  highlightOffset: {x: 1, y: 1}
   highlightScale: {x: 1.2, y: 1.2}
-  descriptionInk: {fileID: 4900000, guid: 8eb392037db530941b0a5a4c50d07ed5, type: 3}
+  descriptionInk: {fileID: 4900000, guid: 47b311f84ad28e84793e36607c0a85b0, type: 3}
   missingReactionInk: {fileID: 0}
-  placedReactionInk: {fileID: 4900000, guid: 5eb6376f9ed844a46a2c3f5a8f419679, type: 3}
+  placedReactionInk: {fileID: 4900000, guid: 6e9c12d0b4dd6c840b3967f65600e790, type: 3}

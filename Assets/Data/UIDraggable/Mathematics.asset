@@ -15,6 +15,9 @@ MonoBehaviour:
   itemName: Mathematics
   itemType: 7
   itemPrefab: {fileID: 1395547997045428716, guid: 95e7c3fe2e999244c8a40ed1cf9b9b10, type: 3}
+  highlightSprite: {fileID: 21300000, guid: c4c0b955168cd4c98b891b56997a23e2, type: 3}
+  highlightOffset: {x: -1.5, y: 2}
+  highlightScale: {x: 1.5, y: 1.2}
   descriptionInk: {fileID: 4900000, guid: 8de1afd591967884c92e963f7dff99e3, type: 3}
   missingReactionInk: {fileID: 0}
   placedReactionInk: {fileID: 4900000, guid: 586ce5fff6e63af44adf7dacd71096d3, type: 3}

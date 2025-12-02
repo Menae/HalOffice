@@ -15,6 +15,9 @@ MonoBehaviour:
   itemName: OfficeChair
   itemType: 5
   itemPrefab: {fileID: 5226260021507015456, guid: 5caba9153ee3cf443abc74fc8450b1e8, type: 3}
+  highlightSprite: {fileID: 21300000, guid: f302782a25a314091b1dcbae4033deed, type: 3}
+  highlightOffset: {x: 2, y: 0}
+  highlightScale: {x: 1.4, y: 1.2}
   descriptionInk: {fileID: 4900000, guid: 8eb090200a5ac8f4080321b95574326c, type: 3}
   missingReactionInk: {fileID: 0}
   placedReactionInk: {fileID: 4900000, guid: c23498e565c0b55408f04ccc198f75b0, type: 3}

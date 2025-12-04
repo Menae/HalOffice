@@ -5139,7 +5139,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c83ffac5c6f061c4b95da6756715c265, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  enableDebugMode: 1
+  enableDebugMode: 0
   debugScore: 0
   evaluationUIPanel: {fileID: 121705566}
   bootAnimationTrigger: BOOT
@@ -5148,7 +5148,7 @@ MonoBehaviour:
   - minScore: 0
     scaleAnimationTrigger: 0
     resultInkFile: {fileID: 4900000, guid: 15d2a883376ce7d47b79d92ad3c39511, type: 3}
-  - minScore: 1
+  - minScore: 2
     scaleAnimationTrigger: 1
     resultInkFile: {fileID: 4900000, guid: e5a02c2ef36315449a9a52945a5b2f74, type: 3}
   - minScore: 5

@@ -117,6 +117,35 @@ public class ScreenEffectsController : MonoBehaviour
         effect30Coroutine = null;
     }
 
+    /// <summary>
+    /// 外部からグリッチエフェクトを一瞬だけ発生させる（コルーチン）
+    /// </summary>
+    /// <param name="duration">グリッチの持続時間</param>
+    public IEnumerator TriggerGlitchBurstRoutine(float duration)
+    {
+        // 音を鳴らす（もし専用の音があればそれを、なければ既存のGlitch音を）
+        if (audioSource != null && glitchSoundClip != null)
+        {
+            audioSource.PlayOneShot(glitchSoundClip, glitchVolumeScale);
+        }
+
+        // グリッチON
+        if (glitchController != null)
+        {
+            glitchController.noiseAmount = 80f;
+            glitchController.glitchStrength = 750f;
+        }
+
+        yield return new WaitForSeconds(duration);
+
+        // グリッチOFF
+        if (glitchController != null)
+        {
+            glitchController.noiseAmount = 0f;
+            glitchController.glitchStrength = 0f;
+        }
+    }
+
     // TVオフ演出のメソッド
     public void TriggerTvOff()
     {

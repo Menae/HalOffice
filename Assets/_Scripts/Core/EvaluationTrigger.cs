@@ -337,7 +337,7 @@ public class EvaluationTrigger : MonoBehaviour
                 handAnimator.SetTrigger("Kill"); // 手が下りてくるアニメーション
 
                 // 手が接触するタイミングに合わせて破壊音と破壊アニメを再生
-                yield return new WaitForSeconds(0.2f);
+                yield return new WaitForSeconds(0.1f);
                 if (crushSound != null)
                 {
                     screenEffectsController.GetComponent<AudioSource>().PlayOneShot(crushSound, crushVolume);
@@ -349,7 +349,6 @@ public class EvaluationTrigger : MonoBehaviour
         }
 
         // --- ケース4: 普通のエンディング (NORMAL ENDING) ---
-        // 条件: 上記のいずれにも当てはまらない場合（BadとGoodの中間のスコア）
         else
         {
             Debug.Log($"Score: {score} -> NORMAL ENDING (Initialize)");
@@ -357,30 +356,33 @@ public class EvaluationTrigger : MonoBehaviour
             targetEnding = endingInitRoot;
             if (targetEnding != null) targetEnding.SetActive(true);
 
-            // A. 初期化を告げるシステムメッセージ（ダイアログ）
+            // A. システムメッセージ再生
             if (normalEndSystemInk != null)
             {
                 var dm = DialogueManager.GetInstance();
                 dm.EnterDialogueMode(normalEndSystemInk);
-
-                // 読み上げ待ち（文字数に応じて調整）
                 yield return new WaitForSeconds(4.0f);
-
-                // 強制進行
                 dm.AdvanceDialogue();
                 yield return new WaitUntil(() => dm.dialogueIsPlaying == false);
             }
 
             yield return new WaitForSeconds(0.5f);
 
-            // B. 初期化音 ＆ 倒れる演出
-            if (screenEffectsController != null && initSound != null)
-                screenEffectsController.GetComponent<AudioSource>().PlayOneShot(initSound, initVolume);
+            // B. 初期化音 ＆ 倒れる演出 ＆ グリッチ演出
+            if (screenEffectsController != null)
+            {
+                // SE再生
+                if (initSound != null)
+                    screenEffectsController.GetComponent<AudioSource>().PlayOneShot(initSound, initVolume);
+
+                // 一瞬だけグリッチさせる（0.5秒間）
+                StartCoroutine(screenEffectsController.TriggerGlitchBurstRoutine(0.5f));
+            }
 
             if (normalEndAnimator != null) normalEndAnimator.SetTrigger("Init");
 
             // 倒れている間の待機
-            yield return new WaitForSeconds(initDuration); // ここで倒れている時間を調整可能
+            yield return new WaitForSeconds(initDuration);
 
             // D. NPCのセリフ（記憶喪失を示唆する吹き出し）
             if (normalEndBubbleController != null && normalEndWakeUpInk != null)

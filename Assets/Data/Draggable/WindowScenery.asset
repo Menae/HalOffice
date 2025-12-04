@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: WindowScenery
   m_EditorClassIdentifier: 
   itemName: WindowScenery
-  itemType: 2
+  itemType: 1
   itemPrefab: {fileID: 7874761534678376013, guid: a1439ed6201a7174da62c1f846754f9a, type: 3}
   highlightSprite: {fileID: 21300000, guid: f252f5eded2ae4364af9e1ec33da6e64, type: 3}
   highlightOffset: {x: -5, y: 10}

@@ -47,7 +47,7 @@ AI の違和感は可視化されている、よく⾒ておくように 。
 # highlight: Right
 # prefab: left
 # speaker: Boss
-右に記されているのがAIの調整方針だ。これに沿うように作業してくれ。
+右に記されているのがAIのプロフィールやゴミ箱などのユーティリティだ。
 
 # highlight: Left
 # prefab: left
@@ -60,7 +60,7 @@ AI の違和感は可視化されている、よく⾒ておくように 。
 
 # prefab: left
 # speaker: Boss
-環境は人格を形作る。部屋を変えることで、AIの特性を調整するんだ。
+環境は人格を形作る。部屋を変えることで、AIの特性を調整するんだ。下部に調整方針なども書かれているぞ。
 
 # prefab: right
 # speaker: Player
@@ -75,7 +75,6 @@ AI の違和感は可視化されている、よく⾒ておくように 。
 # speaker: Boss
 # wait_for_drag
 表示されたウィンドウにあるオブジェクトを掴んで、スロットまでドラッグして配置してみろ。
-// ↑ ここでプレイヤーが配置を完了するまで会話が止まります
 
 # prefab: left
 # speaker: Boss
@@ -140,6 +139,10 @@ AI の違和感は可視化されている、よく⾒ておくように 。
 # prefab: left
 # speaker: Boss
 作業を終了したいときは左下のボタンで完了するんだ。
+
+# prefab: left
+# speaker: Boss
+17時までは作業を完了しろよ。遅い仕事は全体の効率に影響するからな。時計は右下だ。
 
 # prefab: left
 # speaker: Boss

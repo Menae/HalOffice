@@ -397,7 +397,7 @@ public class StartupSequenceManager : MonoBehaviour
             }
         }
 
-        // 【修正点】全ての命令を出し終えた後で、走っているコルーチンが全部終わるのを待つ
+        // 全ての命令を出し終えた後で、走っているコルーチンが全部終わるのを待つ
         foreach (var c in activeCoroutines)
         {
             if (c != null) yield return c;
@@ -407,50 +407,47 @@ public class StartupSequenceManager : MonoBehaviour
         openingDialogueManager.SetIsPlayingEffect(false);
     }
 
-    /// <summary>
-    /// リストからアクターを探し、目的地まで移動させる (Canvas UI版)
-    /// </summary>
     private IEnumerator MoveCharacterRoutine(string actorName, string locationName)
     {
-        // 1. リストから名前でアクターと場所を探す
+        // 1. 検索とチェック
         MovieActor actor = movieActors.Find(a => a.actorName == actorName);
         MovieLocation location = movieLocations.Find(l => l.locationName == locationName);
 
-        // 2. 対象の存在チェック
-        if (actor == null || actor.actorTransform == null || actor.actorAnimator == null)
-        {
-            Debug.LogError($"MoveCharacterRoutine: Actor '{actorName}' or its components not found in list.");
-            yield break; // 処理を中断
-        }
-        if (location == null || location.locationTransform == null)
-        {
-            Debug.LogError($"MoveCharacterRoutine: Location '{locationName}' not found in list.");
-            yield break; // 処理を中断
-        }
+        if (actor == null || actor.actorTransform == null || actor.actorAnimator == null) yield break;
+        if (location == null || location.locationTransform == null) yield break;
 
         RectTransform character = actor.actorTransform;
         Animator charAnimator = actor.actorAnimator;
-        // 目的地（location）の RectTransform から anchoredPosition (2D座標) を取得
-        Vector2 destination = location.locationTransform.anchoredPosition;
 
-        // 3. 移動処理
-        Debug.Log($"{actorName}が{locationName}へ移動開始。");
-        charAnimator.SetBool("IsWalking", true); // "IsWalking" はAnimator側のパラメータ名
+        // 目標のX座標を取得（Yは現在の高さを維持）
+        float targetX = location.locationTransform.anchoredPosition.x;
+        // 到着とみなす距離（ピクセル）
+        float threshold = 1.0f;
 
-        // 目的の2D座標に着くまで、毎フレーム少しずつ動かす
-        while (Vector2.Distance(character.anchoredPosition, destination) > 0.1f)
+        Debug.Log($"{actorName}が{locationName}へ移動開始(Xのみ)。");
+        charAnimator.SetBool("IsWalking", true);
+
+        // X座標の差が閾値より大きい間はループする
+        while (Mathf.Abs(character.anchoredPosition.x - targetX) > threshold)
         {
+            // X座標だけ動かすターゲットを作成
+            Vector2 currentPos = character.anchoredPosition;
+            Vector2 targetPos = new Vector2(targetX, currentPos.y);
+
             character.anchoredPosition = Vector2.MoveTowards(
-                character.anchoredPosition,
-                destination,
-                movieMoveSpeed * Time.deltaTime // ◀ UIの場合は速度を 200 や 300 など大きくする必要があるかも
+                currentPos,
+                targetPos,
+                movieMoveSpeed * Time.deltaTime
             );
-            yield return null; // 1フレーム待つ
+            yield return null;
         }
 
-        // 4. 到着処理
-        character.anchoredPosition = destination; // 座標をジャストに合わせる
-        charAnimator.SetBool("IsWalking", false); // 歩きアニメを停止
+        // 4. 到着処理（ズレを補正して停止）
+        Vector2 finalPos = character.anchoredPosition;
+        finalPos.x = targetX;
+        character.anchoredPosition = finalPos;
+
+        charAnimator.SetBool("IsWalking", false);
         Debug.Log($"{actorName}が{locationName}へ移動完了。");
     }
 

@@ -496,8 +496,8 @@ public class DragDropManager : MonoBehaviour
                 if (audioSource != null && trashSound != null)
                     audioSource.PlayOneShot(trashSound, trashVolume);
 
-                // UI上のダミーアイテムを使用済みにする（非表示にする等）
-                currentUIDraggable.MarkAsUsed(); // または gameObject.SetActive(false) でも可
+                // UI上のダミーアイテムを使用済みにする
+                currentUIDraggable.MarkAsUsed();
 
                 // 成功イベント発火
                 OnItemTrashed?.Invoke();
@@ -524,7 +524,12 @@ public class DragDropManager : MonoBehaviour
         if (targetZone.zoneType != DropZone.ZoneType.GameSlot) return;
 
         ObjectSlot slot = targetZone.associatedSlot;
-        if (slot == null || slot.IsOccupied()) return;
+
+        // 「スロットがない」OR「埋まっている」OR「このアイテムタイプを許可していない」場合はリターン
+        if (slot == null || slot.IsOccupied() || !slot.CanAccept(currentUIDraggable.itemData.itemType))
+        {
+            return;
+        }
 
         if (currentUIDraggable.itemData == null || currentUIDraggable.itemData.itemPrefab == null)
         {

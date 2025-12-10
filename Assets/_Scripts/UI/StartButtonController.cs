@@ -1,6 +1,6 @@
+﻿using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
-using System.Collections;
 
 [RequireComponent(typeof(Button))]
 public class StartButtonController : MonoBehaviour

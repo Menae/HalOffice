@@ -29,21 +29,21 @@ public class InputBridge : MonoBehaviour, IPointerClickHandler, IBeginDragHandle
     }
 
     // ② ドラッグが開始された瞬間の処理
-public void OnBeginDrag(PointerEventData eventData)
-{
-    if (eventData.button != PointerEventData.InputButton.Left) return;
-
-    // マウスが最初に押されたオブジェクト（pointerPress）にUIDraggableがあるかチェック
-    if (eventData.pointerPress != null && eventData.pointerPress.GetComponent<UIDraggable>() != null)
+    public void OnBeginDrag(PointerEventData eventData)
     {
-        // あった場合、それはUIアイコンのドラッグなので、InputBridgeは何もしない
-        return;
-    }
+        if (eventData.button != PointerEventData.InputButton.Left) return;
 
-    // UIアイコン上でなければ、通常通りゲーム世界のオブジェクトを探してドラッグを開始する
-    Draggable draggedDraggable = FindDraggable(eventData);
-    DragDropManager.Instance.HandleBeginDrag(draggedDraggable, eventData);
-}
+        // マウスが最初に押されたオブジェクト（pointerPress）にUIDraggableがあるかチェック
+        if (eventData.pointerPress != null && eventData.pointerPress.GetComponent<UIDraggable>() != null)
+        {
+            // あった場合、それはUIアイコンのドラッグなので、InputBridgeは何もしない
+            return;
+        }
+
+        // UIアイコン上でなければ、通常通りゲーム世界のオブジェクトを探してドラッグを開始する
+        Draggable draggedDraggable = FindDraggable(eventData);
+        DragDropManager.Instance.HandleBeginDrag(draggedDraggable, eventData);
+    }
 
     // ③ ドラッグ中の処理
     public void OnDrag(PointerEventData eventData)

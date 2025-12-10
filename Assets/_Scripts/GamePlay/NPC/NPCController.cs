@@ -1,8 +1,8 @@
-﻿using UnityEngine;
+﻿using Ink.Runtime;
 using System.Collections;
 using System.Collections.Generic;
+using UnityEngine;
 using UnityEngine.EventSystems;
-using Ink.Runtime;
 
 [RequireComponent(typeof(Rigidbody2D), typeof(Collider2D))]
 public class NPCController : MonoBehaviour
@@ -38,7 +38,7 @@ public class NPCController : MonoBehaviour
     [Header("通常ルーティーン設定 (Patrol)")]
     public List<Transform> pointsOfInterest;
     public float inspectDuration = 3.0f;
-    [Range(0, 100)] 
+    [Range(0, 100)]
     [Tooltip("目的地到着後、フィジェットモーションを行う確率(%)")]
     public float fidgetProbability = 20f;
 
@@ -494,7 +494,7 @@ public class NPCController : MonoBehaviour
             isCursorInView = false;
             return;
         }
-        
+
         // --- 以下は既存の視界検知ロジック（変更なし） ---
         Vector3 eyePosition = transform.TransformPoint(eyeOffset);
         Vector3 mouseWorldPos = GetMouseWorldPosition();
@@ -514,7 +514,7 @@ public class NPCController : MonoBehaviour
     private void Flip()
     {
         isFacingRight = !isFacingRight;
-        
+
         visualsTransform.localScale = new Vector3(
             Mathf.Abs(visualsTransform.localScale.x) * (isFacingRight ? 1 : -1),
             visualsTransform.localScale.y,

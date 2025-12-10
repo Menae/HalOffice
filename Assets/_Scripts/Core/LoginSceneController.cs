@@ -1,6 +1,6 @@
 ﻿// ファイル名: LoginSceneController.cs
-using UnityEngine;
 using TMPro;
+using UnityEngine;
 
 public class LoginSceneController : MonoBehaviour
 {

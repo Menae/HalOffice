@@ -1,6 +1,6 @@
-﻿using UnityEngine;
+﻿using System.Collections.Generic; //Listを使うために必要
+using UnityEngine;
 using UnityEngine.EventSystems;
-using System.Collections.Generic; //Listを使うために必要
 
 // IPointerDownHandlerを追加してクリックされたことを検知できるようにする
 public class DraggableStamp : MonoBehaviour, IPointerDownHandler

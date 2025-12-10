@@ -1,7 +1,7 @@
 ﻿using System;
+using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
-using System.Collections;
 
 [RequireComponent(typeof(AudioSource))]
 public class Day1Manager : MonoBehaviour
@@ -184,7 +184,7 @@ public class Day1Manager : MonoBehaviour
             animator.SetTrigger("fadein");
         }
     }
-    
+
     public void DismissNotificationA()
     {
         TriggerFadeOut(imageObjectA);

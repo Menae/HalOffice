@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.UI;
 
 public class ScreenToWorldConverter : MonoBehaviour
@@ -40,7 +40,7 @@ public class ScreenToWorldConverter : MonoBehaviour
 
             // カーソルがRaw Imageの範囲外なら、処理を中断
             if (uvX < 0 || uvX > 1 || uvY < 0 || uvY > 1) return false;
-            
+
             // ▼▼▼ ここからが最重要修正 ▼▼▼
             // Viewport座標からRay（光線）を生成する
             Ray ray = worldCamera.ViewportPointToRay(new Vector3(uvX, uvY, 0));

@@ -1,6 +1,6 @@
-﻿using UnityEngine;
+﻿using System.Collections; // コルーチンを扱うために必要
 using TMPro; // TextMeshProを扱うために必要
-using System.Collections; // コルーチンを扱うために必要
+using UnityEngine;
 
 /// <summary>
 /// ワールド空間（3D空間）に追従する吹き出しを管理するコンポーネント。

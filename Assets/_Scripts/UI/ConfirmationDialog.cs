@@ -1,8 +1,8 @@
 ﻿// ファイル名: ConfirmationDialog.cs
-using UnityEngine;
-using UnityEngine.UI;
-using UnityEngine.Events; // UnityActionを使用するために必要
 using TMPro;
+using UnityEngine;
+using UnityEngine.Events; // UnityActionを使用するために必要
+using UnityEngine.UI;
 
 public class ConfirmationDialog : MonoBehaviour
 {

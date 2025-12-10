@@ -1,6 +1,4 @@
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 
 // [ExecuteAlways]は必要であれば後で追加する
 public class GlitchController : MonoBehaviour

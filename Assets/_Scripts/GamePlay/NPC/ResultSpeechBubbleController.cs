@@ -1,7 +1,6 @@
-﻿using UnityEngine;
+﻿using Ink.Runtime;
 using System.Collections;
-using TMPro;
-using Ink.Runtime;
+using UnityEngine;
 
 [RequireComponent(typeof(AudioSource))]
 public class ResultSpeechBubbleController : MonoBehaviour

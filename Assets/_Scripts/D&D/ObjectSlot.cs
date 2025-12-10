@@ -1,7 +1,7 @@
 ﻿// ObjectSlot.cs
 
-using UnityEngine;
 using System.Collections.Generic; // Listを使うために必要
+using UnityEngine;
 
 [System.Serializable]
 public class ObjectSlot

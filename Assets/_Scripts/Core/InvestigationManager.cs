@@ -1,7 +1,7 @@
-﻿using System.Collections.Generic;
-using UnityEngine;
-using System;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq; // Linqを使うために必要
+using UnityEngine;
 
 public class InvestigationManager : MonoBehaviour
 {
@@ -39,7 +39,7 @@ public class InvestigationManager : MonoBehaviour
 
         // isUnlockedがtrueになっている証拠だけを抽出してリスト化する
         List<Clue> unlockedClues = allCluesInThisScene.Where(clue => clue.isUnlocked).ToList();
-        
+
         // GameManagerの「運び屋」変数に、抽出したリストを渡す
         GameManager.Instance.collectedCluesForReport = unlockedClues;
 

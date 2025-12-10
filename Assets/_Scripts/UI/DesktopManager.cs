@@ -1,9 +1,9 @@
-﻿using UnityEngine;
-using UnityEngine.UI;
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
+using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 
 /// <summary>
 /// ゲームのスタート画面（ログイン画面、デスクトップ画面）のUI遷移と、
@@ -140,7 +140,8 @@ public class DesktopManager : MonoBehaviour
                 }
                 else // それ以外のアプリ
                 {
-                    app.appIconButton.onClick.AddListener(() => {
+                    app.appIconButton.onClick.AddListener(() =>
+                    {
                         if (panelToToggle != null) panelToToggle.SetActive(true);
                         if (imageToToggle != null) imageToToggle.gameObject.SetActive(true);
                     });
@@ -154,7 +155,8 @@ public class DesktopManager : MonoBehaviour
                 {
                     if (button != null)
                     {
-                        button.onClick.AddListener(() => {
+                        button.onClick.AddListener(() =>
+                        {
                             if (panelToToggle != null) panelToToggle.SetActive(false);
                             if (imageToToggle != null) imageToToggle.gameObject.SetActive(false);
                         });
@@ -165,7 +167,8 @@ public class DesktopManager : MonoBehaviour
             if (app.sceneLoadButton != null && !string.IsNullOrEmpty(app.sceneNameToLoad))
             {
                 string sceneName = app.sceneNameToLoad;
-                app.sceneLoadButton.onClick.AddListener(() => {
+                app.sceneLoadButton.onClick.AddListener(() =>
+                {
                     var sequenceManager = FindObjectOfType<StartupSequenceManager>();
                     if (sequenceManager != null)
                     {

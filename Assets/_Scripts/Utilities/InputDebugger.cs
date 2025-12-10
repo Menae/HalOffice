@@ -1,7 +1,7 @@
-﻿using UnityEngine;
-using UnityEngine.EventSystems; // UIイベントを検知するために必要
+﻿using System.Text;              // 文字列結合を効率化するために必要
 using TMPro;                    // TextMeshProを扱うために必要
-using System.Text;              // 文字列結合を効率化するために必要
+using UnityEngine;
+using UnityEngine.EventSystems; // UIイベントを検知するために必要
 
 public class InputDebugger : MonoBehaviour, IPointerClickHandler, IBeginDragHandler, IPointerDownHandler
 {

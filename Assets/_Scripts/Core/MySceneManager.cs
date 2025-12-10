@@ -1,7 +1,7 @@
-﻿using UnityEngine;
+﻿using System.Collections; // ▼▼▼ 追加 ▼▼▼
+using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI; // ▼▼▼ 追加 ▼▼▼
-using System.Collections; // ▼▼▼ 追加 ▼▼▼
 
 public class MySceneManager : MonoBehaviour
 {

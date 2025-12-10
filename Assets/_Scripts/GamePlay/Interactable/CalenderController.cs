@@ -1,5 +1,5 @@
-﻿using UnityEngine;
-using System.Collections.Generic; //Queueを使うために必要
+﻿using System.Collections.Generic; //Queueを使うために必要
+using UnityEngine;
 
 [RequireComponent(typeof(SpriteRenderer), typeof(Collider2D))]
 public class CalendarController : MonoBehaviour

@@ -1,7 +1,7 @@
-﻿using UnityEngine;
-using TMPro;
-using Ink.Runtime;
+﻿using Ink.Runtime;
 using System.Collections; // Coroutineを使うために必要
+using TMPro;
+using UnityEngine;
 
 public class InkDialogueManager : MonoBehaviour
 {

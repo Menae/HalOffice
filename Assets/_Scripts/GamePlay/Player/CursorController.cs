@@ -47,7 +47,7 @@ public class CursorController : MonoBehaviour
     [Header("イベント発行")]
     public FloatEventChannelSO detectionIncreaseChannel;
     public float detectionIncreaseRate = 10f;
-    
+
     [Header("位置調整")]
     [Tooltip("カーソルの表示位置を微調整します (X:左右, Y:上下)")]
     public Vector2 cursorOffset;
@@ -260,7 +260,7 @@ public class CursorController : MonoBehaviour
     private Vector3 GetMouseWorldPosition()
     {
         // ScreenToWorldConverterがインスタンス化されており、かつ座標を取得できた場合
-        if (ScreenToWorldConverter.Instance != null && 
+        if (ScreenToWorldConverter.Instance != null &&
             ScreenToWorldConverter.Instance.GetWorldPosition(Input.mousePosition, out Vector3 worldPos))
         {
             // 正しいワールド座標を返す

@@ -1,6 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.EventSystems;
 
 public class HighlightScript : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
@@ -15,5 +13,5 @@ public class HighlightScript : MonoBehaviour, IPointerEnterHandler, IPointerExit
     {
         highlight.SetActive(false);
     }
-    
+
 }

@@ -212,9 +212,11 @@ public class Day1Manager : MonoBehaviour
         isTimeUp = true;
         Debug.Log("時間切れ！");
 
+        isGameActive = false;
+
         OnTimeUp?.Invoke();
 
-        evaluationTrigger.EndDayAndEvaluate();
+        //evaluationTrigger.EndDayAndEvaluate();
     }
 
     /// <summary>

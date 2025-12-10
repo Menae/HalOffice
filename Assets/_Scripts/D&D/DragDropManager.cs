@@ -6,33 +6,53 @@ using UnityEngine.UI;
 
 public class DragDropManager : MonoBehaviour
 {
+    /// <summary>
+    /// ドラッグ操作が開始されたときに発行するグローバルイベント。
+    /// UIやゲームロジックがドラッグ開始を検知するために購読する。
+    /// </summary>
     public static event Action OnDragStarted;
+
+    /// <summary>
+    /// ドラッグ操作が終了したときに発行するグローバルイベント。
+    /// UIやゲームロジックがドラッグ終了を検知するために購読する。
+    /// </summary>
     public static event Action OnDragEnded;
 
-    // アイテムがスロットに正常に配置された時に呼ばれるイベント
+    /// <summary>
+    /// アイテムがスロットに正常に配置されたときに発行するイベント。
+    /// シーン内の配置達成処理を通知するために使用する。
+    /// </summary>
     public event Action OnItemPlaced;
-    // アイテムがゴミ箱に捨てられた時に呼ばれるイベント
+
+    /// <summary>
+    /// アイテムがゴミ箱へ捨てられたときに発行するイベント。
+    /// ゴミ箱処理やスコア更新などを通知するために使用する。
+    /// </summary>
     public event Action OnItemTrashed;
 
     /// <summary>
-    /// 現在アクティブなCursorControllerを保持する静的プロパティ
+    /// 現在アクティブな CursorController の参照。
+    /// CursorController は自身を登録/解除してこのプロパティに反映する。
     /// </summary>
     public static CursorController ActiveCursor { get; private set; }
 
     /// <summary>
-    /// CursorControllerが自分自身を登録するためのメソッド
+    /// CursorController が自身を登録するためのメソッド。
+    /// 登録されたカーソルはドラッグ中のプロキシの親になる。
     /// </summary>
+    /// <param name="cursor">登録する CursorController。</param>
     public static void RegisterCursor(CursorController cursor)
     {
         ActiveCursor = cursor;
     }
 
     /// <summary>
-    /// CursorControllerが自分自身を登録解除するためのメソッド
+    /// CursorController が自身の登録を解除するためのメソッド。
+    /// 現在登録されているインスタンスと一致する場合のみ解除する。
     /// </summary>
+    /// <param name="cursor">解除を要求する CursorController。</param>
     public static void UnregisterCursor(CursorController cursor)
     {
-        // 念のため、現在登録されているのが自分自身である場合のみ解除
         if (ActiveCursor == cursor)
         {
             ActiveCursor = null;
@@ -44,24 +64,65 @@ public class DragDropManager : MonoBehaviour
 
     [Header("参照")]
     [Tooltip("ドラッグ対象として判定する物理レイヤー")]
+    /// <summary>
+    /// ドラッグ可能と見なす物理レイヤー設定。Inspectorで設定必須。
+    /// </summary>
     public LayerMask draggableLayer;
+
+    /// <summary>
+    /// スクリーン座標をゲーム世界座標へ変換するユーティリティ参照。
+    /// RenderTexture を利用する場合は正しく設定すること。
+    /// </summary>
     public ScreenToWorldConverter screenToWorldConverter;
+
+    /// <summary>
+    /// 現在利用中の EventSystem。Raycast に使用する。
+    /// </summary>
     public EventSystem eventSystem;
+
     [Tooltip("ドラッグ操作のルートオブジェクト（移動させる親）")]
+    /// <summary>
+    /// ドラッグ中に表示するプロキシのルート RectTransform。Inspectorで設定必須。
+    /// </summary>
     public RectTransform dragProxyRoot;
+
     [Tooltip("アイテム本体の画像を表示するImage")]
+    /// <summary>
+    /// ドラッグプロキシでアイテム本体を表示する Image。raycastTarget は無効化する。
+    /// </summary>
     public Image dragProxyItemImage;
+
     [Tooltip("ハイライト（後光）を表示するImage")]
+    /// <summary>
+    /// ドラッグプロキシでハイライトを表示する Image。サイズやオフセットは ItemData 側で指定する。
+    /// </summary>
     public Image dragProxyHighlightImage;
+
+    /// <summary>
+    /// ルート Canvas。プロキシを一時的に戻す際に使用する。
+    /// </summary>
     public Canvas parentCanvas;
+
+    /// <summary>
+    /// ゲーム世界を描画するメインカメラ。ワールド座標⇔スクリーン座標変換に使用。
+    /// </summary>
     public Camera mainCamera;
+
+    /// <summary>
+    /// UI レンダリング用カメラ（必要な場合に使用）。
+    /// </summary>
     public Camera uiCamera;
 
     [Header("サウンド設定")]
     [Tooltip("効果音を再生するためのAudioSource")]
+    /// <summary>
+    /// 効果音再生に使う AudioSource。null の場合は再生をスキップする。
+    /// </summary>
     public AudioSource audioSource;
+
     [Tooltip("アイテムをゴミ箱に捨てた時の効果音")]
     public AudioClip trashSound;
+
     [Range(0f, 1f)]
     [Tooltip("ゴミ箱の効果音の音量")]
     public float trashVolume = 1.0f;
@@ -69,44 +130,68 @@ public class DragDropManager : MonoBehaviour
     [Header("配置SE設定")]
     [Tooltip("アイテムを正解のスロットに配置した時の効果音")]
     public AudioClip correctPlacementSound;
+
     [Range(0f, 1f)]
     [Tooltip("正解の効果音の音量")]
     public float correctPlacementVolume = 1.0f;
+
     [Tooltip("アイテムを不正解のスロットに配置した時の効果音")]
     public AudioClip incorrectPlacementSound;
+
     [Range(0f, 1f)]
     [Tooltip("不正解の効果音の音量")]
     public float incorrectPlacementVolume = 1.0f;
 
-    // --- 内部変数 (一部変更) ---
+    // 内部変数
     private Draggable currentDraggedObject;
     private Draggable selectedObject;
     private UIDraggable currentUIDraggable;
     private UIDraggable selectedUIDraggable;
     private ObjectSlot originalSlot;
 
+    /// <summary>
+    /// シーン内のシングルトン参照。複数存在する場合は後から生成されたものを破棄する。
+    /// </summary>
     public static DragDropManager Instance { get; private set; }
 
+    /// <summary>
+    /// ユーザーからの操作を受け付けるかどうかのフラグ。false の場合は全ての入力を無視する。
+    /// Inspector から直接変更しないこと。SetInteractionEnabled 経由で制御すること。
+    /// </summary>
     public bool InteractionEnabled { get; private set; } = true;
 
+    /// <summary>
+    /// 入力受付状態を切り替える。カーソルにも同じ命令を伝播する。
+    /// </summary>
+    /// <param name="enabled">入力を許可するなら true。</param>
     public void SetInteractionEnabled(bool enabled)
     {
         InteractionEnabled = enabled;
 
-        // ついでにカーソルにも命令を伝える（連動）
         if (ActiveCursor != null)
         {
             ActiveCursor.SetInputEnabled(enabled);
         }
     }
 
-
+    /// <summary>
+    /// Awake は Unity の初期化フェーズで呼ばれる。シングルトンの登録を行う。
+    /// 他のオブジェクトの Awake より後に実行される依存がある場合は注意。
+    /// </summary>
     private void Awake()
     {
         if (Instance != null && Instance != this) { Destroy(this.gameObject); }
         else { Instance = this; }
     }
 
+    /// <summary>
+    /// アイテムがクリックされたときの処理。
+    /// UI 由来かワールド由来かを判断し、選択状態の切替とダイアログ表示を行う。
+    /// null チェックを行い、同一アイテムの再クリックで選択解除する。
+    /// </summary>
+    /// <param name="uiDraggable">UI 由来のドラッグ可能オブジェクト（存在しない場合は null）。</param>
+    /// <param name="worldDraggable">ワールド由来のドラッグ可能オブジェクト（存在しない場合は null）。</param>
+    /// <param name="eventData">クリックに関する PointerEventData。</param>
     public void HandleItemClick(UIDraggable uiDraggable, Draggable worldDraggable, PointerEventData eventData)
     {
         if (!InteractionEnabled) return;
@@ -115,7 +200,6 @@ public class DragDropManager : MonoBehaviour
         object clickedItem = uiDraggable != null ? (object)uiDraggable : (object)worldDraggable;
         object previouslySelectedItem = selectedUIDraggable != null ? (object)selectedUIDraggable : (object)selectedObject;
 
-        // --- 選択解除 ---
         // 以前に選択されていたものがあれば、ハイライトを消す
         if (previouslySelectedItem != null)
         {
@@ -123,32 +207,30 @@ public class DragDropManager : MonoBehaviour
             if (selectedObject != null) selectedObject.SetHighlight(false);
         }
 
-        // --- 選択処理 ---
-        // 何もクリックされなかったか、同じアイテムを再度クリックした場合は、選択解除してIdle状態にする
+        // 何もクリックされなかったか、同じアイテムを再度クリックした場合は選択解除して Idle に戻す
         if (clickedItem == null || clickedItem == previouslySelectedItem)
         {
             selectedUIDraggable = null;
             selectedObject = null;
             currentState = DdState.Idle;
         }
-        // 違うアイテムがクリックされた場合は、選択を切り替える
         else
         {
             if (uiDraggable != null)
             {
                 selectedUIDraggable = uiDraggable;
-                selectedObject = null; // ワールドオブジェクトの選択は解除
+                selectedObject = null;
                 selectedUIDraggable.SetHighlight(true);
-                // 既存のダイアログ表示ロジックを維持
+
                 if (selectedUIDraggable.itemData?.descriptionInk != null)
                     InkDialogueManager.Instance.ShowStory(selectedUIDraggable.itemData.descriptionInk);
             }
-            else // worldDraggable != null
+            else
             {
                 selectedObject = worldDraggable;
-                selectedUIDraggable = null; // UIオブジェクトの選択は解除
+                selectedUIDraggable = null;
                 selectedObject.SetHighlight(true);
-                // 既存のダイアログ表示ロジックを維持
+
                 if (selectedObject.itemData?.descriptionInk != null)
                     InkDialogueManager.Instance.ShowStory(selectedObject.itemData.descriptionInk);
             }
@@ -156,19 +238,22 @@ public class DragDropManager : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// ワールド側の Draggable からドラッグが開始されたときの処理。
+    /// 選択済みから持ち上げるケースと、Idle から直接ドラッグするケースの両方を扱う。
+    /// </summary>
+    /// <param name="draggedObject">開始された Draggable。</param>
+    /// <param name="eventData">ドラッグ開始に関する PointerEventData（位置参照に使用）。</param>
     public void HandleBeginDrag(Draggable draggedObject, PointerEventData eventData)
     {
         if (!InteractionEnabled) return;
 
-        // ケース1: アイテムが既に選択されている状態で、ドラッグが開始された場合
         if (currentState == DdState.ItemSelected && draggedObject == selectedObject)
         {
             StartHolding(draggedObject, eventData.position);
         }
-        // ケース2: 未選択状態(Idle)から、いきなりドラッグが開始された場合
         else if (currentState == DdState.Idle && draggedObject != null)
         {
-            // その場でアイテムを選択状態にしてから、即座にドラッグを開始する
             selectedObject = draggedObject;
             selectedObject.SetHighlight(true);
             currentState = DdState.ItemSelected;
@@ -176,6 +261,12 @@ public class DragDropManager : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// UI 側の UIDraggable からドラッグが開始されたときの処理。
+    /// デバッグログを残しつつ、選択状態の遷移とプロキシ表示の初期化を行う。
+    /// </summary>
+    /// <param name="draggedObject">開始された UIDraggable。</param>
+    /// <param name="eventData">ドラッグ開始に関する PointerEventData。</param>
     public void HandleBeginDragUI(UIDraggable draggedObject, PointerEventData eventData)
     {
         Debug.Log($"--- DragDropManager.HandleBeginDragUI ---: 呼び出されました。");
@@ -185,13 +276,11 @@ public class DragDropManager : MonoBehaviour
 
         if (!InteractionEnabled) return;
 
-        // ケース1：アイテムが既に選択されている状態で、ドラッグが開始された場合
         if (currentState == DdState.ItemSelected && draggedObject == selectedUIDraggable)
         {
             Debug.Log("条件成功：ドラッグを開始します。");
             StartHoldingUI(draggedObject, eventData);
         }
-        // ケース2：未選択状態(Idle)から、いきなりドラッグが開始された場合
         else if (currentState == DdState.Idle && draggedObject != null)
         {
             Debug.Log("条件成功（Idleから）：選択してドラッグを開始します。");
@@ -206,12 +295,15 @@ public class DragDropManager : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// ドラッグ中の毎フレーム処理。プロキシのハイライト表示判定と反映を行う。
+    /// ドラッグ対象が UI 由来かワールド由来かを判定して処理する。
+    /// </summary>
+    /// <param name="eventData">現在の PointerEventData（未使用だが将来の拡張に備えて受け取る）。</param>
     public void HandleDrag(PointerEventData eventData)
     {
-        // アイテムを持っていないなら何もしない
         if (currentState != DdState.HoldingItem) return;
 
-        // 現在ドラッグしているアイテムのデータを取得（UI由来かワールド由来かで分岐）
         ItemData currentItemData = null;
         if (currentDraggedObject != null)
         {
@@ -222,50 +314,48 @@ public class DragDropManager : MonoBehaviour
             currentItemData = currentUIDraggable.itemData;
         }
 
-        // データが取得できない場合は処理中断
         if (currentItemData == null) return;
-
-        // --- 判定ロジック ---
 
         bool showHighlight = false;
 
-        // カーソル下のドロップゾーンを探す（既存メソッドを活用）
+        // カーソル下のドロップゾーンを取得。UI→ワールドの順で検索。
         DropZone zoneUnderCursor = FindDropZoneUnderCursor();
 
-        // ゾーンが見つかり、かつそれが「ゲームスロット」である場合
         if (zoneUnderCursor != null && zoneUnderCursor.zoneType == DropZone.ZoneType.GameSlot)
         {
             ObjectSlot slot = zoneUnderCursor.associatedSlot;
 
-            // 1. スロットが存在する
-            // 2. スロットが空である（占有されていない）
-            // 3. そのスロットがこのアイテムタイプを受け入れ可能である
             if (slot != null && !slot.IsOccupied() && slot.CanAccept(currentItemData.itemType))
             {
-                // 全ての条件を満たした場合のみ、ハイライトを表示
                 showHighlight = true;
             }
         }
-        // ※必要であればここに「ゴミ箱(TrashCan)」の上に来た時の処理も追加可能です
-
-        // --- ビジュアルへの反映 ---
 
         if (dragProxyHighlightImage != null)
         {
-            // 状態が変わった時だけSetActiveを呼ぶと少し負荷が軽いですが、
-            // UnityのSetActiveは内部でチェックしているので毎フレーム呼んでも問題ありません。
             dragProxyHighlightImage.gameObject.SetActive(showHighlight);
         }
     }
 
+    /// <summary>
+    /// ドラッグが終了したときの処理。
+    /// HoldingItem 状態であればドロップ処理へ委譲する。
+    /// </summary>
+    /// <param name="eventData">終了時の PointerEventData。</param>
     public void HandleEndDrag(PointerEventData eventData)
     {
         if (currentState == DdState.HoldingItem)
         {
-            HandleDrop(eventData); // 引数 eventData を渡す
+            HandleDrop(eventData);
         }
     }
 
+    /// <summary>
+    /// 世界側の Draggable を持ち上げる開始処理。
+    /// プロキシの初期化、元スロットからの切り離し、表示の切替を行う。
+    /// </summary>
+    /// <param name="draggable">持ち上げる Draggable。</param>
+    /// <param name="screenPos">マウスのスクリーン座標（初期オフセット計算に使用）。</param>
     private void StartHolding(Draggable draggable, Vector2 screenPos)
     {
         currentState = DdState.HoldingItem;
@@ -280,20 +370,15 @@ public class DragDropManager : MonoBehaviour
 
         SpriteRenderer sr = draggable.GetComponent<SpriteRenderer>();
 
-        // ItemDataの取得
         ItemData data = draggable.itemData;
         Sprite highlightSprite = (data != null) ? data.highlightSprite : null;
 
-        // オフセットの取得
         Vector2 offset = (data != null) ? data.highlightOffset : Vector2.zero;
 
-        // ▼スケールの取得（Vector2）
         Vector2 scale = (data != null) ? data.highlightScale : Vector2.one;
 
-        // SetupProxyへ渡す
         SetupProxy(sr.sprite, highlightSprite, offset, scale);
 
-        // サイズ計算処理
         Bounds worldBounds = sr.bounds;
         Vector2 minScreenPoint = mainCamera.WorldToScreenPoint(worldBounds.min);
         Vector2 maxScreenPoint = mainCamera.WorldToScreenPoint(worldBounds.max);
@@ -312,6 +397,12 @@ public class DragDropManager : MonoBehaviour
         OnDragStarted?.Invoke();
     }
 
+    /// <summary>
+    /// UI 側の UIDraggable を持ち上げる開始処理。
+    /// UI 用の画像、スケール、オフセットをプロキシへ適用する。
+    /// </summary>
+    /// <param name="uiDraggable">持ち上げる UIDraggable。</param>
+    /// <param name="eventData">ドラッグ開始に関する PointerEventData。</param>
     private void StartHoldingUI(UIDraggable uiDraggable, PointerEventData eventData)
     {
         currentState = DdState.HoldingItem;
@@ -319,17 +410,13 @@ public class DragDropManager : MonoBehaviour
 
         Image sourceImage = uiDraggable.GetComponent<Image>();
 
-        // ItemDataの取得
         ItemData data = uiDraggable.itemData;
         Sprite highlightSprite = (data != null) ? data.highlightSprite : null;
 
-        // オフセットの取得
         Vector2 offset = (data != null) ? data.highlightOffset : Vector2.zero;
 
-        // スケールの取得（Vector2） 
         Vector2 scale = (data != null) ? data.highlightScale : Vector2.one;
 
-        // SetupProxyへ渡す
         SetupProxy(sourceImage.sprite, highlightSprite, offset, scale);
 
         dragProxyRoot.sizeDelta = sourceImage.rectTransform.sizeDelta;
@@ -345,64 +432,58 @@ public class DragDropManager : MonoBehaviour
     }
 
     /// <summary>
-    /// プロキシ（ドラッグ中の見た目）を初期化する
+    /// ドラッグ中に表示するプロキシを初期化する。
+    /// ルートの CanvasGroup 設定、画像の差し替え、位置・スケールの適用を行う。
     /// </summary>
-    /// <param name="mainSprite">アイテム本体の画像</param>
-    /// <param name="highlightSprite">ハイライト用画像</param>
-    /// <param name="offset">ハイライトの位置ズレ補正</param>
-    /// <param name="scale">ハイライトの拡大率(X, Y)</param>
+    /// <param name="mainSprite">アイテム本体のスプライト。</param>
+    /// <param name="highlightSprite">ハイライト用スプライト（ない場合は null）。</param>
+    /// <param name="offset">ハイライトのオフセット。</param>
+    /// <param name="scale">ハイライトのスケール（X, Y）。</param>
     private void SetupProxy(Sprite mainSprite, Sprite highlightSprite, Vector2 offset, Vector2 scale)
     {
-        // 1. Rootの表示
         dragProxyRoot.gameObject.SetActive(true);
 
-        // レイキャストがプロキシに遮られないようにCanvasGroupで制御
         CanvasGroup rootGroup = dragProxyRoot.GetComponent<CanvasGroup>();
         if (rootGroup == null) rootGroup = dragProxyRoot.gameObject.AddComponent<CanvasGroup>();
         rootGroup.blocksRaycasts = false;
         rootGroup.interactable = false;
 
-        // 2. アイテム画像の設定
         if (dragProxyItemImage != null)
         {
             dragProxyItemImage.sprite = mainSprite;
             dragProxyItemImage.raycastTarget = false;
             dragProxyItemImage.gameObject.SetActive(true);
-
-            // アイテム画像は常に中心（0,0）
             dragProxyItemImage.rectTransform.anchoredPosition = Vector2.zero;
         }
 
-        // 3. ハイライト画像の設定
         if (dragProxyHighlightImage != null)
         {
             dragProxyHighlightImage.sprite = highlightSprite;
             dragProxyHighlightImage.raycastTarget = false;
 
-            // ▼▼▼ 位置（Offset）とサイズ（Scale X,Y）を適用 ▼▼▼
             dragProxyHighlightImage.rectTransform.anchoredPosition = offset;
             dragProxyHighlightImage.rectTransform.localScale = new Vector3(scale.x, scale.y, 1f);
 
-            // 初期状態は非表示
             dragProxyHighlightImage.gameObject.SetActive(false);
         }
     }
 
+    /// <summary>
+    /// ドロップ処理のエントリポイント。プロキシの後処理、ドロップ先判定、各種イベント発火を行う。
+    /// </summary>
+    /// <param name="eventData">ドロップ時の PointerEventData。</param>
     private void HandleDrop(PointerEventData eventData)
     {
         OnDragEnded?.Invoke();
 
-        // --- 代理イメージの後処理 ---
-        // Rootを親キャンバスに戻して非表示にする
+        // プロキシをキャンバスへ戻して非表示にする
         dragProxyRoot.SetParent(parentCanvas.transform, true);
         dragProxyRoot.gameObject.SetActive(false);
 
         if (InkDialogueManager.Instance != null) { InkDialogueManager.Instance.CloseDialogue(); }
 
-        // --- ドロップ先の判定 ---
         DropZone targetZone = FindDropZoneUnderCursor();
 
-        // --- オブジェクトごとのドロップ処理 ---
         if (currentDraggedObject != null)
         {
             HandleGameWorldDrop(targetZone);
@@ -414,7 +495,7 @@ public class DragDropManager : MonoBehaviour
             currentUIDraggable.SetHighlight(false);
         }
 
-        // --- 状態のリセット ---
+        // 状態のリセット
         currentState = DdState.Idle;
         selectedObject = null;
         selectedUIDraggable = null;
@@ -423,6 +504,11 @@ public class DragDropManager : MonoBehaviour
         originalSlot = null;
     }
 
+    /// <summary>
+    /// ワールドオブジェクトをドロップした際の処理。
+    /// ゴミ箱、スロットへの配置、元へ戻す処理を扱う。
+    /// </summary>
+    /// <param name="targetZone">ドロップ先の DropZone（存在しない場合は null）。</param>
     private void HandleGameWorldDrop(DropZone targetZone)
     {
         if (targetZone != null && targetZone.zoneType == DropZone.ZoneType.TrashCan)
@@ -436,25 +522,21 @@ public class DragDropManager : MonoBehaviour
             Destroy(currentDraggedObject.gameObject);
             GameEventManager.InvokeObjectRemoved(removedFromSlot);
 
-            // ゴミ箱イベント発火
             OnItemTrashed?.Invoke();
         }
         else
         {
             currentDraggedObject.gameObject.SetActive(true);
 
-            // 「スロットが空」かつ「そのスロットがこのアイテムを受け入れ可能」な場合
             if (targetZone != null &&
                 targetZone.zoneType == DropZone.ZoneType.GameSlot &&
                 !targetZone.associatedSlot.IsOccupied() &&
                 targetZone.associatedSlot.CanAccept(currentDraggedObject.itemData.itemType))
             {
-                // 正解・不正解を判定してSEを再生
                 ObjectSlot slot = targetZone.associatedSlot;
-                // このスロットの正解タイプと、置いたアイテムのタイプが一致するか？
+
                 if (slot.correctItemType == currentDraggedObject.itemData.itemType)
                 {
-                    // 正解のSEを再生
                     if (audioSource != null && correctPlacementSound != null)
                     {
                         audioSource.PlayOneShot(correctPlacementSound, correctPlacementVolume);
@@ -462,7 +544,6 @@ public class DragDropManager : MonoBehaviour
                 }
                 else
                 {
-                    // 不正解のSEを再生
                     if (audioSource != null && incorrectPlacementSound != null)
                     {
                         audioSource.PlayOneShot(incorrectPlacementSound, incorrectPlacementVolume);
@@ -471,7 +552,6 @@ public class DragDropManager : MonoBehaviour
 
                 PlaceInNewSlot(slot);
 
-                // 配置成功イベント発火
                 OnItemPlaced?.Invoke();
             }
             else
@@ -481,51 +561,42 @@ public class DragDropManager : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// UI 側のアイテムをドロップした際の処理。
+    /// チュートリアル用ゾーンの特別扱いと、本番モードでの生成配置処理を分岐して実行する。
+    /// </summary>
+    /// <param name="targetZone">ドロップ先の DropZone（存在しない場合は null）。</param>
     private void HandleUIDrop(DropZone targetZone)
     {
         if (targetZone == null) return;
 
-        // ---------------------------------------------------------
-        // A. チュートリアルモード（練習）の判定
-        // ---------------------------------------------------------
+        // チュートリアル用ゾーンの処理（実体化せずに使用済みにする）
         if (targetZone.isTutorialZone)
         {
-            // チュートリアル用のゴミ箱だった場合
             if (targetZone.zoneType == DropZone.ZoneType.TrashCan)
             {
                 if (audioSource != null && trashSound != null)
                     audioSource.PlayOneShot(trashSound, trashVolume);
 
-                // UI上のダミーアイテムを使用済みにする
                 currentUIDraggable.MarkAsUsed();
-
-                // 成功イベント発火
                 OnItemTrashed?.Invoke();
             }
-            // チュートリアル用のスロットだった場合
             else if (targetZone.zoneType == DropZone.ZoneType.GameSlot)
             {
                 if (audioSource != null && correctPlacementSound != null)
                     audioSource.PlayOneShot(correctPlacementSound, correctPlacementVolume);
 
                 currentUIDraggable.MarkAsUsed();
-
-                // 成功イベント発火
                 OnItemPlaced?.Invoke();
             }
 
-            // チュートリアルの場合はここで終了（実体化はしない）
             return;
         }
 
-        // ---------------------------------------------------------
-        // B. 本番モード（従来通りの処理）
-        // ---------------------------------------------------------
         if (targetZone.zoneType != DropZone.ZoneType.GameSlot) return;
 
         ObjectSlot slot = targetZone.associatedSlot;
 
-        // 「スロットがない」OR「埋まっている」OR「このアイテムタイプを許可していない」場合はリターン
         if (slot == null || slot.IsOccupied() || !slot.CanAccept(currentUIDraggable.itemData.itemType))
         {
             return;
@@ -537,7 +608,6 @@ public class DragDropManager : MonoBehaviour
             return;
         }
 
-        // 正解・不正解を判定してSEを再生
         if (slot.correctItemType == currentUIDraggable.itemData.itemType)
         {
             if (audioSource != null && correctPlacementSound != null)
@@ -549,7 +619,6 @@ public class DragDropManager : MonoBehaviour
                 audioSource.PlayOneShot(incorrectPlacementSound, incorrectPlacementVolume);
         }
 
-        // アイテムを生成して配置
         GameObject newItem = Instantiate(
             currentUIDraggable.itemData.itemPrefab,
             slot.slotTransform.position,
@@ -570,6 +639,11 @@ public class DragDropManager : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// カーソル下にある DropZone を検索して返す。
+    /// UI の Raycast 結果を優先し、見つからなければワールドの Collider2D を調べる。
+    /// </summary>
+    /// <returns>見つかった DropZone、存在しない場合は null。</returns>
     private DropZone FindDropZoneUnderCursor()
     {
         PointerEventData pointerData = new PointerEventData(eventSystem);
@@ -594,22 +668,28 @@ public class DragDropManager : MonoBehaviour
         return null;
     }
 
+    /// <summary>
+    /// ドラッグ中のオブジェクトを元のスロットに戻す処理。
+    /// originalSlot が null の場合は何もしない。
+    /// </summary>
     private void ReturnToOriginalSlot()
     {
         if (currentDraggedObject != null)
         {
-            // originalPositionではなく、スロットの位置に戻す
             if (originalSlot != null)
             {
                 currentDraggedObject.transform.position = originalSlot.slotTransform.position;
                 originalSlot.currentObject = currentDraggedObject;
                 currentDraggedObject.currentSlot = originalSlot;
             }
-            // もしスロットに属さないオブジェクトだった場合のフォールバック（必要なら）
-            // else { currentDraggedObject.transform.position = originalPosition; }
         }
     }
 
+    /// <summary>
+    /// 指定したスロットに現在のドラッグ対象を配置する。
+    /// transform の位置更新とスロット参照の更新を行う。
+    /// </summary>
+    /// <param name="newSlot">配置先の ObjectSlot。</param>
     private void PlaceInNewSlot(ObjectSlot newSlot)
     {
         if (currentDraggedObject != null && newSlot != null)

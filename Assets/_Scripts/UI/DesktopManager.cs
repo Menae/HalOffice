@@ -15,45 +15,99 @@ public class DesktopManager : MonoBehaviour
 
     [Header("ログインシーケンス設定")]
     [Tooltip("ログイン画面の「はじめる」ボタン")]
+    /// <summary>
+    /// ログイン画面の「はじめる」ボタン。InspectorでD&D。Startでクリックリスナを登録。
+    /// </summary>
     public Button startButton;
+
     [Tooltip("ログイン画面全体を管理する親オブジェクトのCanvas Group")]
+    /// <summary>
+    /// ログイン画面をまとめるCanvasGroup。表示/非表示やインタラクティブ制御に使用。
+    /// </summary>
     public CanvasGroup loginScreenCanvasGroup;
+
     [Tooltip("ログイン後に表示するデスクトップ画面の親オブジェクト")]
+    /// <summary>
+    /// デスクトップ画面のルートGameObject。ログイン完了時に有効化する。
+    /// </summary>
     public GameObject desktopScreen;
+
     [Tooltip("アプリケーションを終了するためのボタン")]
+    /// <summary>
+    /// アプリ終了用ボタン。Editor/実機で挙動が異なるためStartでリスナを登録。
+    /// </summary>
     public Button exitButton;
 
     [Header("通知設定")]
     [Tooltip("通知アプリアイコンの右上に表示するバッジ")]
+    /// <summary>
+    /// 通知バッジのGameObject。表示/非表示で通知状態を表現。
+    /// </summary>
     public GameObject notificationBadge;
+
     [Tooltip("デスクトップ表示後、通知が表示されるまでの待機時間(秒)")]
+    /// <summary>
+    /// デスクトップ表示後に通知を表示するまでの待機時間（秒）。Inspectorで調整可能。
+    /// </summary>
     public float notificationDelay = 3.0f;
+
     [Tooltip("通知が表示される時に再生する効果音")]
+    /// <summary>
+    /// 通知再生時のAudioClip。AudioSourceが割り当てられている場合に再生する。
+    /// </summary>
     public AudioClip notificationSound;
+
     [Range(0f, 1f)]
     [Tooltip("通知効果音の音量")]
+    /// <summary>
+    /// 通知効果音の音量（0.0〜1.0）。
+    /// </summary>
     public float notificationVolume = 0.8f;
+
     [Tooltip("効果音を再生するためのAudioSourceコンポーネント")]
+    /// <summary>
+    /// 効果音再生に使用するAudioSource。nullの場合は音を鳴らさない。
+    /// </summary>
     public AudioSource audioSource;
 
     [Header("ハイライト演出設定")]
     [Tooltip("Inkタグから呼び出せるハイライト対象リスト")]
+    /// <summary>
+    /// ハイライト表示対象のリスト。各要素は名前で参照される。
+    /// </summary>
     public List<HighlightTarget> highlightTargets;
 
     [Header("デスクトップ設定")]
     [Tooltip("デスクトップのアプリ情報をまとめたリスト")]
+    /// <summary>
+    /// デスクトップ上のアプリ情報リスト。各要素でアイコンやウィンドウを管理。
+    /// </summary>
     public List<AppEntry> desktopApps;
+
     [Tooltip("アプリアイコンをホバーした時に表示する背景のImage")]
+    /// <summary>
+    /// アイコンホバー時に表示するフレームImage。Startで非表示にして親を保持。
+    /// </summary>
     public Image iconHoverFrame;
 
     [Header("チュートリアル会話設定")]
     [Tooltip("シーン内のChatController")]
+    /// <summary>
+    /// シーン内のChatController参照。nullチェックあり。チュートリアル開始に使用。
+    /// </summary>
     public ChatController chatController;
+
     [Tooltip("最初に再生する会話のInkファイル（JSONアセット）")]
+    /// <summary>
+    /// 最初に再生するチュートリアル用のInk JSONアセット。nullの場合は再生しない。
+    /// </summary>
     public TextAsset tutorialChatInk;
 
     [Header("デバッグ設定")]
     [Tooltip("チェックを入れると、エディタ実行時に毎回チュートリアルが再生されます")]
+    /// <summary>
+    /// エディタ実行時にチュートリアルを強制表示するフラグ。ビルド時は無視可能。
+    /// </summary>
     public bool forceShowTutorialInEditor = false;
 
     /// <summary>
@@ -63,22 +117,47 @@ public class DesktopManager : MonoBehaviour
     public class AppEntry
     {
         [Tooltip("Inspector上でアプリを識別するための名前")]
+        /// <summary>
+        /// Inspector上で識別する名前。ハードコードされた参照やログ出力に使用可能。
+        /// </summary>
         public string appName;
+
         [Tooltip("アプリを起動するためのアイコンボタン")]
+        /// <summary>
+        /// アプリアイコンのButton。Startでクリックリスナを登録。
+        /// </summary>
         public Button appIconButton;
+
         [Tooltip("アイコンクリック時に表示されるウィンドウパネル")]
+        /// <summary>
+        /// アイコンクリックで有効化するウィンドウのGameObject。nullチェックあり。
+        /// </summary>
         public GameObject appPanel;
+
         [Tooltip("ウィンドウを閉じるためのボタン（複数可）")]
+        /// <summary>
+        /// ウィンドウを閉じるためのボタン一覧。各ボタンにリスナを追加してパネルを閉じる。
+        /// </summary>
         public List<Button> closeButtons;
 
         [Header("オプション設定")]
         [Tooltip("アイコンクリック時にパネルと一緒にアクティブになるImage（任意）")]
+        /// <summary>
+        /// クリック時に同時にアクティブ化するImage。任意でnull可。
+        /// </summary>
         public Image imageToActivate;
 
         [Header("シーン遷移設定（任意）")]
         [Tooltip("このボタンを押すと指定したシーンに遷移する（任意）")]
+        /// <summary>
+        /// シーン遷移をトリガーするボタン。シーン名が未設定の場合は無効。
+        /// </summary>
         public Button sceneLoadButton;
+
         [Tooltip("遷移先のシーン名")]
+        /// <summary>
+        /// 遷移先のシーン名。空文字の場合は遷移しない。
+        /// </summary>
         public string sceneNameToLoad;
     }
 
@@ -90,18 +169,30 @@ public class DesktopManager : MonoBehaviour
 
     #region Unity Lifecycle Methods
 
+    /// <summary>
+    /// コンポーネントが有効化されたタイミングで呼ばれる。イベント購読を登録。
+    /// ChatControllerの会話完了やタグ処理イベントを受け取るための登録を行う。
+    /// </summary>
     private void OnEnable()
     {
         ChatController.OnConversationFinished += HandleTutorialFinished;
         ChatController.OnTagsProcessed += HandleTags;
     }
 
+    /// <summary>
+    /// コンポーネントが無効化されるタイミングで呼ばれる。イベント購読を解除。
+    /// イベント登録が残らないように必ず解除する。
+    /// </summary>
     private void OnDisable()
     {
         ChatController.OnConversationFinished -= HandleTutorialFinished;
         ChatController.OnTagsProcessed -= HandleTags;
     }
 
+    /// <summary>
+    /// 初期化処理。UnityのStartイベントで呼ばれる。Inspectorの参照チェックとボタンリスナ登録を行う。
+    /// ホバーフレームの親を保存して非表示にする処理を実行。
+    /// </summary>
     void Start()
     {
         // ホバーフレームの元の親を保存し、非表示にしておく
@@ -111,7 +202,7 @@ public class DesktopManager : MonoBehaviour
             iconHoverFrame.gameObject.SetActive(false);
         }
 
-        // --- ボタンのクリックイベントをスクリプトから登録 ---
+        // ボタンのクリックイベントをスクリプトから登録
         if (startButton != null)
         {
             startButton.interactable = false;
@@ -122,7 +213,7 @@ public class DesktopManager : MonoBehaviour
             exitButton.onClick.AddListener(ExitApplication);
         }
 
-        // --- デスクトップアプリの初期設定 ---
+        // デスクトップアプリの初期設定
         for (int i = 0; i < desktopApps.Count; i++)
         {
             AppEntry app = desktopApps[i];
@@ -186,6 +277,10 @@ public class DesktopManager : MonoBehaviour
 
     #region Public Methods
 
+    /// <summary>
+    /// シーケンス初期化用の設定を行う。ログイン画面を有効化し、デスクトップと通知を非表示にする。
+    /// 外部からシーケンス制御時に呼び出す想定。
+    /// </summary>
     public void InitializeForSequence()
     {
         if (loginScreenCanvasGroup != null) loginScreenCanvasGroup.gameObject.SetActive(true);
@@ -193,17 +288,28 @@ public class DesktopManager : MonoBehaviour
         if (notificationBadge != null) notificationBadge.SetActive(false);
     }
 
+    /// <summary>
+    /// シーケンスの制御を引き継ぎ、はじめるボタンを操作可能にする。
+    /// 外部シーケンスからの呼び出しを想定。
+    /// </summary>
     public void TakeOverControl()
     {
         if (startButton != null) startButton.interactable = true;
     }
 
+    /// <summary>
+    /// ログインからデスクトップへの遷移を開始する。多重呼び出し防止のためフェード中は無視する。
+    /// ボタンのクリックハンドラから呼び出される。
+    /// </summary>
     public void StartLoginSequence()
     {
         if (isFading) return;
         StartCoroutine(LoginToDesktopRoutine());
     }
 
+    /// <summary>
+    /// アプリケーションを終了する。Editor実行時はPlayモードを停止し、ビルド版ではApplication.Quitを呼ぶ。
+    /// </summary>
     public void ExitApplication()
     {
 #if UNITY_EDITOR
@@ -217,6 +323,10 @@ public class DesktopManager : MonoBehaviour
 
     #region Private Methods & Coroutines
 
+    /// <summary>
+    /// 最初の（通知）アプリアイコンがクリックされた時の処理。関連するパネルとイメージを表示し、
+    /// 通知バッジが表示中であればそれを消す。
+    /// </summary>
     private void OnFirstAppIconClick()
     {
         if (desktopApps.Count > 0)
@@ -233,6 +343,10 @@ public class DesktopManager : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// ログイン画面からデスクトップへ遷移するコルーチン。フェード処理を待機して画面切り替えとチュートリアル開始を行う。
+    /// StartupSequenceManagerのFade処理に依存するため、nullチェックを行う。
+    /// </summary>
     private IEnumerator LoginToDesktopRoutine()
     {
         isFading = true;
@@ -273,20 +387,24 @@ public class DesktopManager : MonoBehaviour
         if (ChatController.Instance != null && tutorialChatInk != null)
         {
             ChatController.Instance.StartConversation(tutorialChatInk);
-            // PlayerPrefs.SetInt("HasSeenTutorial", 1); // ◀ チュートリアルを見たことを記録する処理を削除
+            // PlayerPrefs.SetInt("HasSeenTutorial", 1); // チュートリアルを見たことを記録する処理を削除
         }
-        // else 
-        // {
-        //     StartCoroutine(ShowNotificationRoutine());
-        // } ◀ チュートリアルが必ず実行されるため、elseブロックも削除
         // (ShowNotificationRoutineは HandleTutorialFinished から呼び出されます)
     }
 
+    /// <summary>
+    /// チュートリアル再生終了イベントのハンドラ。通知表示コルーチンを開始する。
+    /// ChatControllerのイベントから呼び出される。
+    /// </summary>
     private void HandleTutorialFinished()
     {
         StartCoroutine(ShowNotificationRoutine());
     }
 
+    /// <summary>
+    /// 通知表示を遅延させた後、バッジ表示と効果音再生、通知アプリアイコンを有効化するコルーチン。
+    /// audioSourceやnotificationSoundがnullの場合は音を再生しない。
+    /// </summary>
     private IEnumerator ShowNotificationRoutine()
     {
         yield return new WaitForSeconds(notificationDelay);
@@ -308,6 +426,10 @@ public class DesktopManager : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// シーン遷移をフェード付きで行うコルーチン。既にフェード中なら中断する。
+    /// StartupSequenceManagerのFadeに依存するためnullチェックを行う。
+    /// </summary>
     private IEnumerator LoadSceneRoutine(string sceneName, StartupSequenceManager sequenceManager)
     {
         if (isFading) yield break;
@@ -321,6 +443,10 @@ public class DesktopManager : MonoBehaviour
         SceneManager.LoadScene(sceneName);
     }
 
+    /// <summary>
+    /// ボタンに対してポインターのEnter/Exitイベントを登録する。EventTriggerが無ければ追加する。
+    /// ホバー時にフレームを表示し、離脱時に非表示にする。
+    /// </summary>
     private void SetupHoverEvents(Button button)
     {
         EventTrigger trigger = button.gameObject.GetComponent<EventTrigger>() ?? button.gameObject.AddComponent<EventTrigger>();
@@ -332,6 +458,10 @@ public class DesktopManager : MonoBehaviour
         trigger.triggers.Add(entryExit);
     }
 
+    /// <summary>
+    /// 指定したアイコン上にホバーフレームを配置して表示する。RectTransformを親に合わせてストレッチし、描画順序を調整する。
+    /// iconHoverFrameがnullの場合は何もしない。
+    /// </summary>
     private void ShowHoverFrame(Transform iconTransform)
     {
         if (iconHoverFrame == null) return;
@@ -354,6 +484,9 @@ public class DesktopManager : MonoBehaviour
         iconHoverFrame.gameObject.SetActive(true);
     }
 
+    /// <summary>
+    /// ホバーフレームを非表示にして親を元に戻す。iconHoverFrameがnullの場合は何もしない。
+    /// </summary>
     private void HideHoverFrame()
     {
         if (iconHoverFrame == null) return;
@@ -368,6 +501,10 @@ public class DesktopManager : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// ChatControllerから渡されたタグリストを解析して処理を実行する。
+    /// フォーマットは "key:value" を想定。対応外のキーは無視する。
+    /// </summary>
     private void HandleTags(List<string> tags)
     {
         foreach (string tag in tags)
@@ -393,6 +530,10 @@ public class DesktopManager : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// ハイライトタグの処理コルーチン。カンマ区切りで複数ターゲットに対応し、必要なものだけ有効化する。
+    /// 終了時にcurrentEffectCoroutineをクリアする。
+    /// </summary>
     private IEnumerator ProcessHighlightTag(string highlightData)
     {
         // まず全て消す
@@ -410,6 +551,10 @@ public class DesktopManager : MonoBehaviour
         currentEffectCoroutine = null;
     }
 
+    /// <summary>
+    /// 名前に一致するハイライトターゲットを検索して有効化する。見つからない場合は警告を出力する。
+    /// highlightTargetsがnullの場合は何もしない。
+    /// </summary>
     private void ActivateHighlight(string name)
     {
         // リストから名前に一致するものを探して表示
@@ -424,6 +569,9 @@ public class DesktopManager : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// 登録されている全てのハイライトパネルを非表示にする。highlightTargetsがnullの場合は何もしない。
+    /// </summary>
     private void DeactivateAllHighlights()
     {
         if (highlightTargets == null) return;

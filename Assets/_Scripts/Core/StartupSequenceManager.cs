@@ -4,32 +4,51 @@ using UnityEngine;
 using UnityEngine.UI;
 
 /// <summary>
-/// ムービー演出で操作するアクター（キャラやオブジェクト）の定義
+/// ムービー演出で操作するアクター（キャラやオブジェクト）の定義。actorName は Ink タグと紐付ける識別子。
 /// </summary>
+/// <remarks>
+/// actorTransform と actorAnimator は Inspector で割り当てること。どちらかが null の場合、当該アクターに対する演出は無視される。
+/// </remarks>
 [System.Serializable]
 public class MovieActor
 {
     [Tooltip("Inkタグで呼び出すための名前 (例: Guard)")]
     public string actorName;
+
     [Tooltip("動かす対象のTransform")]
-    public RectTransform actorTransform;
+    public RectTransform actorTransform; // InspectorでD&D
+
     [Tooltip("操作する対象のAnimator")]
-    public Animator actorAnimator;
+    public Animator actorAnimator; // InspectorでD&D
 }
 
+/// <summary>
+/// ムービー内での移動先定義。locationName は Ink タグで参照する識別子。
+/// </summary>
+/// <remarks>
+/// locationTransform は Inspector で配置すること。null の場合、移動命令は無視される。
+/// </remarks>
 [System.Serializable]
 public class MovieLocation
 {
     [Tooltip("Inkタグで呼び出すための名前 (例: Point_A)")]
     public string locationName;
+
     [Tooltip("移動先のTransform")]
-    public RectTransform locationTransform;
+    public RectTransform locationTransform; // InspectorでD&D
 }
 
+/// <summary>
+/// 起動時の一連の演出（OSブート→オープニング→タイトル→ログイン）を管理するコンポーネント。
+/// </summary>
+/// <remarks>
+/// Start でシーケンスを開始する。GameManager.Instance.currentDay が 2 以上の場合はシーケンスをスキップしてオブジェクトを無効化する。
+/// 各フェーズで UI や AudioSource を操作するため、該当コンポーネントは Inspector で割り当てること。
+/// </remarks>
 public class StartupSequenceManager : MonoBehaviour
 {
     [Header("フェード設定")]
-    public Image fadeImage;
+    public Image fadeImage; // InspectorでD&D: フェードに使用する Image
 
     [Header("フェード時間（秒）")]
     [Tooltip("OSブート画面へ“開く”フェード（黒→透明）")]
@@ -46,39 +65,40 @@ public class StartupSequenceManager : MonoBehaviour
     public float fadeFromTitle = 1.0f;
     [Tooltip("ログインへ“開く”フェード（黒→透明）")]
     public float fadeToLogin = 1.0f;
+
     // 互換用：既存の fadeDuration は残しておく（他所で参照している可能性に備える）
     [Tooltip("（互換）未指定時のデフォルトフェード時間。上の個別値が0以下ならこの値を使います。")]
     public float fadeDuration = 1.5f;
 
     [Header("管理対象オブジェクト")]
-    public GameObject osBootPhase;
-    public GameObject openingMoviePhase;
-    public GameObject titlePhase;
-    public GameObject loginPhase;
-    public DesktopManager desktopManager;
+    public GameObject osBootPhase; // InspectorでD&D
+    public GameObject openingMoviePhase; // InspectorでD&D
+    public GameObject titlePhase; // InspectorでD&D
+    public GameObject loginPhase; // InspectorでD&D
+    public DesktopManager desktopManager; // InspectorでD&D
 
     [Header("スキップ設定")]
     [Tooltip("起動時のOSブート演出（osBootPhase）をスキップします")]
     public bool skipOsBootPhase = false;
 
     [Header("タイトル演出")]
-    public Animator titleLogoAnimator;
+    public Animator titleLogoAnimator; // InspectorでD&D
     [Tooltip("タイトルロゴのアニメーション再生時間(秒)")]
     public float titleAnimDuration = 3.0f;
 
     [Header("オープニング演出")]
     [Tooltip("オープニングで再生する会話を管理するDialogueManager")]
-    public DialogueManager openingDialogueManager;
+    public DialogueManager openingDialogueManager; // InspectorでD&D
     [Tooltip("オープニングで再生する会話のInkファイル(任意)")]
-    public TextAsset openingChatInk;
+    public TextAsset openingChatInk; // InspectorでD&D
 
     [Header("オープニングムービー演出 (Actors)")]
     [Tooltip("ムービー内で操作するキャラクター/オブジェクトのリスト")]
-    public List<MovieActor> movieActors;
+    public List<MovieActor> movieActors; // InspectorでD&D
 
     [Header("オープニングムービー演出 (Locations)")]
     [Tooltip("ムービー内で使用する移動先のリスト")]
-    public List<MovieLocation> movieLocations;
+    public List<MovieLocation> movieLocations; // InspectorでD&D
 
     [Header("オープニングムービー演出 (Settings)")]
     [Tooltip("キャラクターの移動速度")]
@@ -86,26 +106,32 @@ public class StartupSequenceManager : MonoBehaviour
 
     [Header("オープニング操作UI")]
     [Tooltip("会話終了後に表示するパネル（電源ボタンを含むルート）")]
-    public GameObject openingProceedPanel;
+    public GameObject openingProceedPanel; // InspectorでD&D
 
     [Tooltip("次フェーズへ進むための電源ボタン")]
-    public Button openingProceedButton;
+    public Button openingProceedButton; // InspectorでD&D
+
     [Header("電源ボタンサウンド")]
     [Tooltip("ボタン押下時に再生するSE")]
     public AudioClip openingProceedSE;
+
     [Range(0f, 1f)]
     [Tooltip("ボタンSEの音量")]
     public float openingProceedSEVolume = 1f;
+
     [Tooltip("ボタン押下からフェード開始までの待機秒数")]
     public float openingProceedDelay = 0.4f;
+
     [Tooltip("押下直後にボタンを無効化して二重クリックを防止します")]
     public bool disableProceedButtonOnClick = true;
 
     [Header("サウンド設定")]
     [Tooltip("効果音を再生するためのAudioSource")]
-    public AudioSource audioSource;
+    public AudioSource audioSource; // InspectorでD&D
+
     [Tooltip("タイトルロゴ表示時に再生する効果音")]
     public AudioClip titleLogoSound;
+
     [Range(0f, 1f)]
     [Tooltip("タイトルロゴ効果音の音量")]
     public float titleLogoVolume = 1.0f;
@@ -126,7 +152,13 @@ public class StartupSequenceManager : MonoBehaviour
     private bool openingProceedRoutineRunning = false;
     private MovieActor currentSpeakingActor;
 
-    // DialogueManagerの会話終了イベントを購読するための処理
+    /// <summary>
+    /// コンポーネント有効化時に呼ばれる。イベント購読とオープニング用 AudioSource の追加を行う。
+    /// </summary>
+    /// <remarks>
+    /// DialogueManager のイベントにリスナを登録する。GameObject に BGM と環境音用の AudioSource を追加し、ループ設定を行う。
+    /// openingProceedButton が割り当てられている場合はクリックリスナを追加する。
+    /// </remarks>
     private void OnEnable()
     {
         DialogueManager.OnDialogueFinished += OnOpeningChatFinished;
@@ -135,7 +167,7 @@ public class StartupSequenceManager : MonoBehaviour
         // 行の表示完了を検知してアニメを止める
         DialogueManager.OnLineFinishDisplaying += StopSpeakingAnimation;
 
-        // BGM用と環境音用に2つのスピーカー(AudioSource)を動的に追加します
+        // BGM用と環境音用に2つのスピーカー(AudioSource)を動的に追加する
         opBgmSource = gameObject.AddComponent<AudioSource>();
         opBgmSource.loop = true;
         opBgmSource.playOnAwake = false;
@@ -148,6 +180,12 @@ public class StartupSequenceManager : MonoBehaviour
             openingProceedButton.onClick.AddListener(OnOpeningProceedClicked);
     }
 
+    /// <summary>
+    /// コンポーネント無効化時に呼ばれる。イベント購読解除と UI リスナの削除を行う。
+    /// </summary>
+    /// <remarks>
+    /// 登録したイベントハンドラとボタンリスナを解除する。解除漏れは参照が残ってメモリ問題を引き起こす可能性があるため必ず解除する。
+    /// </remarks>
     private void OnDisable()
     {
         DialogueManager.OnDialogueFinished -= OnOpeningChatFinished;
@@ -159,8 +197,13 @@ public class StartupSequenceManager : MonoBehaviour
             openingProceedButton.onClick.RemoveListener(OnOpeningProceedClicked);
     }
 
-
-
+    /// <summary>
+    /// Unity の Start。シーケンス再生の前準備と条件判定を行い、メインコルーチンを開始する。
+    /// </summary>
+    /// <remarks>
+    /// Start は Awake の後、最初のフレーム前に呼ばれる。GameManager の状態を参照して再生可否を判定する。
+    /// 各フェーズで必要な GameObject や UI を初期状態にセットする。
+    /// </remarks>
     void Start()
     {
         // Day2以降はシーケンスを再生しない
@@ -191,7 +234,13 @@ public class StartupSequenceManager : MonoBehaviour
         StartCoroutine(MainSequence());
     }
 
-
+    /// <summary>
+    /// 起動シーケンスの主要フローを順次実行するコルーチン。各フェーズを直列に再生する。
+    /// </summary>
+    /// <remarks>
+    /// フェードや会話再生、タイトル演出、ログイン画面への遷移を管理する。処理中に UI や AudioSource の状態を変更する。
+    /// openingDialogueManager や fadeImage が null の場合は一部処理がスキップされる可能性があるため、Inspector の設定を確認すること。
+    /// </remarks>
     private IEnumerator MainSequence()
     {
         // 常に最初は黒にしておく
@@ -301,12 +350,14 @@ public class StartupSequenceManager : MonoBehaviour
         this.enabled = false;
     }
 
-
-
-
     /// <summary>
-    /// ムービー中のInkタグを処理する (OnTagsProcessed から呼ばれる)
+    /// Ink のタグ一覧を解析し、話者切替と演出トリガーの検出を行う。
     /// </summary>
+    /// <remarks>
+    /// 'speaker: 名前' を検出した場合は該当アクターの発話アニメを開始する。
+    /// 'move_char'、'play_anim'、'wait' のいずれかを検出した場合は openingDialogueManager の再生状態を待機中にし、ProcessTagsRoutine を開始する。
+    /// tags が null または空の場合は何も行わない。openingDialogueManager が未設定だと呼び出し時に例外が発生するため、Inspector での設定を確認すること。
+    /// </remarks>
     private void HandleMovieTags(List<string> tags)
     {
         // 既存の処理（DialogueManagerを待機させる）
@@ -340,8 +391,12 @@ public class StartupSequenceManager : MonoBehaviour
     }
 
     /// <summary>
-    /// タグの処理を非同期で行うコルーチン（並列処理対応版）
+    /// タグの処理を非同期で行うコルーチン（並列処理対応）。
     /// </summary>
+    /// <remarks>
+    /// 各タグに応じたコルーチンを可能な限り並列で開始し、それらが全て完了するまで待機する。
+    /// 不正なフォーマットのタグは警告を出力してスキップする。処理完了後に openingDialogueManager の再生待機状態を解除する。
+    /// </remarks>
     private IEnumerator ProcessTagsRoutine(List<string> tags)
     {
         // 実行したコルーチン（移動やアニメ）を監視するためのリスト
@@ -407,6 +462,13 @@ public class StartupSequenceManager : MonoBehaviour
         openingDialogueManager.SetIsPlayingEffect(false);
     }
 
+    /// <summary>
+    /// 指定のアクターをリストから検索し、目的地まで X 軸方向のみ移動するコルーチン。
+    /// </summary>
+    /// <remarks>
+    /// 目標位置到達判定は threshold ピクセル以内とする。到着時に Animator の IsWalking を false に設定する。
+    /// actor または location に必要な参照が欠けている場合は即時終了するため、呼び出し前に Inspector 設定を確認すること。
+    /// </remarks>
     private IEnumerator MoveCharacterRoutine(string actorName, string locationName)
     {
         // 1. 検索とチェック
@@ -442,7 +504,7 @@ public class StartupSequenceManager : MonoBehaviour
             yield return null;
         }
 
-        // 4. 到着処理（ズレを補正して停止）
+        // 到着処理（ズレを補正して停止）
         Vector2 finalPos = character.anchoredPosition;
         finalPos.x = targetX;
         character.anchoredPosition = finalPos;
@@ -452,8 +514,11 @@ public class StartupSequenceManager : MonoBehaviour
     }
 
     /// <summary>
-    /// リストからアクターを探し、指定されたアニメ（トリガー）を再生し、指定秒数待機する
+    /// リストからアクターを探し、指定されたアニメ（トリガー）を再生し、指定秒数待機するコルーチン。
     /// </summary>
+    /// <remarks>
+    /// Animator が見つからない場合はエラーを出力して即時終了する。指定した duration の間だけ待機する。
+    /// </remarks>
     private IEnumerator PlayAnimationRoutine(string actorName, string triggerName, float duration)
     {
         // 1. リストから名前でアクターを探す
@@ -475,8 +540,12 @@ public class StartupSequenceManager : MonoBehaviour
     }
 
     /// <summary>
-    /// 指定されたアクターのSpeakアニメーションを開始する
+    /// 指定されたアクターの Speak アニメーションを開始する。
     /// </summary>
+    /// <remarks>
+    /// 既に別のアクターが喋っている場合は先にそのアニメを停止してから切り替える。currentSpeakingActor を更新する。
+    /// actor が見つからない場合は何もしない。
+    /// </remarks>
     private void StartSpeakingAnimation(string actorName)
     {
         // 前に喋っていた人がいれば、その人の口を閉じる
@@ -492,8 +561,11 @@ public class StartupSequenceManager : MonoBehaviour
     }
 
     /// <summary>
-    /// 現在喋っているアクターのアニメーションを停止する
+    /// 現在喋っているアクターの Speak アニメーションを停止する。
     /// </summary>
+    /// <remarks>
+    /// currentSpeakingActor が null でない場合は Speak フラグを false にし、参照をクリアする。
+    /// </remarks>
     private void StopSpeakingAnimation()
     {
         if (currentSpeakingActor != null && currentSpeakingActor.actorAnimator != null)
@@ -503,7 +575,12 @@ public class StartupSequenceManager : MonoBehaviour
         currentSpeakingActor = null;
     }
 
-    // DialogueManagerから会話終了イベントを受け取った時に呼ばれる (現在は未使用)
+    /// <summary>
+    /// DialogueManager から会話終了イベントを受け取った時に呼ばれる。
+    /// </summary>
+    /// <remarks>
+    /// finishedInk が openingChatInk と一致するか確認するためのフックポイントを提供する。現在は追加処理を行わない。
+    /// </remarks>
     private void OnOpeningChatFinished(TextAsset finishedInk)
     {
         // 念のため、終了したのがオープニングの会話か確認
@@ -513,7 +590,13 @@ public class StartupSequenceManager : MonoBehaviour
         }
     }
 
-    // フェード処理（所要時間を明示指定する版）
+    /// <summary>
+    /// フェード処理（所要時間を明示指定する版）。targetColor へ線形補間する。
+    /// </summary>
+    /// <remarks>
+    /// duration が 0 以下の場合は fadeDuration をフォールバックとして使用する。透明化完了時に fadeImage を非表示にする。
+    /// fadeImage が null の場合は何も行わない。
+    /// </remarks>
     public IEnumerator Fade(Color targetColor, float duration)
     {
         // フォールバック（0以下が入っても破綻しないように）
@@ -539,19 +622,34 @@ public class StartupSequenceManager : MonoBehaviour
         }
     }
 
-    // 互換用：従来のシグネチャ（fadeDuration を使う）
+    /// <summary>
+    /// 互換用フェードシグネチャ。既存呼び出しと互換性を保つため fadeDuration を使用して Fade を呼ぶ。
+    /// </summary>
     public IEnumerator Fade(Color targetColor)
     {
         // 既存呼び出しはそのままでOK
         return Fade(targetColor, fadeDuration);
     }
 
+    /// <summary>
+    /// 開始ボタンのクリックイベントハンドラ。二重クリック抑止のためコルーチンを起動する。
+    /// </summary>
+    /// <remarks>
+    /// openingProceedRoutineRunning が true の場合は何もしない。ボタン押下処理は ProceedClickRoutine に委譲する。
+    /// </remarks>
     private void OnOpeningProceedClicked()
     {
         if (openingProceedRoutineRunning) return;
         StartCoroutine(ProceedClickRoutine());
     }
 
+    /// <summary>
+    /// 電源ボタン押下時の処理を行うコルーチン。ボタン無効化と SE 再生、遅延待機を行う。
+    /// </summary>
+    /// <remarks>
+    /// 指定の待機後に openingProceedClicked を true にして MainSequence 側の待機を解除する。
+    /// audioSource が未割り当ての場合は Camera.main を使って PlayClipAtPoint で再生を試みる。
+    /// </remarks>
     private IEnumerator ProceedClickRoutine()
     {
         openingProceedRoutineRunning = true;
@@ -577,6 +675,13 @@ public class StartupSequenceManager : MonoBehaviour
         openingProceedRoutineRunning = false;
     }
 
+    /// <summary>
+    /// オープニング専用の BGM と環境音を再生する。
+    /// </summary>
+    /// <remarks>
+    /// openingBgm / openingAmbience が設定されている場合に、それぞれの AudioSource にクリップをセットして再生する。
+    /// AudioSource が未作成の場合は OnEnable で生成される想定。
+    /// </remarks>
     private void PlayOpeningAudio()
     {
         if (openingBgm != null)
@@ -593,6 +698,13 @@ public class StartupSequenceManager : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// オープニング音源を徐々にフェードアウトして停止するコルーチン。
+    /// </summary>
+    /// <remarks>
+    /// duration が 0 の場合は速やかに停止する。フェード終了後に音量を元の値に戻す。
+    /// opBgmSource / opAmbienceSource が null の場合は NullReferenceException になるため、事前に生成されていることを前提とする。
+    /// </remarks>
     private IEnumerator FadeOutOpeningAudio(float duration)
     {
         float startBgmVol = opBgmSource.volume;

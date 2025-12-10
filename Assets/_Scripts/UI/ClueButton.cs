@@ -17,8 +17,6 @@ public class ClueButton : MonoBehaviour
 
     void Start()
     {
-        // ▼▼▼ このメソッドのロジックを全面的に修正 ▼▼▼
-
         // GameManagerが存在するか確認
         if (GameManager.Instance == null)
         {

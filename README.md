@@ -53,7 +53,5 @@ https://youtu.be/CVRCvbL-E_U
 * **Tools:** Git, GitHub
 
 ## 🚀 インストール・遊び方
-1. 右側の「Releases」から `Game_v1.0.zip` をダウンロードしてください。
-2. 解凍し、`Game.exe` を起動するとプレイできます。
-   (または)
-   Unityエディタ上で再生して確認できます。
+1. 右側の「Releases」から `HalOffice_v0.22.zip` をダウンロードしてください。
+2. 解凍し、`HalOffice_v0.22.exe` を起動するとプレイできます。

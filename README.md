@@ -43,7 +43,7 @@ https://youtu.be/CVRCvbL-E_U
 
 ### 2. 外部ライブラリ「Ink」を活用した会話システム
 ダイアログ機能に関するライブラリ「Ink」を作品に統合し、演出制御（SE再生やオブジェクト表示）を含めたダイアログシステムを自作しました。
-* **Dialogue Systemの一例:** [📄 InkDialogueManager.cs](https://github.com/Menae/HalOffice/blob/main/Assets/_Scripts/Core/InkDialogueManager.cs)
+* **Dialogue Systemの一例:** [📄 DialogueManager.cs](https://github.com/Menae/HalOffice/blob/main/Assets/_Scripts/Core/DialogueManager.cs)
     * タイプライター演出の実装や、シングルトンによるアクセス管理を行っています。
 
 ## 🔧 使用技術・環境

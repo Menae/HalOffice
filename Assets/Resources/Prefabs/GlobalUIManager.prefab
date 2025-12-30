@@ -2585,7 +2585,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -90.99994, y: -23.000305}
+  m_AnchoredPosition: {x: -90.99988, y: -23.000244}
   m_SizeDelta: {x: -600, y: -200}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &8160589206906275631
@@ -3182,6 +3182,7 @@ MonoBehaviour:
   gameEndTimeHour: 17
   gameEndTimeMinute: 0
   totalRealTimeDurationInSeconds: 120
+  clockUpdateInterval: 5
   dayText: {fileID: 5319896918791909235}
   taskbarIconEntries:
   - appWindow: {fileID: 8024397667996916883}

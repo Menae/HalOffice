@@ -141,6 +141,10 @@ public class GlobalUIManager : MonoBehaviour
     [Tooltip("開始から終了までにかかる現実の時間（秒）")]
     public float totalRealTimeDurationInSeconds = 300f;
 
+    [Tooltip("時計の表示を更新する間隔（分）。\n例: 1=毎分更新, 5=5分刻み, 15=15分刻み, 30=30分刻み")]
+    [Range(1, 60)]
+    public int clockUpdateInterval = 1;
+
     [Header("日付表示設定")]
     /// <summary>
     /// 現在の日数を表示するTextMeshPro（例：Day 1）。nullチェックあり。
@@ -290,6 +294,12 @@ public class GlobalUIManager : MonoBehaviour
     /// </summary>
     private void Update()
     {
+        // これにより、StartGame()が呼ばれるまで時計は初期時刻で停止する
+        if (GameManager.Instance != null && !GameManager.Instance.isWorkStarted)
+        {
+            return;
+        }
+
         UpdateTaskbarIcons();
         UpdateDayDisplay();
 
@@ -447,18 +457,27 @@ public class GlobalUIManager : MonoBehaviour
 
     /// <summary>
     /// 実行中のゲーム内時間に基づいて時計のUIを更新する。
-    /// フォーマット: "HH:mm"。clockTextがnullの場合は何もしない。
+    /// 指定された更新間隔（clockUpdateInterval）に基づいて時刻を切り捨て表示する。
     /// </summary>
     private void UpdateClockDisplay()
     {
         if (clockText == null) return;
 
-        // floatの「分」を整数の「時」と「分」に変換
+        // 現在の経過時間を「分」単位の整数で取得
         int totalMinutes = Mathf.FloorToInt(currentGameTimeInMinutes);
-        int hours = totalMinutes / 60;
-        int minutes = totalMinutes % 60;
 
-        // "HH:mm" 形式 (09:05 のように0埋め) で表示
+        // 更新間隔が1未満にならないよう安全策を講じる
+        int interval = Mathf.Max(1, clockUpdateInterval);
+
+        // 指定した間隔単位で分を切り捨てる（スナップ処理）
+        // 整数除算の性質を利用し、端数を切り捨てることで間隔ごとの更新を実現する
+        int snappedMinutes = (totalMinutes / interval) * interval;
+
+        // 表示用の時・分を算出
+        int hours = snappedMinutes / 60;
+        int minutes = snappedMinutes % 60;
+
+        // "HH:mm" 形式 (例: 09:05) でテキストコンポーネントに設定
         clockText.text = string.Format("{0:00}:{1:00}", hours, minutes);
     }
 

@@ -163,19 +163,31 @@ public class Day1Manager : MonoBehaviour
     }
 
     /// <summary>
-    /// ゲーム開始ボタンから呼ばれる。プレイヤー入力を解放し、ゲームをアクティブ化する。
-    /// 副作用: GameManagerの入力許可をtrueに設定、startGameButtonを非表示にする。
+    /// ゲーム（業務）を開始する処理である。
+    /// チュートリアル終了後、またはスタートボタン押下時に呼び出される。
+    /// GameManagerへ業務開始を通知し、タイマー処理を有効化する。
     /// </summary>
     public void StartGame()
     {
-        Debug.Log("StartGame() has been called! isGameActive will be set to true.");
+        // 既に開始されている場合は処理を中断する
+        if (isGameActive) return;
+
+        Debug.Log("Day1の業務を開始する。");
+
+        // ゲーム進行フラグを有効化し、Updateメソッド内での時間経過を開始させる
         isGameActive = true;
 
+        // GameManagerへ業務開始を通知し、入力操作を許可する
         if (GameManager.Instance != null)
         {
-            GameManager.Instance.SetInputEnabled(true);
+            GameManager.Instance.StartWork();
+        }
+        else
+        {
+            Debug.LogWarning("GameManagerが存在しないため、同期処理をスキップした。");
         }
 
+        // スタートボタンが設定されている場合は非表示にする
         if (startGameButton != null)
         {
             startGameButton.gameObject.SetActive(false);

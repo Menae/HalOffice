@@ -39,6 +39,11 @@ public class DropZone : MonoBehaviour
     /// </summary>
     public bool isTutorialZone = false;
 
+    // ハイライト表示用のオブジェクト
+    [Header("ハイライト設定")]
+    [Tooltip("アイテムが近づいた時に表示するハイライト枠などのオブジェクト")]
+    public GameObject highlightVisual;
+
     [HideInInspector]
     /// <summary>
     /// この DropZone が GameSlot の場合に対応する ObjectSlot を参照するフィールド。Inspectorには表示しない。
@@ -47,4 +52,19 @@ public class DropZone : MonoBehaviour
     /// ZoneType が GameSlot のときに外部から割り当てる。未設定(null)の可能性あり。使用時は必ず null チェックを行うこと。
     /// </remarks>
     public ObjectSlot associatedSlot;
+
+    // ハイライトのオンオフ
+    public void SetHighlight(bool active)
+    {
+        if (highlightVisual != null)
+        {
+            highlightVisual.SetActive(active);
+        }
+    }
+
+    // 初期化時にハイライトを消す
+    private void Start()
+    {
+        SetHighlight(false);
+    }
 }

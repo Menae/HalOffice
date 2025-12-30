@@ -28,7 +28,7 @@ AIにも好みがあるらしい。人間らしさを追求した結果、こう
 
 # prefab: left
 # speaker: Boss
-そんなインシデントを起こせばお前自身の評価にも響くからな、気を付けろよ。
+そんな<color=red><u>インシデント</u></color>を起こせばお前自身の評価にも響くからな、気を付けろよ。
 
 # highlight: DetectionMeter
 # prefab: left
@@ -73,22 +73,21 @@ AI の違和感は可視化されている、よく⾒ておくように 。
 
 # prefab: left
 # speaker: Boss
-# wait_for_drag
-表示されたウィンドウにあるオブジェクトを掴んで、スロットまでドラッグして配置してみろ。
-
-# prefab: left
-# speaker: Boss
-悪くない手際だ。
-
-# prefab: left
-# speaker: Boss
 # wait_for_trash
-次は削除だ。不要なものは、同じようにドラッグしてゴミ箱まで持っていけばいい。やってみろ。
+まずは<color=red>削除</color>だ。ウィンドウにある不要なものを、ドラッグしてゴミ箱まで持っていってみろ。
 
 # prefab: left
 # speaker: Boss
 うむ、完璧だ。
 
+# prefab: left
+# speaker: Boss
+# wait_for_drag
+次は<color=red>配置</color>についてだ。表示されたウィンドウにあるオブジェクトを掴んで、スロットまでドラッグして配置してみろ。
+
+# prefab: left
+# speaker: Boss
+悪くない手際だ。
 
 #highlight:Log
 # prefab: left

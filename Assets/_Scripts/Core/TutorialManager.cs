@@ -17,6 +17,10 @@ public class HighlightTarget
     /// </summary>
     [Tooltip("実際に表示するハイライト用のパネル")]
     public GameObject panel;
+
+    // ハイライト時の枠
+    [Tooltip("ハイライト時に表示する強調枠などのオブジェクト")]
+    public GameObject frameObject;
 }
 
 [System.Serializable]
@@ -458,12 +462,17 @@ public class TutorialManager : MonoBehaviour
     /// 指定された名前のハイライトターゲットを有効化する。見つからない場合は警告を出力。
     /// </summary>
     /// <param name="name">ハイライトターゲットの名前。</param>
-    private void ActivateHighlight(string name)
+    public void ActivateHighlight(string name)
     {
         HighlightTarget target = highlightTargets.Find(ht => ht.name == name);
-        if (target != null && target.panel != null)
+        if (target != null)
         {
-            target.panel.SetActive(true);
+            // パネルの表示
+            if (target.panel != null) target.panel.SetActive(true);
+
+            // 枠の表示
+            if (target.frameObject != null) target.frameObject.SetActive(true);
+
             Debug.Log($"ハイライト表示: {name}");
         }
         else
@@ -480,8 +489,10 @@ public class TutorialManager : MonoBehaviour
         if (highlightTargets == null) return;
         foreach (var target in highlightTargets)
         {
-            if (target.panel != null)
-                target.panel.SetActive(false);
+            if (target.panel != null) target.panel.SetActive(false);
+
+            // 枠も非表示にする
+            if (target.frameObject != null) target.frameObject.SetActive(false);
         }
     }
 

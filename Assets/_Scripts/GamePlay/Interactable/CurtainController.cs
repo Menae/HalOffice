@@ -2,61 +2,37 @@
 
 /// <summary>
 /// カーテンの表示と相互作用を管理するコンポーネント。
-/// カーテンの開閉に応じてスプライト切替と、景色オブジェクト／スロットの操作可否を同期する。
+/// クリック判定とドラッグ判定を区別し、適切な挙動（開閉またはドラッグ優先）を行う。
 /// </summary>
 public class CurtainController : MonoBehaviour
 {
     [Header("オブジェクト参照")]
     [Tooltip("開閉するカーテンのSpriteRenderer")]
-    /// <summary>
-    /// 開閉するカーテンのSpriteRenderer。InspectorでD&D。nullチェックあり。
-    /// </summary>
     public SpriteRenderer curtainRenderer;
 
     [Tooltip("最初に配置されている景色Aのオブジェクト")]
-    /// <summary>
-    /// 最初に配置される景色AのDraggable。InspectorでD&D。カーテンの開閉に合わせて操作可否を切替。
-    /// </summary>
     public Draggable sceneryA;
 
     [Tooltip("景色が置かれるスロットのDropZone")]
-    /// <summary>
-    /// 景色が置かれるDropZone。InspectorでD&D。GameSlotの場合はassociatedSlotからObjectSlotを取得して使用。
-    /// </summary>
     public DropZone sceneryDropZone;
 
     [Header("スプライト設定")]
-    /// <summary>
-    /// 閉じているときに表示するスプライト。InspectorでD&D。null時は描画更新をスキップ。
-    /// </summary>
     public Sprite closedCurtainSprite;
-
-    /// <summary>
-    /// 開いているときに表示するスプライト。InspectorでD&D。null時は描画更新をスキップ。
-    /// </summary>
     public Sprite openCurtainSprite;
 
     // 内部変数
-    /// <summary>DropZoneから取得した対応するObjectSlotのキャッシュ。</summary>
     private ObjectSlot scenerySlot;
-
-    /// <summary>カーテンの状態フラグ（true=開いている）。</summary>
     private bool isOpen = false;
-
-    /// <summary>景色AのCollider2D参照をキャッシュ。nullチェックあり。</summary>
     private Collider2D sceneryACollider;
-
-    /// <summary>SceneryBが配置されたことを一度だけ検知するためのフラグ。</summary>
     private bool isSceneryB_Placed = false;
-
-    /// <summary>DropZoneのCollider2D参照をキャッシュ。nullチェックあり。</summary>
     private Collider2D sceneryDropZoneCollider;
 
-    /// <summary>
-    /// UnityのStartイベント。スクリプト有効化後、最初のフレームの直前に呼ばれる。
-    /// DropZoneからassociatedSlotとCollider2Dを取得してキャッシュし、景色Aのコライダーをキャッシュして初期状態を反映。
-    /// 設定漏れ時はエラーログを出力。
-    /// </summary>
+    // クリック/ドラッグ判定用
+    private Vector3 pointerDownPos;
+    private bool isPointerDown = false;
+    private bool isDragThresholdExceeded = false;
+    private const float DragThreshold = 10f; // ドラッグとみなす移動距離（ピクセル）
+
     void Start()
     {
         if (sceneryDropZone != null)
@@ -73,40 +49,65 @@ public class CurtainController : MonoBehaviour
         {
             sceneryACollider = sceneryA.GetComponent<Collider2D>();
         }
-
         UpdateCurtainState();
     }
 
-    /// <summary>
-    /// 毎フレーム呼ばれるUpdateイベント。
-    /// 右クリックによるカーテンの開閉判定と、スロットにSceneryBが配置された瞬間の処理（1回のみ）を管理。
-    /// 入力が無効化されている場合は早期リターン。
-    /// </summary>
     void Update()
     {
-        // 右クリックでカーテンの開閉を切替
-        if (Input.GetMouseButtonDown(1))
-        {
-            if (GameManager.Instance != null && !GameManager.Instance.isInputEnabled) return;
+        // 入力無効時は処理しない
+        if (GameManager.Instance != null && !GameManager.Instance.isInputEnabled) return;
 
+        // 1. マウスボタンを押した瞬間
+        if (Input.GetMouseButtonDown(0))
+        {
             if (ScreenToWorldConverter.Instance.GetWorldPosition(Input.mousePosition, out Vector3 worldPos))
             {
+                // カーテンをクリックしたか確認
                 RaycastHit2D[] hits = Physics2D.RaycastAll(worldPos, Vector2.zero);
-
-                // クリック地点のヒットに自オブジェクトが含まれているか判定
                 foreach (var hit in hits)
                 {
                     if (hit.collider != null && hit.collider.gameObject == this.gameObject)
                     {
-                        isOpen = !isOpen;
-                        UpdateCurtainState();
+                        // カーテン上で押下開始
+                        isPointerDown = true;
+                        pointerDownPos = Input.mousePosition;
+                        isDragThresholdExceeded = false;
                         break;
                     }
                 }
             }
         }
 
-        // SceneryBがスロットに配置された瞬間を一度だけ検知して処理
+        // 2. マウスボタンを押している間
+        if (isPointerDown)
+        {
+            // 移動距離をチェック
+            if (Vector3.Distance(Input.mousePosition, pointerDownPos) > DragThreshold)
+            {
+                isDragThresholdExceeded = true;
+            }
+
+            // 3. マウスボタンを離した瞬間
+            if (Input.GetMouseButtonUp(0))
+            {
+                // ドラッグ操作（移動）が行われていなければ「クリック」とみなして開閉
+                if (!isDragThresholdExceeded)
+                {
+                    isOpen = !isOpen;
+                    UpdateCurtainState();
+                }
+
+                // 状態リセット
+                isPointerDown = false;
+            }
+        }
+        // マウスが離れた、または外れた場合の安全策（Upを拾い損ねた場合など）
+        else if (Input.GetMouseButtonUp(0))
+        {
+            isPointerDown = false;
+        }
+
+        // SceneryB配置検知（変更なし）
         if (!isSceneryB_Placed && scenerySlot != null && scenerySlot.IsOccupied())
         {
             if (scenerySlot.currentObject.itemData != null && scenerySlot.currentObject.itemData.itemType == ItemType.SceneryB)
@@ -122,24 +123,20 @@ public class CurtainController : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// カーテンのスプライトと関連オブジェクトの操作可能状態を同期する。
-    /// curtainRendererが未設定の場合は処理を中止。sceneryAとDropZoneのコライダーを開閉状態に合わせて有効/無効化。
-    /// </summary>
     private void UpdateCurtainState()
     {
         if (curtainRenderer == null) return;
 
         curtainRenderer.sprite = isOpen ? openCurtainSprite : closedCurtainSprite;
 
-        // 景色Aの操作可否をカーテン状態に合わせて切替
+        // 景色Aの操作可否
         if (sceneryA != null && sceneryACollider != null)
         {
             sceneryA.enabled = isOpen;
             sceneryACollider.enabled = isOpen;
         }
 
-        // 景色スロット（DropZone）の当たり判定をカーテン状態に合わせて切替
+        // スロットの当たり判定
         if (sceneryDropZoneCollider != null)
         {
             sceneryDropZoneCollider.enabled = isOpen;

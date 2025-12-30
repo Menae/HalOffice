@@ -297,43 +297,73 @@ public class DragDropManager : MonoBehaviour
 
     /// <summary>
     /// ドラッグ中の毎フレーム処理。プロキシのハイライト表示判定と反映を行う。
-    /// ドラッグ対象が UI 由来かワールド由来かを判定して処理する。
+    /// 追加: スロット側のハイライト制御
     /// </summary>
-    /// <param name="eventData">現在の PointerEventData（未使用だが将来の拡張に備えて受け取る）。</param>
     public void HandleDrag(PointerEventData eventData)
     {
         if (currentState != DdState.HoldingItem) return;
 
         ItemData currentItemData = null;
-        if (currentDraggedObject != null)
-        {
-            currentItemData = currentDraggedObject.itemData;
-        }
-        else if (currentUIDraggable != null)
-        {
-            currentItemData = currentUIDraggable.itemData;
-        }
+        if (currentDraggedObject != null) currentItemData = currentDraggedObject.itemData;
+        else if (currentUIDraggable != null) currentItemData = currentUIDraggable.itemData;
 
         if (currentItemData == null) return;
 
-        bool showHighlight = false;
+        bool showProxyHighlight = false;
 
-        // カーソル下のドロップゾーンを取得。UI→ワールドの順で検索。
+        // カーソル下のドロップゾーンを取得
         DropZone zoneUnderCursor = FindDropZoneUnderCursor();
 
+        // 全てのDropZoneのハイライトを一旦リセット（重ければ最適化可）
+        // ※シーン内の全DropZoneを取得するのは重いので、本来はキャッシュすべきだが、
+        // 簡易実装として直前にハイライトしたものを記憶する変数をクラスに追加するのがベスト。
+        // ここでは簡略化のため、「現在ホバー中のものだけON、それ以外OFF」というロジックにする。
+
+        // スロットハイライト処理
         if (zoneUnderCursor != null && zoneUnderCursor.zoneType == DropZone.ZoneType.GameSlot)
         {
             ObjectSlot slot = zoneUnderCursor.associatedSlot;
-
+            // スロットが空き、かつ受け入れ可能であれば
             if (slot != null && !slot.IsOccupied() && slot.CanAccept(currentItemData.itemType))
             {
-                showHighlight = true;
+                showProxyHighlight = true; // 手持ちアイテムのハイライト
+
+                // スロットが正解であればスロット自体をハイライト
+                if (slot.IsCorrectItem(currentItemData.itemType))
+                {
+                    zoneUnderCursor.SetHighlight(true);
+                }
             }
         }
 
+        // 前フレームでハイライトしていたものを消す処理が必要。
+        // HandleDrag内で簡易的に行うなら、FindDropZoneUnderCursorで取得できなかった
+        // 他のすべてのDropZoneのSetHighlight(false)を呼ぶ必要があるが、
+        // 実装の手間を減らすため、ResetAllSlotHighlightsヘルパーメソッドを追加し、ここで呼ぶ。
+        ResetAllSlotHighlights(zoneUnderCursor);
+
         if (dragProxyHighlightImage != null)
         {
-            dragProxyHighlightImage.gameObject.SetActive(showHighlight);
+            dragProxyHighlightImage.gameObject.SetActive(showProxyHighlight);
+        }
+    }
+
+    // ハイライトリセット用のヘルパー
+    private DropZone lastHighlightedZone;
+
+    private void ResetAllSlotHighlights(DropZone currentZone)
+    {
+        // 以前ハイライトしていたが、現在対象でないなら消す
+        if (lastHighlightedZone != null && lastHighlightedZone != currentZone)
+        {
+            lastHighlightedZone.SetHighlight(false);
+            lastHighlightedZone = null;
+        }
+
+        // 現在ハイライトすべきゾーンがあれば記録
+        if (currentZone != null)
+        {
+            lastHighlightedZone = currentZone;
         }
     }
 
@@ -505,12 +535,20 @@ public class DragDropManager : MonoBehaviour
     }
 
     /// <summary>
-    /// ワールドオブジェクトをドロップした際の処理。
-    /// ゴミ箱、スロットへの配置、元へ戻す処理を扱う。
+    /// ゲーム空間内のオブジェクトがドロップされた際の処理を行う。
+    /// ゴミ箱への廃棄、または新しいスロットへの配置可否を判定し、実行する。
     /// </summary>
-    /// <param name="targetZone">ドロップ先の DropZone（存在しない場合は null）。</param>
+    /// <param name="targetZone">ドロップ先のゾーン情報</param>
     private void HandleGameWorldDrop(DropZone targetZone)
     {
+        // ドロップ操作完了に伴い、直前まで表示していたハイライトを解除する
+        if (lastHighlightedZone != null)
+        {
+            lastHighlightedZone.SetHighlight(false);
+            lastHighlightedZone = null;
+        }
+
+        // ゴミ箱へのドロップ判定
         if (targetZone != null && targetZone.zoneType == DropZone.ZoneType.TrashCan)
         {
             if (audioSource != null && trashSound != null)
@@ -519,15 +557,21 @@ public class DragDropManager : MonoBehaviour
             }
 
             ObjectSlot removedFromSlot = originalSlot;
-            Destroy(currentDraggedObject.gameObject);
-            GameEventManager.InvokeObjectRemoved(removedFromSlot);
 
+            // オブジェクトを破棄する
+            Destroy(currentDraggedObject.gameObject);
+
+            // 破棄イベントを発火する
+            GameEventManager.InvokeObjectRemoved(removedFromSlot);
             OnItemTrashed?.Invoke();
         }
         else
         {
+            // ドロップ失敗またはスロット移動の判定へ進む
+            // ドラッグ中は非表示にしていたオブジェクトを表示に戻す
             currentDraggedObject.gameObject.SetActive(true);
 
+            // 有効なゲームスロットへのドロップか判定を行う
             if (targetZone != null &&
                 targetZone.zoneType == DropZone.ZoneType.GameSlot &&
                 !targetZone.associatedSlot.IsOccupied() &&
@@ -535,7 +579,8 @@ public class DragDropManager : MonoBehaviour
             {
                 ObjectSlot slot = targetZone.associatedSlot;
 
-                if (slot.correctItemType == currentDraggedObject.itemData.itemType)
+                // 正誤判定：リストを用いた判定メソッドを使用し、正解・不正解のSEを再生する
+                if (slot.IsCorrectItem(currentDraggedObject.itemData.itemType))
                 {
                     if (audioSource != null && correctPlacementSound != null)
                     {
@@ -550,90 +595,109 @@ public class DragDropManager : MonoBehaviour
                     }
                 }
 
+                // 新しいスロットへオブジェクトを配置する
                 PlaceInNewSlot(slot);
-
                 OnItemPlaced?.Invoke();
             }
             else
             {
+                // 配置不可能な場所へのドロップ時は、元のスロット位置に戻す
                 ReturnToOriginalSlot();
             }
         }
     }
 
     /// <summary>
-    /// UI 側のアイテムをドロップした際の処理。
-    /// チュートリアル用ゾーンの特別扱いと、本番モードでの生成配置処理を分岐して実行する。
+    /// UI上のアイテム（タスクバー等）がドロップされた際の処理を行う。
+    /// 実体化してワールド内のスロットへ配置するフローを制御する。
     /// </summary>
-    /// <param name="targetZone">ドロップ先の DropZone（存在しない場合は null）。</param>
+    /// <param name="targetZone">ドロップ先のゾーン情報</param>
     private void HandleUIDrop(DropZone targetZone)
     {
         if (targetZone == null) return;
 
-        // チュートリアル用ゾーンの処理（実体化せずに使用済みにする）
-        if (targetZone.isTutorialZone)
+        // ドロップ操作完了に伴い、ハイライトを解除する
+        if (lastHighlightedZone != null)
         {
-            if (targetZone.zoneType == DropZone.ZoneType.TrashCan)
-            {
-                if (audioSource != null && trashSound != null)
-                    audioSource.PlayOneShot(trashSound, trashVolume);
+            lastHighlightedZone.SetHighlight(false);
+            lastHighlightedZone = null;
+        }
 
-                currentUIDraggable.MarkAsUsed();
-                OnItemTrashed?.Invoke();
-            }
-            else if (targetZone.zoneType == DropZone.ZoneType.GameSlot)
+        // ゴミ箱へのドロップ判定
+        if (targetZone.zoneType == DropZone.ZoneType.TrashCan)
+        {
+            if (audioSource != null && trashSound != null)
             {
-                if (audioSource != null && correctPlacementSound != null)
-                    audioSource.PlayOneShot(correctPlacementSound, correctPlacementVolume);
-
-                currentUIDraggable.MarkAsUsed();
-                OnItemPlaced?.Invoke();
+                audioSource.PlayOneShot(trashSound, trashVolume);
             }
 
+            // UIアイテムを使用済みにする
+            currentUIDraggable.MarkAsUsed();
+
+            // ゴミ捨てイベントを発行（チュートリアル進行用）
+            OnItemTrashed?.Invoke();
             return;
         }
 
+        // チュートリアルゾーンへのドロップ判定
+        // 実際のアイテム生成は行わないが、配置成功イベントは発行する必要がある
+        if (targetZone.isTutorialZone)
+        {
+            // 配置イベントを発行（チュートリアル進行用）
+            OnItemPlaced?.Invoke();
+
+            // 視覚的なフィードバックとして使用済みにする
+            currentUIDraggable.MarkAsUsed();
+            return;
+        }
+
+        // ゲームスロット以外へのUIからの直接ドロップは許可しない
         if (targetZone.zoneType != DropZone.ZoneType.GameSlot) return;
 
         ObjectSlot slot = targetZone.associatedSlot;
 
+        // スロットが無効、既に埋まっている、あるいはアイテムタイプを受け入れない場合は中断する
         if (slot == null || slot.IsOccupied() || !slot.CanAccept(currentUIDraggable.itemData.itemType))
         {
             return;
         }
 
-        if (currentUIDraggable.itemData == null || currentUIDraggable.itemData.itemPrefab == null)
-        {
-            Debug.LogError($"UIアイテム '{currentUIDraggable.name}' のItemDataまたはPrefabが正しく設定されていません。", currentUIDraggable);
-            return;
-        }
-
-        if (slot.correctItemType == currentUIDraggable.itemData.itemType)
+        // 配置処理を開始する
+        // 正誤判定：リストベースの判定メソッドを利用する
+        if (slot.IsCorrectItem(currentUIDraggable.itemData.itemType))
         {
             if (audioSource != null && correctPlacementSound != null)
+            {
                 audioSource.PlayOneShot(correctPlacementSound, correctPlacementVolume);
+            }
         }
         else
         {
             if (audioSource != null && incorrectPlacementSound != null)
+            {
                 audioSource.PlayOneShot(incorrectPlacementSound, incorrectPlacementVolume);
+            }
         }
 
-        GameObject newItem = Instantiate(
-            currentUIDraggable.itemData.itemPrefab,
-            slot.slotTransform.position,
-            Quaternion.identity
-        );
+        // UIアイテムに対応するプレハブをワールド空間に生成する
+        GameObject newItem = Instantiate(currentUIDraggable.itemData.itemPrefab, slot.slotTransform.position, Quaternion.identity);
 
         Draggable newDraggable = newItem.GetComponent<Draggable>();
         if (newDraggable != null)
         {
+            // データを引き継ぎ、スロットとの相互参照を設定する
             newDraggable.itemData = currentUIDraggable.itemData;
             slot.currentObject = newDraggable;
             newDraggable.currentSlot = slot;
+
+            // UI側のアイテムを使用済みにする
             currentUIDraggable.MarkAsUsed();
+
+            // 新規配置フラグを立てる（評価ロジック等で使用）
             if (FindObjectOfType<ObjectSlotManager>() != null)
+            {
                 FindObjectOfType<ObjectSlotManager>().MarkSlotAsNewlyPlaced(slot);
+            }
 
             OnItemPlaced?.Invoke();
         }

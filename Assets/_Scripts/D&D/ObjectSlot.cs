@@ -19,8 +19,8 @@ public class ObjectSlot
     [Tooltip("このスロットに配置可能なアイテムの種類のリスト。空の場合は何でも配置できる。")]
     public List<ItemType> allowedItemTypes = new List<ItemType>();
 
-    [Tooltip("このスロットに対する正解のアイテム種類")]
-    public ItemType correctItemType;
+    [Tooltip("このスロットに対する正解のアイテム種類のリスト")]
+    public List<ItemType> correctItemTypes = new List<ItemType>();
 
     [Tooltip("このスロットが空の時に「正解」と判定する場合はチェック")]
     public bool isCorrectWhenEmpty = false;
@@ -53,5 +53,12 @@ public class ObjectSlot
     public bool IsOccupied()
     {
         return currentObject != null;
+    }
+
+    // 正解判定用のヘルパーメソッド
+    public bool IsCorrectItem(ItemType typeToCheck)
+    {
+        if (correctItemTypes == null) return false;
+        return correctItemTypes.Contains(typeToCheck);
     }
 }

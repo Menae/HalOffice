@@ -199,7 +199,8 @@ public class EvaluationTrigger : MonoBehaviour
             }
             else
             {
-                if (slot.IsOccupied() && slot.currentObject.itemData.itemType == slot.correctItemType)
+                // 変更: リストに含まれているかで判定
+                if (slot.IsOccupied() && slot.IsCorrectItem(slot.currentObject.itemData.itemType))
                     score++;
             }
         }

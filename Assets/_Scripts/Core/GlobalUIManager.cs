@@ -201,8 +201,20 @@ public class GlobalUIManager : MonoBehaviour
     /// <summary>
     /// デモ終了画面を出すシーン名（例：LoginScene）。OnSceneLoadedで参照。
     /// </summary>
-    [Tooltip("デモ終了画面を出すシーン名（例：LoginScene）")]
-    public string demoEndSceneName = "LoginScene";
+    [Tooltip("デモ終了画面を出すシーン名")]
+    public string demoEndSceneName = "P1&P2";
+
+    /// <summary>
+    /// デモ終了画面にある「アプリケーション終了」ボタン。
+    /// </summary>
+    [Tooltip("デモ終了画面にある「アプリケーション終了」ボタン")]
+    public Button demoExitButton;
+
+    /// <summary>
+    /// デモ終了画面にある「最初から再開」ボタン。
+    /// </summary>
+    [Tooltip("デモ終了画面にある「最初から再開」ボタン")]
+    public Button demoRestartButton;
 
     // 内部処理用の変数
     private bool isClockRunning = false;
@@ -246,7 +258,7 @@ public class GlobalUIManager : MonoBehaviour
     /// 役割:
     /// - タスクバーの表示/非表示切替
     /// - 時計の稼働/停止切替
-    /// - デモ終了画面の表示判定
+    /// - デモ終了画面の表示判定とボタン設定
     /// </summary>
     /// <param name="scene">ロードされたシーン情報。</param>
     /// <param name="mode">ロードモード。</param>
@@ -275,16 +287,41 @@ public class GlobalUIManager : MonoBehaviour
         }
 
         // --- 3. デモ終了処理 ---
-        if (demoEndImage != null &&
-            scene.name == demoEndSceneName &&
-            GameManager.Instance != null &&
-            GameManager.Instance.currentDay >= demoEndDay)
+        bool isDemoEnd = (scene.name == demoEndSceneName &&
+                          GameManager.Instance != null &&
+                          GameManager.Instance.currentDay >= demoEndDay);
+
+        if (demoEndImage != null)
         {
-            demoEndImage.gameObject.SetActive(true);
-        }
-        else if (demoEndImage != null)
-        {
-            demoEndImage.gameObject.SetActive(false);
+            demoEndImage.gameObject.SetActive(isDemoEnd);
+
+            // デバッグ用ログを追加
+            Debug.Log($"デモ終了判定: {isDemoEnd} (Scene: {scene.name}, Day: {GameManager.Instance?.currentDay})");
+
+            if (isDemoEnd)
+            {
+                Debug.Log("ボタンのイベント登録を実行します。");
+
+                if (demoExitButton != null)
+                {
+                    demoExitButton.onClick.RemoveAllListeners();
+                    demoExitButton.onClick.AddListener(QuitApplication);
+                }
+                else
+                {
+                    Debug.LogError("Exit ButtonがInspectorでアタッチされていません！");
+                }
+
+                if (demoRestartButton != null)
+                {
+                    demoRestartButton.onClick.RemoveAllListeners();
+                    demoRestartButton.onClick.AddListener(RestartGame);
+                }
+                else
+                {
+                    Debug.LogError("Restart ButtonがInspectorでアタッチされていません！");
+                }
+            }
         }
     }
 
@@ -501,5 +538,29 @@ public class GlobalUIManager : MonoBehaviour
     {
         if (taskbarObject != null) { taskbarObject.SetActive(isVisible); }
         if (desktopIconsObject != null) { desktopIconsObject.SetActive(isVisible); }
+    }
+
+    /// <summary>
+    /// アプリケーションを完全に終了する。
+    /// デモ終了画面の終了ボタン等から呼び出す。
+    /// </summary>
+    public void QuitApplication()
+    {
+        Debug.Log("アプリケーションを終了する。");
+        Application.Quit();
+    }
+
+    /// <summary>
+    /// ゲームの進行状況をリセットし、デモ終了画面で指定されたシーンを再ロードする。
+    /// </summary>
+    public void RestartGame()
+    {
+        if (GameManager.Instance != null)
+        {
+            GameManager.Instance.ResetGameProgress();
+        }
+
+        // デモ終了後に遷移すべきシーンをロード
+        SceneManager.LoadScene(demoEndSceneName);
     }
 }

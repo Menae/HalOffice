@@ -907,7 +907,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &71359384
 RectTransform:
   m_ObjectHideFlags: 0
@@ -1364,7 +1364,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &115324072
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -20767,12 +20767,16 @@ MonoBehaviour:
   highlightTargets:
   - name: Right
     panel: {fileID: 480331995}
+    frameObject: {fileID: 0}
   - name: DetectionMeter
     panel: {fileID: 1965433564}
+    frameObject: {fileID: 0}
   - name: Left
     panel: {fileID: 1846568925}
+    frameObject: {fileID: 0}
   - name: Log
     panel: {fileID: 705802657}
+    frameObject: {fileID: 0}
   tutorialVideos:
   - name: DD
     player: {fileID: 992809051}
@@ -23747,7 +23751,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &1922236819
 Transform:
   m_ObjectHideFlags: 0
@@ -25214,7 +25218,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &2009428995
 RectTransform:
   m_ObjectHideFlags: 0

@@ -111,6 +111,11 @@ public class DetectionManager : MonoBehaviour
 
         currentDetection += amount;
         currentDetection = Mathf.Clamp(currentDetection, 0f, maxDetection);
+
+        if (currentDetection >= maxDetection)
+        {
+            HandleTimeUp();
+        }
     }
 
     /// <summary>

@@ -217,4 +217,30 @@ public class GameManager : MonoBehaviour
         Debug.Log("リザルトシーンが閉じられた。メインシーンへ制御を戻す。");
         OnResultSceneClosed?.Invoke();
     }
+
+    /// <summary>
+    /// ゲームの進行状況を完全に初期化し、Day 1 の開始前状態に戻す。
+    /// デモ版終了後の再スタート時や、タイトル画面に戻る際に使用する。
+    /// </summary>
+    public void ResetGameProgress()
+    {
+        // 進行変数のリセット
+        currentDay = 1;
+        reputationScore = 0;
+        correctPlacementCount = 0;
+
+        // フラグのリセット
+        isWorkStarted = false;
+        justFinishedInvestigation = false;
+        shouldShowResults = false;
+
+        // リストのクリア
+        collectedCluesForReport.Clear();
+        conversationLog.Clear();
+
+        // 証拠のリセット
+        ResetAllClues();
+
+        Debug.Log("ゲームの進行状況を完全にリセットした。");
+    }
 }

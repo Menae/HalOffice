@@ -3328,7 +3328,7 @@ MonoBehaviour:
   - P3_Day1
   demoEndImage: {fileID: 6605763985558450512}
   demoEndDay: 2
-  demoEndSceneName: P1&P2
+  demoEndSceneName: Title
   demoExitButton: {fileID: 5050296577128083729}
   demoRestartButton: {fileID: 1838343262397379177}
 --- !u!114 &1071078508034451762

@@ -161,6 +161,21 @@ public class DragDropManager : MonoBehaviour
     public bool InteractionEnabled { get; private set; } = true;
 
     /// <summary>
+    /// 現在ドラッグ中のワールドオブジェクト（読み取り専用）
+    /// </summary>
+    public Draggable CurrentDraggedObject => currentDraggedObject;
+
+    /// <summary>
+    /// ドラッグが開始された元のスロット（読み取り専用）
+    /// </summary>
+    public ObjectSlot OriginalSlot => originalSlot;
+
+    /// <summary>
+    /// 現在アイテムをホールド中かどうか
+    /// </summary>
+    public bool IsHoldingItem => currentState == DdState.HoldingItem;
+
+    /// <summary>
     /// 入力受付状態を切り替える。カーソルにも同じ命令を伝播する。
     /// </summary>
     /// <param name="enabled">入力を許可するなら true。</param>

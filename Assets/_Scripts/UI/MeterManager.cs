@@ -6,8 +6,7 @@
 /// </summary>
 /// <remarks>
 /// ユーザー体験を損なわないよう、アイテムのドラッグ＆ドロップ操作中のメーター変動を抑制する機能を実装。
-/// カーソルが指定されたゲーム画面範囲内にある場合は、移動中のアイテムを
-/// 仮想的に「元のスロットに存在するもの」として扱い、計算を行う補正処理を含んでいる。
+/// また、各メーターが最大値（100%）に達した際に、特定の演出用オブジェクトを有効化する機能を持つ。
 /// </remarks>
 public class MeterManager : MonoBehaviour
 {
@@ -27,6 +26,26 @@ public class MeterManager : MonoBehaviour
     /// </summary>
     public RetroMeter completionMeter;
 
+    [Header("Max Value Events")]
+    [Tooltip("知識メーターが最大(100%)になった時に有効化されるオブジェクト")]
+    public GameObject knowledgeMaxEffect;
+
+    [Tooltip("自律性メーターが最大(100%)になった時に有効化されるオブジェクト")]
+    public GameObject autonomyMaxEffect;
+
+    [Tooltip("完成度メーターが最大(100%)になった時に有効化されるオブジェクト")]
+    public GameObject completionMaxEffect;
+
+    [Header("Settings - Custom Max Values")]
+    [Tooltip("知識メーターの最大値（分母）。0の場合は「全スロット数」が自動適用されます。")]
+    public int customMaxKnowledge = 0;
+
+    [Tooltip("自律性メーターの最大値（分母）。0の場合は「全スロット数」が自動適用されます。")]
+    public int customMaxAutonomy = 0;
+
+    [Tooltip("完成度メーターの最大スコア（分母）。0の場合は「全スロット数 × 2」が自動適用されます。")]
+    public float customMaxCompletion = 0f;
+
     [Header("References")]
     /// <summary>
     /// シーン内の全スロットを管理するマネージャー。
@@ -42,7 +61,7 @@ public class MeterManager : MonoBehaviour
 
     /// <summary>
     /// UI判定に使用するカメラ。
-    /// CanvasのRenderModeがScreenSpace - Overlayの場合はnull、Cameraの場合は対象カメラを設定する。
+    /// CanvasのRenderModeがOverlayの場合はnullを設定。
     /// </summary>
     [Tooltip("UI判定用カメラ。CanvasのRenderModeがOverlayの場合はnullを設定。")]
     public Camera uiCamera;
@@ -55,6 +74,11 @@ public class MeterManager : MonoBehaviour
         if (knowledgeMeter != null) knowledgeMeter.InitializeMeter();
         if (autonomyMeter != null) autonomyMeter.InitializeMeter();
         if (completionMeter != null) completionMeter.InitializeMeter();
+
+        // エフェクトの初期状態を非表示にする
+        if (knowledgeMaxEffect != null) knowledgeMaxEffect.SetActive(false);
+        if (autonomyMaxEffect != null) autonomyMaxEffect.SetActive(false);
+        if (completionMaxEffect != null) completionMaxEffect.SetActive(false);
     }
 
     /// <summary>
@@ -66,13 +90,8 @@ public class MeterManager : MonoBehaviour
     }
 
     /// <summary>
-    /// スロットの配置状況を集計し、各メーターの表示を更新する。
+    /// スロットの配置状況を集計し、各メーターの表示更新および最大値到達時のイベント制御を行う。
     /// </summary>
-    /// <remarks>
-    /// ドラッグ操作中のアイテムについては、カーソルが画面内にある限り
-    /// 「元のスロットに配置されている」ものとして計算に含めることで、
-    /// 操作中の意図しないメーター変動（フリッカー）を防止している。
-    /// </remarks>
     private void UpdateMeters()
     {
         if (slotManager == null || slotManager.objectSlots == null) return;
@@ -107,18 +126,13 @@ public class MeterManager : MonoBehaviour
 
             if (slot.IsOccupied() && slot.currentObject != null)
             {
-                // 通常ケース：スロットにオブジェクトが実際に配置されている場合
                 dataToCheck = slot.currentObject.itemData;
             }
             else if (isHolding && slot == originalSlot && heldObject != null && isCursorInsideScreen)
             {
-                // ドラッグ中ケース（補正処理）：
-                // スロットは空だが、ドラッグ中のオブジェクトの元位置であり、
-                // かつカーソルが有効範囲内にある場合、このアイテムを含めて計算する
                 dataToCheck = heldObject.itemData;
             }
 
-            // アイテムデータが特定できた場合のみ集計
             if (dataToCheck != null)
             {
                 if (slot.IsCorrectItem(dataToCheck.itemType))
@@ -132,30 +146,51 @@ public class MeterManager : MonoBehaviour
             }
         }
 
-        // --- 各メーターへの値の適用 ---
+        // --- 1. 知識量 (Knowledge) ---
+        // カスタム設定があればそれを使用、なければ全スロット数を使用
+        float kDenominator = (customMaxKnowledge > 0) ? customMaxKnowledge : totalSlots;
+        float knowledgeRatio = Mathf.Clamp01((float)knowledgeCount / kDenominator);
 
-        // 知識量メーター更新（全体に対する正解数の割合）
         if (knowledgeMeter != null)
         {
-            float ratio = (float)knowledgeCount / totalSlots;
-            knowledgeMeter.UpdateMeterNormalized(ratio);
+            knowledgeMeter.UpdateMeterNormalized(knowledgeRatio);
+        }
+        if (knowledgeMaxEffect != null)
+        {
+            knowledgeMaxEffect.SetActive(knowledgeRatio >= 1.0f);
         }
 
-        // 自律性メーター更新（全体に対する不正解数の割合）
+
+        // --- 2. 自律性 (Autonomy) ---
+        float aDenominator = (customMaxAutonomy > 0) ? customMaxAutonomy : totalSlots;
+        float autonomyRatio = Mathf.Clamp01((float)autonomyCount / aDenominator);
+
         if (autonomyMeter != null)
         {
-            float ratio = (float)autonomyCount / totalSlots;
-            autonomyMeter.UpdateMeterNormalized(ratio);
+            autonomyMeter.UpdateMeterNormalized(autonomyRatio);
+        }
+        if (autonomyMaxEffect != null)
+        {
+            autonomyMaxEffect.SetActive(autonomyRatio >= 1.0f);
         }
 
-        // 完成度メーター更新
-        // 計算式: (正解数 + (全体数 - 不正解数)) / (全体数 * 2)
-        // ※空きスロットも「減点ではない」要素としてスコアに含まれる仕様
+
+        // --- 3. 完成度 (Completion) ---
+        // 現在のスコア計算: 正解数 + (空きスロット数) ※空きスロット数 = 全スロット - 不正解数
+        // つまり「減点されなかった要素の数」
+        float currentScore = knowledgeCount + (totalSlots - autonomyCount);
+
+        // カスタム設定があればそれを使用、なければ標準計算(全スロット*2)を使用
+        float cDenominator = (customMaxCompletion > 0f) ? customMaxCompletion : (totalSlots * 2.0f);
+        float completionRatio = Mathf.Clamp01(currentScore / cDenominator);
+
         if (completionMeter != null)
         {
-            float maxScore = totalSlots * 2.0f;
-            float currentScore = knowledgeCount + (totalSlots - autonomyCount);
-            completionMeter.UpdateMeterNormalized(currentScore / maxScore);
+            completionMeter.UpdateMeterNormalized(completionRatio);
+        }
+        if (completionMaxEffect != null)
+        {
+            completionMaxEffect.SetActive(completionRatio >= 1.0f);
         }
     }
 }

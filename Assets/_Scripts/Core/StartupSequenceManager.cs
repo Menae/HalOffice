@@ -561,16 +561,24 @@ public class StartupSequenceManager : MonoBehaviour
     }
 
     /// <summary>
-    /// 現在喋っているアクターの Speak アニメーションを停止する。
+    /// 全てのアクターの Speak アニメーションを強制停止する。
     /// </summary>
     /// <remarks>
-    /// currentSpeakingActor が null でない場合は Speak フラグを false にし、参照をクリアする。
+    /// 連打スキップ時などに currentSpeakingActor の参照がズレてアニメーションが残り続けるのを防ぐため、
+    /// 特定の対象だけでなく、登録されている全員に対して Speak = false を発行する。
     /// </remarks>
     private void StopSpeakingAnimation()
     {
-        if (currentSpeakingActor != null && currentSpeakingActor.actorAnimator != null)
+        // リストにいる全員を強制的に止める
+        if (movieActors != null)
         {
-            currentSpeakingActor.actorAnimator.SetBool("Speak", false);
+            foreach (var actor in movieActors)
+            {
+                if (actor.actorAnimator != null)
+                {
+                    actor.actorAnimator.SetBool("Speak", false);
+                }
+            }
         }
         currentSpeakingActor = null;
     }

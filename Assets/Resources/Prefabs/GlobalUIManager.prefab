@@ -3314,7 +3314,7 @@ MonoBehaviour:
   gameStartTimeMinute: 0
   gameEndTimeHour: 17
   gameEndTimeMinute: 0
-  totalRealTimeDurationInSeconds: 120
+  totalRealTimeDurationInSeconds: 180
   clockUpdateInterval: 5
   dayText: {fileID: 5319896918791909235}
   taskbarIconEntries:
@@ -3328,7 +3328,7 @@ MonoBehaviour:
   - P3_Day1
   demoEndImage: {fileID: 6605763985558450512}
   demoEndDay: 2
-  demoEndSceneName: Title
+  demoEndSceneName: P1&P2
   demoExitButton: {fileID: 5050296577128083729}
   demoRestartButton: {fileID: 1838343262397379177}
 --- !u!114 &1071078508034451762

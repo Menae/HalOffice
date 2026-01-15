@@ -30,12 +30,37 @@ public class Day1Manager : MonoBehaviour
     public float totalTimeInSeconds = 300f;
 
     [Header("時間経過イベント")]
-    [Tooltip("この残り秒数になったら、オブジェクトAを表示 (InspectorでD&D)")]
+    /// <summary>
+    /// イベントAの発火タイミング（残り秒数）。
+    /// </summary>
+    [Tooltip("この残り秒数になったら、オブジェクトAを表示")]
     public float eventA_TriggerTime = 120f;
+
+    /// <summary>
+    /// 時間経過で表示される通知オブジェクトA。
+    /// </summary>
     public GameObject imageObjectA;
-    [Tooltip("この残り秒数になったら、オブジェクトBを表示 (InspectorでD&D)")]
+
+    /// <summary>
+    /// 通知Aを閉じる操作を受け付けるボタンコンポーネント。
+    /// </summary>
+    public Button closeButtonA;
+
+    /// <summary>
+    /// イベントBの発火タイミング（残り秒数）。
+    /// </summary>
+    [Tooltip("この残り秒数になったら、オブジェクトBを表示")]
     public float eventB_TriggerTime = 60f;
+
+    /// <summary>
+    /// 時間経過で表示される通知オブジェクトB。
+    /// </summary>
     public GameObject imageObjectB;
+
+    /// <summary>
+    /// 通知Bを閉じる操作を受け付けるボタンコンポーネント。
+    /// </summary>
+    public Button closeButtonB;
 
     [Header("通知エフェクト設定")]
     [Tooltip("通知が表示される時の効果音")]
@@ -68,28 +93,41 @@ public class Day1Manager : MonoBehaviour
     public static event Action OnTimeUp;
 
     /// <summary>
-    /// Unity Start。シーン初期化処理を行う。
-    /// 呼び出しタイミング: MonoBehaviour.Start（Awakeの後、最初のフレームの直前）。
-    /// 初期化内容: AudioSource取得、タイマー初期化、通知オブジェクト非表示、フェード開始またはチュートリアル開始。
-    /// 注意: GameManagerやTutorialManagerが未設定だと一部の動作をスキップする。
+    /// シーンの初期化処理を実行する。
+    /// 依存コンポーネントの取得、UI状態のリセット、イベントハンドラの登録を行う。
     /// </summary>
     void Start()
     {
+        // 外部マネージャーとの連携（入力制御）
         if (GameManager.Instance != null)
         {
-            // チュートリアル開始前は入力を無効化しておく
             GameManager.Instance.SetInputEnabled(false);
         }
 
         audioSource = GetComponent<AudioSource>();
         currentTime = totalTimeInSeconds;
 
-        // 通知オブジェクトを事前に非表示にする（null許容）
+        // UI初期状態の設定
         if (imageObjectA != null) imageObjectA.SetActive(false);
         if (imageObjectB != null) imageObjectB.SetActive(false);
 
+        // UIイベントの購読設定
+        // 多重登録を防ぐため、リスナーをクリアしてから登録する
+        if (closeButtonA != null)
+        {
+            closeButtonA.onClick.RemoveAllListeners();
+            closeButtonA.onClick.AddListener(DismissNotificationA);
+        }
+
+        if (closeButtonB != null)
+        {
+            closeButtonB.onClick.RemoveAllListeners();
+            closeButtonB.onClick.AddListener(DismissNotificationB);
+        }
+
         isGameActive = false;
 
+        // シーン開始演出の分岐
         if (screenFadeImage != null)
         {
             screenFadeImage.gameObject.SetActive(true);
@@ -98,14 +136,13 @@ public class Day1Manager : MonoBehaviour
         }
         else
         {
-            // フェードイメージが設定されていない場合は直接チュートリアル開始
             if (tutorialManager != null)
             {
                 tutorialManager.StartTutorial();
             }
             else
             {
-                Debug.LogError("TutorialManagerが設定されていません！");
+                Debug.LogError("TutorialManagerが未設定のため、進行を開始できません。");
             }
         }
     }
@@ -266,16 +303,23 @@ public class Day1Manager : MonoBehaviour
     }
 
     /// <summary>
-    /// 指定オブジェクトのAnimatorに"fadeout"トリガーを送る。nullチェックあり。
+    /// 指定オブジェクトをフェードアウト、または非表示にする。
+    /// Animatorがない場合は即座にSetActive(false)を行う。
     /// </summary>
-    /// <param name="obj">フェードアウトさせるオブジェクト</param>
     private void TriggerFadeOut(GameObject obj)
     {
         if (obj == null) return;
+
         Animator animator = obj.GetComponent<Animator>();
-        if (animator != null)
+        if (animator != null && animator.runtimeAnimatorController != null)
         {
+            // Animatorがあり、コントローラーも割り当てられている場合はアニメーション再生
             animator.SetTrigger("fadeout");
+        }
+        else
+        {
+            // アニメーション設定がない場合は、即座に非表示にする
+            obj.SetActive(false);
         }
     }
 

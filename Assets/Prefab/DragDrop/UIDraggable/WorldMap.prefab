@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 7914894278366790692}
   - component: {fileID: 4565792749152983736}
   - component: {fileID: 3522493522739275977}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: WorldMap
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -130,7 +130,7 @@ BoxCollider2D:
     adaptiveTiling: 0
   m_AutoTiling: 0
   serializedVersion: 2
-  m_Size: {x: 1.12, y: 0.74}
+  m_Size: {x: 1.15, y: 0.74}
   m_EdgeRadius: 0
 --- !u!114 &3522493522739275977
 MonoBehaviour:
@@ -156,7 +156,7 @@ GameObject:
   m_Component:
   - component: {fileID: 5003095010183952443}
   - component: {fileID: 4537140707365865214}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: Highlight
   m_TagString: Untagged
   m_Icon: {fileID: 0}

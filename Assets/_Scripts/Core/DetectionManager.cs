@@ -126,6 +126,10 @@ public class DetectionManager : MonoBehaviour
     {
         if (isGameOver) return;
         isGameOver = true;
+
+        // 結果発表フェーズへ移行する際、メーターを0（空）にして見た目を綺麗にする
+        currentDetection = 0f;
+
         OnGameOver?.Invoke();
 
         if (evaluationTrigger != null)
@@ -166,6 +170,10 @@ public class DetectionManager : MonoBehaviour
     public void ForceStopDetection()
     {
         isGameOver = true;
+
+        // 強制停止時にメーターを0（空）にする
+        currentDetection = 0f;
+
         Debug.Log("DetectionManager: 強制停止しました。");
     }
 

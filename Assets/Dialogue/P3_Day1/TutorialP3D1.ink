@@ -24,7 +24,7 @@ AIにも好みがあるらしい。人間らしさを追求した結果、こう
 
 # prefab: left
 # speaker: Boss
-だから、もしこちら側の存在に気づいてしまうと、彼女は正気を失い、このソフト⾃体がクラッシュしてしまう。
+だから、もしこちら側の存在に気づいてしまうと、AIは正気を失い、このソフト⾃体がクラッシュしてしまう。
 
 # prefab: left
 # speaker: Boss
@@ -135,16 +135,18 @@ AI の違和感は可視化されている、よく⾒ておくように 。
     -> final_conversation
     
 == final_conversation ==
+# highlight: BottomRight
 # prefab: left
 # speaker: Boss
 作業を終了したいときは左下のボタンで完了するんだ。
 
 # prefab: left
 # speaker: Boss
-17時までは作業を完了しろよ。遅い仕事は全体の効率に影響するからな。時計は右下だ。
+17時までには作業を完了しろよ。遅い仕事は全体の効率に影響するからな。時計は右下だ。
 
 # prefab: left
 # speaker: Boss
+#reset_effects
 よし、では今回は教育⽤ AI の開発だ。早速取り掛かってくれ！
 
 # prefab: left

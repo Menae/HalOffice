@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 4796948859904327912}
   - component: {fileID: 3473731975141791633}
   - component: {fileID: 5684695027206837140}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: fuusiga
   m_TagString: Untagged
   m_Icon: {fileID: 0}

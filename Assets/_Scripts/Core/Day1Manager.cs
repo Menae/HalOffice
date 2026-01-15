@@ -374,6 +374,16 @@ public class Day1Manager : MonoBehaviour
     }
 
     /// <summary>
+    /// 外部からゲーム進行（タイマー）を強制的に停止させる。
+    /// 評価フェーズ移行時などに呼び出し、時間経過イベントの発生を防ぐために使用する。
+    /// </summary>
+    public void StopTimer()
+    {
+        isGameActive = false;
+        Debug.Log("Day1Manager: タイマーを停止しました。");
+    }
+
+    /// <summary>
     /// 現在の残り時間を取得する。
     /// </summary>
     /// <returns>残り秒数（float）</returns>

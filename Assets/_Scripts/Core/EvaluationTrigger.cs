@@ -23,6 +23,11 @@ public class EvaluationTrigger : MonoBehaviour
     /// nullの場合は一部演出（サウンドやエフェクト）がスキップされる。
     /// </summary>
     public ScreenEffectsController screenEffectsController;
+    [Tooltip("時間管理を行っているDay1Manager。評価開始時にタイマーを止めるために使用。")]
+    public Day1Manager day1Manager;
+    // 検知ゲージ管理マネージャー
+    [Tooltip("検知ゲージを管理するDetectionManager。評価開始時にゲージを0にするために使用。")]
+    public DetectionManager detectionManager;
 
     [Header("設定")]
     [Tooltip("遷移先のリザルトシーン名")]
@@ -187,6 +192,29 @@ public class EvaluationTrigger : MonoBehaviour
         {
             Debug.LogError("ObjectSlotManagerが設定されていません！");
             return;
+        }
+
+        // 1. タイマーを停止（前回追加分）
+        if (day1Manager != null)
+        {
+            day1Manager.StopTimer();
+        }
+        else
+        {
+            var foundManager = FindObjectOfType<Day1Manager>();
+            if (foundManager != null) foundManager.StopTimer();
+        }
+
+        // 2. 検知メーターを強制停止＆リセット
+        if (detectionManager != null)
+        {
+            detectionManager.ForceStopDetection();
+        }
+        else
+        {
+            // 念のため自動検索の保険を入れておく
+            var foundDetection = FindObjectOfType<DetectionManager>();
+            if (foundDetection != null) foundDetection.ForceStopDetection();
         }
 
         int score = 0;

@@ -163,7 +163,11 @@ public class NPCController : MonoBehaviour
         // デバッグ用：'F'キーで家具へ向かう挙動をテスト
         if (Input.GetKeyDown(KeyCode.F))
         {
-            SwitchState(NPCState.HeadToFurniture);
+            // ここでもリスト確認を入れる
+            if (furnitureTargets != null && furnitureTargets.Count > 0)
+            {
+                SwitchState(NPCState.HeadToFurniture);
+            }
         }
     }
 
@@ -234,6 +238,10 @@ public class NPCController : MonoBehaviour
         if (behaviorCoroutine != null) StopCoroutine(behaviorCoroutine);
         animator.SetFloat("moveX", 0f);
         animator.SetFloat("moveY", 0f);
+
+        // トリガー系のリセットも行う（スライド移動防止）
+        animator.ResetTrigger("DoFidget");
+        animator.ResetTrigger("isLooking");
 
         timeInView = 0f;
     }
@@ -450,6 +458,9 @@ public class NPCController : MonoBehaviour
     /// </summary>
     public void RequestFurnitureInteraction()
     {
+        // リストが空なら何もしない（パトロールを中断させない）
+        if (furnitureTargets == null || furnitureTargets.Count == 0) return;
+
         if (currentState == NPCState.Patrol)
         {
             SwitchState(NPCState.HeadToFurniture);

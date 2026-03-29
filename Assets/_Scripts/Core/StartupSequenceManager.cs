@@ -206,11 +206,11 @@ public class StartupSequenceManager : MonoBehaviour
     /// </remarks>
     void Start()
     {
-        // Day2以降はシーケンスを再生しない
+        // Day2以降はOP・タイトルをスキップし、ログイン画面から開始する短縮シーケンスへ
         if (GameManager.Instance != null && GameManager.Instance.currentDay >= 2)
         {
-            Debug.Log($"Day {GameManager.Instance.currentDay}のため、スタートアップシーケンスをスキップします。");
-            gameObject.SetActive(false);
+            Debug.Log($"Day {GameManager.Instance.currentDay}のため、短縮スタートアップシーケンスを開始します。");
+            StartCoroutine(DayTransitionSequence());
             return;
         }
 
@@ -347,6 +347,51 @@ public class StartupSequenceManager : MonoBehaviour
         }
 
         Debug.Log("スタートアップシーケンス完了。DesktopManagerに処理を移行します。");
+        this.enabled = false;
+    }
+
+    /// <summary>
+    /// Day2以降の短縮スタートアップシーケンス。
+    /// OSブート・オープニング・タイトルをスキップし、ログイン画面へ直接遷移する。
+    /// DesktopManagerがFade()を借り続けるためGameObjectは破棄せず、
+    /// this.enabledのみfalseにして終了する。
+    /// </summary>
+    private IEnumerator DayTransitionSequence()
+    {
+        if (GlobalUIManager.Instance != null)
+            GlobalUIManager.Instance.SetDesktopUIVisibility(false);
+
+        // OP・タイトル関連フェーズは全て非表示のまま
+        if (osBootPhase != null)        osBootPhase.SetActive(false);
+        if (openingMoviePhase != null)  openingMoviePhase.SetActive(false);
+        if (titlePhase != null)         titlePhase.SetActive(false);
+
+        // フェード画像を黒で準備
+        if (fadeImage != null)
+        {
+            fadeImage.gameObject.SetActive(true);
+            fadeImage.color = Color.black;
+        }
+
+        // ログイン画面フェーズへ直接遷移
+        if (loginPhase != null) loginPhase.SetActive(true);
+        if (desktopManager != null)
+        {
+            desktopManager.gameObject.SetActive(true);
+            desktopManager.InitializeForSequence();
+        }
+
+        yield return new WaitForSeconds(0.5f);
+        yield return StartCoroutine(Fade(Color.clear, fadeToLogin));
+
+        BGMManager.Instance.TriggerBGMPlayback();
+
+        if (desktopManager != null)
+            desktopManager.TakeOverControl();
+
+        // MainSequenceと同様に自分を無効化する
+        // GameObjectは残す → DesktopManagerがFade()を使い続けられるようにするため
+        Debug.Log("DayTransitionSequence完了。DesktopManagerに処理を移行します。");
         this.enabled = false;
     }
 

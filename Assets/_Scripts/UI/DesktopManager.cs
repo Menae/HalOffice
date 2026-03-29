@@ -100,8 +100,16 @@ public class DesktopManager : MonoBehaviour
     [Tooltip("最初に再生する会話のInkファイル（JSONアセット）")]
     /// <summary>
     /// 最初に再生するチュートリアル用のInk JSONアセット。nullの場合は再生しない。
+    /// tutorialChatInkByDayが設定されている場合はそちらが優先される。
     /// </summary>
     public TextAsset tutorialChatInk;
+
+    [Tooltip("日付に対応するチュートリアルInkファイル（任意）。設定があれば tutorialChatInk より優先されます。\nindex 0 = Day1、index 1 = Day2…\nnullを設定した日はチュートリアルなしで通知表示へ進みます。")]
+    /// <summary>
+    /// 日付ごとのチュートリアルInk配列。GameManager.currentDay - 1 をインデックスとして使用。
+    /// 空のままにした場合は tutorialChatInk にフォールバックする。
+    /// </summary>
+    public TextAsset[] tutorialChatInkByDay;
 
     [Header("デバッグ設定")]
     [Tooltip("チェックを入れると、エディタ実行時に毎回チュートリアルが再生されます")]
@@ -159,6 +167,13 @@ public class DesktopManager : MonoBehaviour
         /// 遷移先のシーン名。空文字の場合は遷移しない。
         /// </summary>
         public string sceneNameToLoad;
+
+        [Tooltip("日付に対応する遷移先シーン名（任意）。設定があれば sceneNameToLoad より優先されます。\nindex 0 = Day1、index 1 = Day2、index 2 = Day3…")]
+        /// <summary>
+        /// 日付ごとの遷移先シーン名配列。GameManager.currentDay - 1 をインデックスとして使用。
+        /// 空のままにした場合は sceneNameToLoad にフォールバックする。
+        /// </summary>
+        public string[] sceneNameToLoadByDay;
     }
 
     // --- 内部処理用の変数 ---
@@ -257,13 +272,22 @@ public class DesktopManager : MonoBehaviour
 
             if (app.sceneLoadButton != null && !string.IsNullOrEmpty(app.sceneNameToLoad))
             {
-                string sceneName = app.sceneNameToLoad;
+                AppEntry capturedApp = app;
                 app.sceneLoadButton.onClick.AddListener(() =>
                 {
+                    // 日付に対応した遷移先シーンを解決する
+                    string targetScene = capturedApp.sceneNameToLoad;
+                    if (capturedApp.sceneNameToLoadByDay != null && capturedApp.sceneNameToLoadByDay.Length > 0)
+                    {
+                        int day = GameManager.Instance != null ? GameManager.Instance.currentDay : 1;
+                        int idx = Mathf.Clamp(day - 1, 0, capturedApp.sceneNameToLoadByDay.Length - 1);
+                        if (!string.IsNullOrEmpty(capturedApp.sceneNameToLoadByDay[idx]))
+                            targetScene = capturedApp.sceneNameToLoadByDay[idx];
+                    }
                     var sequenceManager = FindObjectOfType<StartupSequenceManager>();
                     if (sequenceManager != null)
                     {
-                        StartCoroutine(LoadSceneRoutine(sceneName, sequenceManager));
+                        StartCoroutine(LoadSceneRoutine(targetScene, sequenceManager));
                     }
                 });
             }
@@ -383,13 +407,27 @@ public class DesktopManager : MonoBehaviour
 
         yield return new WaitForSeconds(1f); // 少し待機
 
-        // PlayerPrefsのチェックを削除し、常にチュートリアルを実行するように変更
-        if (ChatController.Instance != null && tutorialChatInk != null)
+        // 日付に対応したチュートリアルInkを選択して再生する
+        TextAsset inkToPlay = tutorialChatInk;
+        if (tutorialChatInkByDay != null && tutorialChatInkByDay.Length > 0)
         {
-            ChatController.Instance.StartConversation(tutorialChatInk);
-            // PlayerPrefs.SetInt("HasSeenTutorial", 1); // チュートリアルを見たことを記録する処理を削除
+            int day = GameManager.Instance != null ? GameManager.Instance.currentDay : 1;
+            int idx = Mathf.Clamp(day - 1, 0, tutorialChatInkByDay.Length - 1);
+            // 配列にエントリがある日はその値を使う（nullなら「チュートリアルなし」扱い）
+            if (idx < tutorialChatInkByDay.Length)
+                inkToPlay = tutorialChatInkByDay[idx];
         }
-        // (ShowNotificationRoutineは HandleTutorialFinished から呼び出されます)
+
+        if (ChatController.Instance != null && inkToPlay != null)
+        {
+            // Inkが設定されている場合は会話を再生し、終了後にHandleTutorialFinishedが通知を出す
+            ChatController.Instance.StartConversation(inkToPlay);
+        }
+        else
+        {
+            // Inkがない日（チュートリアルなし）は直接通知表示へ進む
+            StartCoroutine(ShowNotificationRoutine());
+        }
     }
 
     /// <summary>

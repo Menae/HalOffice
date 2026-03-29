@@ -7731,10 +7731,6 @@ MonoBehaviour:
   metamorphoseSound: {fileID: 8300000, guid: e847150f7d1add84bbd6213fec610b91, type: 3}
   metamorphoseVolume: 0.3
   nextSceneName: P1&P2
-  nextSceneNameByDay:
-  - P1&P2
-  - P1&P2
-  - Title
 --- !u!1 &563466255
 GameObject:
   m_ObjectHideFlags: 0

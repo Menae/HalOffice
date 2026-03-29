@@ -177,9 +177,16 @@ public class EvaluationTrigger : MonoBehaviour
     [Header("遷移設定")]
     /// <summary>
     /// 次のシーン名。デイ進行後にこのシーンへ遷移する。
-    /// InspectorでD&Dまたは文字列を設定する。
+    /// nextSceneNameByDayが設定されている場合はそちらが優先される。
     /// </summary>
     public string nextSceneName = "P1&P2";
+
+    [Tooltip("日付に対応する次シーン名（任意）。設定があれば nextSceneName より優先されます。\nindex 0 = Day1終了後、index 1 = Day2終了後…")]
+    /// <summary>
+    /// 日付ごとの遷移先シーン名配列。GameManager.currentDay - 1 をインデックスとして使用。
+    /// 空のままにした場合は nextSceneName にフォールバックする。
+    /// </summary>
+    public string[] nextSceneNameByDay;
 
     /// <summary>
     /// ボタンのOnClickイベントなどから呼び出す公開メソッド。
@@ -514,7 +521,15 @@ public class EvaluationTrigger : MonoBehaviour
         if (GameManager.Instance != null)
             GameManager.Instance.AdvanceDay();
 
-        // 次シーンへ遷移
-        SceneManager.LoadScene(nextSceneName);
+        // 日付に対応した次シーンへ遷移する
+        string targetScene = nextSceneName;
+        if (nextSceneNameByDay != null && nextSceneNameByDay.Length > 0)
+        {
+            int day = GameManager.Instance != null ? GameManager.Instance.currentDay : 1;
+            int idx = Mathf.Clamp(day - 1, 0, nextSceneNameByDay.Length - 1);
+            if (!string.IsNullOrEmpty(nextSceneNameByDay[idx]))
+                targetScene = nextSceneNameByDay[idx];
+        }
+        SceneManager.LoadScene(targetScene);
     }
 }

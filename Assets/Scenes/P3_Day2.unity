@@ -7733,7 +7733,6 @@ MonoBehaviour:
   nextSceneName: P1&P2
   nextSceneNameByDay:
   - P1&P2
-  - P1&P2
   - Title
 --- !u!1 &563466255
 GameObject:

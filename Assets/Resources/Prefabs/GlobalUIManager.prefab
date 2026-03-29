@@ -3321,13 +3321,15 @@ MonoBehaviour:
   - appWindow: {fileID: 8024397667996916883}
     iconDefault: {fileID: 7834624872287366835}
     iconActive: {fileID: 8854264117051894010}
-  scenesToHideTaskbar: []
+  scenesToHideTaskbar:
+  - Title
   layoutDefault: {fileID: 3663279832629758959}
   layoutSpecial: {fileID: 6082687015796301340}
   specialLayoutScenes:
   - P3_Day1
+  - P3_Day2
   demoEndImage: {fileID: 6605763985558450512}
-  demoEndDay: 2
+  demoEndDay: 4
   demoEndSceneName: P1&P2
   demoExitButton: {fileID: 5050296577128083729}
   demoRestartButton: {fileID: 1838343262397379177}
@@ -3782,7 +3784,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &3786860591038347419
 RectTransform:
   m_ObjectHideFlags: 0

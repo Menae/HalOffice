@@ -8062,6 +8062,7 @@ MonoBehaviour:
     imageToActivate: {fileID: 0}
     sceneLoadButton: {fileID: 0}
     sceneNameToLoad: 
+    sceneNameToLoadByDay: []
   - appName: File
     appIconButton: {fileID: 1412480152}
     appPanel: {fileID: 836428588}
@@ -8070,6 +8071,7 @@ MonoBehaviour:
     imageToActivate: {fileID: 0}
     sceneLoadButton: {fileID: 0}
     sceneNameToLoad: 
+    sceneNameToLoadByDay: []
   - appName: Tuning
     appIconButton: {fileID: 1972265165}
     appPanel: {fileID: 520215996}
@@ -8079,9 +8081,14 @@ MonoBehaviour:
     imageToActivate: {fileID: 0}
     sceneLoadButton: {fileID: 1816449140}
     sceneNameToLoad: P3_Day1
+    sceneNameToLoadByDay:
+    - P3_Day1
+    - P3_Day2
   iconHoverFrame: {fileID: 1248714435}
   chatController: {fileID: 1071078508034451762, guid: 0e26e8ef3b87fb34d9584990c4969569, type: 3}
   tutorialChatInk: {fileID: 4900000, guid: 9450792627969f14c9ef4730544d1006, type: 3}
+  tutorialChatInkByDay:
+  - {fileID: 4900000, guid: 9450792627969f14c9ef4730544d1006, type: 3}
   forceShowTutorialInEditor: 1
 --- !u!4 &1510773764
 Transform:

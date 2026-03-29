@@ -136,13 +136,15 @@ public class Day1Manager : MonoBehaviour
         }
         else
         {
-            if (tutorialManager != null)
+            if (tutorialManager != null && tutorialManager.gameObject.activeInHierarchy)
             {
                 tutorialManager.StartTutorial();
             }
             else
             {
-                Debug.LogError("TutorialManagerが未設定のため、進行を開始できません。");
+                // TutorialManagerが未設定またはGameObjectが非アクティブな場合はスキップして開始ボタンを表示する
+                Debug.LogWarning("TutorialManagerが未設定または非アクティブのため、チュートリアルをスキップしてゲーム開始ボタンを表示します。");
+                ShowStartGameButton();
             }
         }
     }
@@ -189,13 +191,15 @@ public class Day1Manager : MonoBehaviour
         screenFadeImage.color = Color.clear;
         screenFadeImage.gameObject.SetActive(false);
 
-        if (tutorialManager != null)
+        if (tutorialManager != null && tutorialManager.gameObject.activeInHierarchy)
         {
             tutorialManager.StartTutorial();
         }
         else
         {
-            Debug.LogError("TutorialManagerが設定されていません！");
+            // TutorialManagerが未設定またはGameObjectが非アクティブな場合はスキップして開始ボタンを表示する
+            Debug.LogWarning("TutorialManagerが未設定または非アクティブのため、チュートリアルをスキップしてゲーム開始ボタンを表示します。");
+            ShowStartGameButton();
         }
     }
 

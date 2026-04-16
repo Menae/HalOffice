@@ -12,9 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c6080d36db368f04aa7827256c3e1044, type: 3}
   m_Name: BLTV
   m_EditorClassIdentifier: 
-  itemName: 
-  itemType: 0
-  itemPrefab: {fileID: 0}
+  itemName: BLTV
+  itemType: 23
+  itemPrefab: {fileID: 104085335840492786, guid: 19451d9a0f28a55428ff0d28f3607aa0, type: 3}
   highlightSprite: {fileID: 0}
   highlightOffset: {x: 0, y: 0}
   highlightScale: {x: 1, y: 1}
